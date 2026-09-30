@@ -9,3 +9,14 @@ Aplicación móvil que proporciona a peatones y ciclistas rutas para llegar a su
 * Ouyang Zhou Zhou
 
 ## Características
+
+### Peatones y ciclistas
+* Rutas que minimizan la exposición solar
+* Preferencias ajustables: sombra y distancia
+* Mapa 3D interactivo
+
+### Conductores
+* Búsqueda de aparcamiento cerca de las facultades de la UCM
+* Estimación de sombra durante la estancia del coche
+* Recomendación según cercanía y sombra
+
