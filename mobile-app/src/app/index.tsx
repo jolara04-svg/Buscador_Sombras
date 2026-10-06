@@ -1,292 +1,317 @@
-import { StyleSheet, Text, View, TextInput, Button, Switch } from 'react-native';
 import { useState } from 'react';
+import {
+  Button,
+  ScrollView,
+  StyleSheet,
+  TextInput,
+  useColorScheme,
+  View,
+} from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-// Simplified solar position calculation
-function calculateSunPosition(date: Date, latitude: number, longitude: number) {
-  // Convert to radians
-  const toRad = (deg: number) => (deg * Math.PI) / 180;
-  const toDeg = (rad: number) => (rad * 180) / Math.PI;
+import SolarScene from '@/components/solar-scene';
+import { ThemedText } from '@/components/themed-text';
+import { ThemedView } from '@/components/themed-view';
+import { BottomTabInset, Colors, MaxContentWidth, Spacing } from '@/constants/theme';
+import { calculateSunPosition, type SolarPosition } from '@/utils/solar-position';
 
-  // Julian date calculation
-  const year = date.getFullYear();
-  const month = date.getMonth() + 1; // 0-11 to 1-12
-  const day = date.getDate();
-  const hour = date.getHours();
-  const minute = date.getMinutes();
+function pad(value: number) {
+  return value.toString().padStart(2, '0');
+}
 
-  // Calculate Julian Date
-  const JulianDate =
-    367 * year
-    - Math.floor((7 * (year + Math.floor((month + 9) / 12))) / 4)
-    + Math.floor((275 * month) / 9)
-    + day
-    + 1721013.5
-    + ((hour + minute / 60) / 24)
-    - 0.5 * Math.sign(100 * year + month - 190002.5)
-    + 0.5;
+function formatDate(date: Date) {
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+}
 
-  // Days since J2000.0
-  const n = JulianDate - 2451545.0;
+function formatTime(date: Date) {
+  return `${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
 
-  // Mean longitude of the sun
-  const L = 280.460 + 0.9856474 * n;
-  const L_norm = L % 360;
+function parseLocalDateTime(dateText: string, timeText: string) {
+  const dateMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateText.trim());
+  const timeMatch = /^(\d{2}):(\d{2})$/.exec(timeText.trim());
+  if (!dateMatch || !timeMatch) return null;
 
-  // Mean anomaly of the sun
-  const g = 357.528 + 0.9856003 * n;
-  const g_rad = toRad(g % 360);
+  const year = Number(dateMatch[1]);
+  const month = Number(dateMatch[2]);
+  const day = Number(dateMatch[3]);
+  const hours = Number(timeMatch[1]);
+  const minutes = Number(timeMatch[2]);
+  const parsed = new Date(year, month - 1, day, hours, minutes, 0, 0);
 
-  // Ecliptic longitude of the sun
-  const lambda = L_norm + 1.915 * Math.sin(g_rad) + 0.020 * Math.sin(2 * g_rad);
+  if (
+    parsed.getFullYear() !== year ||
+    parsed.getMonth() !== month - 1 ||
+    parsed.getDate() !== day ||
+    parsed.getHours() !== hours ||
+    parsed.getMinutes() !== minutes
+  ) {
+    return null;
+  }
 
-  // Obliquity of the ecliptic
-  const epsilon = 23.439 - 0.0000004 * n;
+  return parsed;
+}
 
-  // Right ascension and declination
-  const alpha = Math.atan2(Math.cos(toRad(epsilon)) * Math.sin(toRad(lambda)), Math.cos(toRad(lambda)));
-  const delta = Math.asin(Math.sin(toRad(epsilon)) * Math.sin(toRad(lambda)));
-
-  // Greenwich mean sidereal time
-  const GMST = 6.697375 + 0.0657098242 * n + hour;
-  const GMST_deg = (GMST % 24) * 15;
-
-  // Local hour angle
-  const LHA = (GMST_deg + longitude - L_norm) % 360;
-  const LHA_rad = toRad(LHA);
-
-  // Latitude in radians
-  const lat_rad = toRad(latitude);
-
-  // Solar elevation (altitude)
-  const elevation_rad = Math.asin(
-    Math.sin(delta) * Math.sin(lat_rad) +
-    Math.cos(delta) * Math.cos(lat_rad) * Math.cos(LHA_rad)
-  );
-
-  // Solar azimuth
-  const azimuth_rad = Math.acos(
-    (Math.sin(delta) - Math.sin(elevation_rad) * Math.sin(lat_rad)) /
-    (Math.cos(elevation_rad) * Math.cos(lat_rad))
-  );
-
-  // Adjust azimuth based on hour angle
-  const azimuth = LHA_rad > 0 ? toDeg(azimuth_rad) : 360 - toDeg(azimuth_rad);
-
-  return {
-    elevation: toDeg(elevation_rad),
-    azimuth: azimuth
-  };
+function getSceneMessage(result: SolarPosition | null) {
+  if (!result) return 'Calcula una posición para proyectar la sombra.';
+  if (!result.isAboveHorizon) return 'El sol está bajo el horizonte; no hay sombra solar.';
+  if (result.nearHorizon) return 'Sombra muy larga: se limita a la superficie visible.';
+  return 'Sombra proyectada según la posición solar calculada.';
 }
 
 export default function SolarCalculatorScreen() {
-  const [date, setDate] = useState(new Date());
-  const [time, setTime] = useState(new Date());
+  const now = new Date();
+  const insets = useSafeAreaInsets();
+  const scheme = useColorScheme();
+  const theme = Colors[scheme === 'dark' ? 'dark' : 'light'];
+  const [dateText, setDateText] = useState(formatDate(now));
+  const [timeText, setTimeText] = useState(formatTime(now));
   const [latitude, setLatitude] = useState('');
   const [longitude, setLongitude] = useState('');
-  const [result, setResult] = useState(null);
+  const [result, setResult] = useState<SolarPosition | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [calculating, setCalculating] = useState(false);
 
   const handleCalculate = () => {
+    setError(null);
+
+    const date = parseLocalDateTime(dateText, timeText);
+    if (!date) {
+      setError('Usa una fecha válida con formato AAAA-MM-DD y una hora HH:MM.');
+      return;
+    }
+
+    const latitudeValue = Number(latitude.trim().replace(',', '.'));
+    const longitudeValue = Number(longitude.trim().replace(',', '.'));
+    if (!latitude.trim() || !longitude.trim() || !Number.isFinite(latitudeValue) || !Number.isFinite(longitudeValue)) {
+      setError('Ingresa coordenadas numéricas válidas.');
+      return;
+    }
+    if (latitudeValue < -90 || latitudeValue > 90) {
+      setError('La latitud debe estar entre -90 y 90 grados.');
+      return;
+    }
+    if (longitudeValue < -180 || longitudeValue > 180) {
+      setError('La longitud debe estar entre -180 y 180 grados.');
+      return;
+    }
+
+    setCalculating(true);
     try {
-      const lat = parseFloat(latitude);
-      const lon = parseFloat(longitude);
-
-      if (isNaN(lat) || isNaN(lon)) {
-        alert('Por favor ingrese coordenadas válidas');
-        return;
-      }
-
-      if (lat < -90 || lat > 90) {
-        alert('La latitud debe estar entre -90 y 90 grados');
-        return;
-      }
-
-      if (lon < -180 || lon > 180) {
-        alert('La longitud debe estar entre -180 y 180 grados');
-        return;
-      }
-
-      // Combine date and time
-      const combinedDate = new Date(date);
-      combinedDate.setHours(time.getHours(), time.getMinutes(), 0, 0);
-
-      setCalculating(true);
-      const position = calculateSunPosition(combinedDate, lat, lon);
-      setResult(position);
-      setCalculating(false);
-    } catch (error) {
-      alert('Error en el cálculo: ' + error.message);
+      setResult(calculateSunPosition(date, latitudeValue, longitudeValue));
+    } catch (calculationError) {
+      setError(
+        calculationError instanceof Error
+          ? calculationError.message
+          : 'No se pudo calcular la posición solar.',
+      );
+    } finally {
       setCalculating(false);
     }
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Calculadora de Posición Solar</Text>
-        <Text style={styles.subtitle}>Ingrese fecha, hora y ubicación</Text>
-      </View>
-
-      <View style={styles.form}>
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Fecha:</Text>
-          <TextInput
-            style={styles.input}
-            value={date.toISOString().split('T')[0]}
-            onChangeText={(text) => {
-              const newDate = new Date(text);
-              if (!isNaN(newDate.getTime())) setDate(newDate);
-            }}
-            placeholder="YYYY-MM-DD"
-          />
+    <ScrollView
+      style={[styles.scrollView, { backgroundColor: theme.background }]}
+      contentContainerStyle={[
+        styles.contentContainer,
+        {
+          paddingBottom: insets.bottom + BottomTabInset + Spacing.four,
+          paddingTop: Math.max(insets.top, Spacing.three),
+        },
+      ]}
+      keyboardShouldPersistTaps="handled">
+      <ThemedView style={styles.container}>
+        <View style={styles.header}>
+          <ThemedText type="title" style={styles.title}>
+            Posición solar
+          </ThemedText>
+          <ThemedText themeColor="textSecondary" style={styles.subtitle}>
+            Observa cómo cambia la sombra sobre un cubo 3D.
+          </ThemedText>
         </View>
 
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Hora:</Text>
-          <TextInput
-            style={styles.input}
-            value={time.toTimeString().slice(0, 5)}
-            onChangeText={(text) => {
-              const [hours, minutes] = text.split(':');
-              const newDate = new Date(time);
-              newDate.setHours(parseInt(hours) || 0, parseInt(minutes) || 0, 0, 0);
-              if (!isNaN(newDate.getTime())) setTime(newDate);
-            }}
-            placeholder="HH:MM"
-          />
-        </View>
+        <ThemedView type="backgroundElement" style={styles.sceneCard}>
+          <SolarScene solarPosition={result} />
+          <ThemedText type="small" themeColor="textSecondary" style={styles.sceneMessage}>
+            {getSceneMessage(result)}
+          </ThemedText>
+        </ThemedView>
 
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Latitud (°):</Text>
-          <TextInput
-            style={styles.input}
-            keyboardType="numeric"
-            value={latitude}
-            onChangeText={setLatitude}
-            placeholder="-90 a 90"
-          />
-        </View>
+        <ThemedView type="backgroundElement" style={styles.form}>
+          <ThemedText type="subtitle" style={styles.sectionTitle}>
+            Parámetros
+          </ThemedText>
 
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Longitud (°):</Text>
-          <TextInput
-            style={styles.input}
-            keyboardType="numeric"
-            value={longitude}
-            onChangeText={setLongitude}
-            placeholder="-180 a 180"
-          />
-        </View>
-
-        <Button
-          title={calculating ? 'Calculando...' : 'Calcular Posición Solar'}
-          onPress={handleCalculate}
-          disabled={calculating}
-          color="#0066cc"
-        />
-      </View>
-
-      {result && (
-        <View style={styles.results}>
-          <Text style={styles.resultsTitle}>Resultados:</Text>
-          <View style={styles.resultItem}>
-            <Text style={styles.resultLabel}>Altura solar:</Text>
-            <Text style={styles.resultValue}>{result.elevation.toFixed(2)}°</Text>
+          <View style={styles.inputGroup}>
+            <ThemedText type="smallBold" style={styles.label}>
+              Fecha
+            </ThemedText>
+            <TextInput
+              accessibilityLabel="Fecha"
+              autoCorrect={false}
+              onChangeText={setDateText}
+              placeholder="AAAA-MM-DD"
+              placeholderTextColor={theme.textSecondary}
+              style={[styles.input, { borderColor: theme.backgroundSelected, color: theme.text }]}
+              value={dateText}
+            />
           </View>
-          <View style={styles.resultItem}>
-            <Text style={styles.resultLabel}>Acimut solar:</Text>
-            <Text style={styles.resultValue}>{result.azimuth.toFixed(2)}°</Text>
+
+          <View style={styles.inputGroup}>
+            <ThemedText type="smallBold" style={styles.label}>
+              Hora local
+            </ThemedText>
+            <TextInput
+              accessibilityLabel="Hora local"
+              autoCorrect={false}
+              onChangeText={setTimeText}
+              placeholder="HH:MM"
+              placeholderTextColor={theme.textSecondary}
+              style={[styles.input, { borderColor: theme.backgroundSelected, color: theme.text }]}
+              value={timeText}
+            />
           </View>
-          <View style={styles.resultItem}>
-            <Text style={styles.resultLabel}>Posición:</Text>
-            <Text style={styles.resultValue}>
-              {result.elevation >= 0 ? 'Por encima del horizonte' : 'Por debajo del horizonte'}
-            </Text>
+
+          <View style={styles.inputGroup}>
+            <ThemedText type="smallBold" style={styles.label}>
+              Latitud (°)
+            </ThemedText>
+            <TextInput
+              accessibilityLabel="Latitud"
+              keyboardType="numbers-and-punctuation"
+              onChangeText={setLatitude}
+              placeholder="-90 a 90"
+              placeholderTextColor={theme.textSecondary}
+              style={[styles.input, { borderColor: theme.backgroundSelected, color: theme.text }]}
+              value={latitude}
+            />
           </View>
-        </View>
-      )}
-    </View>
+
+          <View style={styles.inputGroup}>
+            <ThemedText type="smallBold" style={styles.label}>
+              Longitud (°)
+            </ThemedText>
+            <TextInput
+              accessibilityLabel="Longitud"
+              keyboardType="numbers-and-punctuation"
+              onChangeText={setLongitude}
+              placeholder="-180 a 180"
+              placeholderTextColor={theme.textSecondary}
+              style={[styles.input, { borderColor: theme.backgroundSelected, color: theme.text }]}
+              value={longitude}
+            />
+          </View>
+
+          {error && (
+            <ThemedText themeColor="textSecondary" style={styles.error}>
+              {error}
+            </ThemedText>
+          )}
+
+          <Button
+            color="#3c87f7"
+            disabled={calculating}
+            onPress={handleCalculate}
+            title={calculating ? 'Calculando...' : 'Calcular posición solar'}
+          />
+        </ThemedView>
+
+        {result && (
+          <ThemedView type="backgroundElement" style={styles.results}>
+            <ThemedText type="subtitle" style={styles.sectionTitle}>
+              Resultado
+            </ThemedText>
+            <View style={styles.resultItem}>
+              <ThemedText themeColor="textSecondary">Altura solar</ThemedText>
+              <ThemedText type="smallBold">{result.elevation.toFixed(2)}°</ThemedText>
+            </View>
+            <View style={styles.resultItem}>
+              <ThemedText themeColor="textSecondary">Acimut solar</ThemedText>
+              <ThemedText type="smallBold">{result.azimuth.toFixed(2)}°</ThemedText>
+            </View>
+            <View style={styles.resultItem}>
+              <ThemedText themeColor="textSecondary">Estado</ThemedText>
+              <ThemedText type="smallBold">
+                {result.isAboveHorizon ? 'Sobre el horizonte' : 'Bajo el horizonte'}
+              </ThemedText>
+            </View>
+          </ThemedView>
+        )}
+      </ThemedView>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  scrollView: {
     flex: 1,
-    padding: 20,
-    backgroundColor: '#f5f5f5',
+  },
+  contentContainer: {
+    alignItems: 'center',
+  },
+  container: {
+    maxWidth: MaxContentWidth,
+    paddingHorizontal: Spacing.four,
+    width: '100%',
   },
   header: {
     alignItems: 'center',
-    marginBottom: 30,
+    gap: Spacing.one,
+    marginBottom: Spacing.four,
   },
   title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 5,
+    textAlign: 'center',
   },
   subtitle: {
-    fontSize: 16,
-    color: '#666',
+    textAlign: 'center',
+  },
+  sceneCard: {
+    borderRadius: Spacing.three,
+    marginBottom: Spacing.four,
+    overflow: 'hidden',
+  },
+  sceneMessage: {
+    paddingHorizontal: Spacing.three,
+    paddingVertical: Spacing.two,
+    textAlign: 'center',
   },
   form: {
-    backgroundColor: 'white',
-    padding: 20,
-    borderRadius: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    borderRadius: Spacing.three,
+    padding: Spacing.three,
+  },
+  sectionTitle: {
+    fontSize: 24,
+    lineHeight: 32,
+    marginBottom: Spacing.three,
   },
   inputGroup: {
-    marginBottom: 20,
+    marginBottom: Spacing.three,
   },
   label: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 8,
-    color: '#333',
+    marginBottom: Spacing.one,
   },
   input: {
+    borderRadius: Spacing.one,
     borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 6,
-    padding: 12,
     fontSize: 16,
-    backgroundColor: 'white',
+    minHeight: 48,
+    paddingHorizontal: Spacing.two,
+  },
+  error: {
+    marginBottom: Spacing.three,
   },
   results: {
-    marginTop: 30,
-    backgroundColor: 'white',
-    padding: 20,
-    borderRadius: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  resultsTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 15,
+    borderRadius: Spacing.three,
+    marginTop: Spacing.four,
+    padding: Spacing.three,
   },
   resultItem: {
+    alignItems: 'center',
+    borderBottomColor: '#77777733',
+    borderBottomWidth: StyleSheet.hairlineWidth,
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderColor: '#eee',
-  },
-  resultLabel: {
-    fontSize: 16,
-    color: '#666',
-  },
-  resultValue: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#333',
+    paddingVertical: Spacing.two,
   },
 });
