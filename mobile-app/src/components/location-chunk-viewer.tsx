@@ -60,8 +60,38 @@ function ensureShaderPrecisionSupport(gl: ExpoWebGLRenderingContext) {
   }) as typeof gl.getShaderPrecisionFormat;
 }
 
-function createRenderer(gl: ExpoWebGLRenderingContext) {
+function ensureExpoGlCompatibility(gl: ExpoWebGLRenderingContext) {
   ensureShaderPrecisionSupport(gl);
+
+  const nativeGetParameter = gl.getParameter.bind(gl);
+  const versionEnum = typeof gl.VERSION === 'number' ? gl.VERSION : 0x1f02;
+  const scissorBoxEnum = typeof gl.SCISSOR_BOX === 'number' ? gl.SCISSOR_BOX : 0x0c10;
+  const viewportEnum = typeof gl.VIEWPORT === 'number' ? gl.VIEWPORT : 0x0ba2;
+  const width = Math.max(gl.drawingBufferWidth, 1);
+  const height = Math.max(gl.drawingBufferHeight, 1);
+
+  gl.getParameter = ((parameter: number) => {
+    const value = nativeGetParameter(parameter);
+
+    if (value !== undefined && value !== null) {
+      return value;
+    }
+
+    // expo-gl can return undefined for values that Three.js expects from a browser WebGL context.
+    if (parameter === versionEnum) {
+      return 'WebGL 1.0';
+    }
+
+    if (parameter === scissorBoxEnum || parameter === viewportEnum) {
+      return [0, 0, width, height];
+    }
+
+    return value;
+  }) as typeof gl.getParameter;
+}
+
+function createRenderer(gl: ExpoWebGLRenderingContext) {
+  ensureExpoGlCompatibility(gl);
 
   const canvas = {
     width: gl.drawingBufferWidth,
@@ -72,13 +102,28 @@ function createRenderer(gl: ExpoWebGLRenderingContext) {
     clientHeight: gl.drawingBufferHeight,
   } as unknown as HTMLCanvasElement;
 
-  return new THREE.WebGLRenderer({
-    canvas,
-    context: gl as unknown as WebGLRenderingContext,
-    antialias: true,
-    alpha: false,
-    precision: 'mediump',
-  });
+  const previousWarn = console.warn;
+  console.warn = (...args: unknown[]) => {
+    const message = args[0];
+
+    if (message === 'THREE.WebGLRenderer: WebGL 1 support was deprecated in r153 and will be removed in r163.') {
+      return;
+    }
+
+    previousWarn(...args);
+  };
+
+  try {
+    return new THREE.WebGLRenderer({
+      canvas,
+      context: gl as unknown as WebGLRenderingContext,
+      antialias: true,
+      alpha: false,
+      precision: 'mediump',
+    });
+  } finally {
+    console.warn = previousWarn;
+  }
 }
 
 function disposeModel(model: THREE.Object3D) {
