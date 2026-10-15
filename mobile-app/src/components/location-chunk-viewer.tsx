@@ -1,6 +1,6 @@
 import { GLView, type ExpoWebGLRenderingContext } from 'expo-gl';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, PanResponder, StyleSheet, Text, View } from 'react-native';
 import * as THREE from 'three';
 import { GLTFLoader, type GLTF } from 'three/examples/jsm/loaders/GLTFLoader.js';
 
@@ -9,6 +9,35 @@ type LocationChunkViewerProps = {
 };
 
 type ViewerStatus = 'loading' | 'ready' | 'error';
+
+type OrbitState = {
+  azimuth: number;
+  elevation: number;
+  distance: number;
+  target: THREE.Vector3;
+};
+
+type RenderContext = {
+  gl: ExpoWebGLRenderingContext;
+  renderer: THREE.WebGLRenderer;
+  scene: THREE.Scene;
+  camera: THREE.PerspectiveCamera;
+};
+
+const MIN_ORBIT_ELEVATION = 0.25;
+const MAX_ORBIT_ELEVATION = Math.PI / 2 - 0.04;
+const ORBIT_SENSITIVITY = 0.01;
+
+function updateOrbitCamera(camera: THREE.PerspectiveCamera, orbit: OrbitState) {
+  const horizontalDistance = Math.cos(orbit.elevation) * orbit.distance;
+
+  camera.position.set(
+    orbit.target.x + Math.sin(orbit.azimuth) * horizontalDistance,
+    orbit.target.y + Math.sin(orbit.elevation) * orbit.distance,
+    orbit.target.z + Math.cos(orbit.azimuth) * horizontalDistance,
+  );
+  camera.lookAt(orbit.target);
+}
 
 function createRenderer(gl: ExpoWebGLRenderingContext) {
   const canvas = {
@@ -49,6 +78,14 @@ export function LocationChunkViewer({ chunkUrl }: LocationChunkViewerProps) {
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
   const sceneRef = useRef<THREE.Scene | null>(null);
   const modelRef = useRef<THREE.Object3D | null>(null);
+  const renderContextRef = useRef<RenderContext | null>(null);
+  const orbitRef = useRef<OrbitState>({
+    azimuth: 0,
+    elevation: MAX_ORBIT_ELEVATION,
+    distance: 1,
+    target: new THREE.Vector3(),
+  });
+  const dragStartRef = useRef({ azimuth: 0, elevation: MAX_ORBIT_ELEVATION });
   const loadIdRef = useRef(0);
 
   const cleanup = useCallback(() => {
@@ -60,11 +97,59 @@ export function LocationChunkViewer({ chunkUrl }: LocationChunkViewerProps) {
     }
 
     sceneRef.current = null;
+    renderContextRef.current = null;
     rendererRef.current?.dispose();
     rendererRef.current = null;
   }, []);
 
   useEffect(() => cleanup, [cleanup]);
+
+  const renderCurrentFrame = useCallback(() => {
+    const renderContext = renderContextRef.current;
+
+    if (!renderContext) {
+      return;
+    }
+
+    updateOrbitCamera(renderContext.camera, orbitRef.current);
+    renderContext.renderer.render(renderContext.scene, renderContext.camera);
+    renderContext.gl.endFrameEXP();
+  }, []);
+
+  const [panResponder, setPanResponder] = useState<ReturnType<typeof PanResponder.create> | null>(null);
+
+  useEffect(() => {
+    const responder = PanResponder.create({
+      onMoveShouldSetPanResponder: (_, gestureState) => {
+        const horizontalDrag =
+          Math.abs(gestureState.dx) > Math.abs(gestureState.dy) && Math.abs(gestureState.dx) > 8;
+        const twoFingerDrag =
+          gestureState.numberActiveTouches >= 2 &&
+          Math.max(Math.abs(gestureState.dx), Math.abs(gestureState.dy)) > 8;
+
+        return horizontalDrag || twoFingerDrag;
+      },
+      onPanResponderGrant: () => {
+        dragStartRef.current = {
+          azimuth: orbitRef.current.azimuth,
+          elevation: orbitRef.current.elevation,
+        };
+      },
+      onPanResponderMove: (_, gestureState) => {
+        orbitRef.current.azimuth = dragStartRef.current.azimuth + gestureState.dx * ORBIT_SENSITIVITY;
+        orbitRef.current.elevation = THREE.MathUtils.clamp(
+          dragStartRef.current.elevation - gestureState.dy * ORBIT_SENSITIVITY,
+          MIN_ORBIT_ELEVATION,
+          MAX_ORBIT_ELEVATION,
+        );
+        renderCurrentFrame();
+      },
+      onPanResponderRelease: renderCurrentFrame,
+      onPanResponderTerminate: renderCurrentFrame,
+    });
+
+    setPanResponder(responder);
+  }, [renderCurrentFrame]);
 
   const handleContextCreate = useCallback(
     (gl: ExpoWebGLRenderingContext) => {
@@ -86,7 +171,7 @@ export function LocationChunkViewer({ chunkUrl }: LocationChunkViewerProps) {
       scene.background = new THREE.Color('#142033');
 
       const camera = new THREE.PerspectiveCamera(42, width / height, 0.01, 100000);
-      camera.up.set(0, 0, -1);
+      camera.up.set(0, 1, 0);
 
       scene.add(new THREE.HemisphereLight(0xdcecff, 0x2c3444, 2.2));
 
@@ -168,9 +253,15 @@ export function LocationChunkViewer({ chunkUrl }: LocationChunkViewerProps) {
             (viewSize / (2 * Math.tan(THREE.MathUtils.degToRad(camera.fov) / 2))) * 1.15;
           camera.near = 0.01;
           camera.far = Math.max(distance + size.y + horizontalSize * 2, 100);
-          camera.position.set(0, distance, 0);
-          camera.lookAt(0, 0, 0);
+          orbitRef.current = {
+            azimuth: 0,
+            elevation: MAX_ORBIT_ELEVATION,
+            distance,
+            target: new THREE.Vector3(0, 0, 0),
+          };
+          updateOrbitCamera(camera, orbitRef.current);
           camera.updateProjectionMatrix();
+          renderContextRef.current = { gl, renderer, scene, camera };
 
           setStatus('ready');
 
@@ -178,8 +269,7 @@ export function LocationChunkViewer({ chunkUrl }: LocationChunkViewerProps) {
             return;
           }
 
-          renderer.render(scene, camera);
-          gl.endFrameEXP();
+          renderCurrentFrame();
         } catch (error) {
           if (loadId !== loadIdRef.current) {
             return;
@@ -192,13 +282,17 @@ export function LocationChunkViewer({ chunkUrl }: LocationChunkViewerProps) {
 
       void loadChunk();
     },
-    [chunkUrl],
+    [chunkUrl, renderCurrentFrame],
   );
 
   return (
     <View style={styles.card}>
       <View style={styles.viewerFrame}>
-        <GLView style={StyleSheet.absoluteFill} onContextCreate={handleContextCreate} />
+        <GLView
+          {...(panResponder?.panHandlers ?? {})}
+          style={StyleSheet.absoluteFill}
+          onContextCreate={handleContextCreate}
+        />
 
         {status === 'loading' && (
           <View style={styles.overlay} pointerEvents="none">
@@ -215,7 +309,9 @@ export function LocationChunkViewer({ chunkUrl }: LocationChunkViewerProps) {
         )}
       </View>
 
-      <Text style={styles.caption}>Chunk de edificios de la ubicación seleccionada</Text>
+      <Text style={styles.caption}>
+        Chunk de edificios de la ubicación seleccionada{`\n`}Desliza horizontalmente para girar la cámara
+      </Text>
     </View>
   );
 }

@@ -130,7 +130,13 @@ export default function SolarCalculatorScreen() {
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
+    <ScrollView
+      contentContainerStyle={styles.container}
+      keyboardShouldPersistTaps="handled"
+      nestedScrollEnabled
+      showsVerticalScrollIndicator
+      style={styles.scrollView}
+    >
       <View style={styles.header}>
         <Text style={styles.title}>Calculadora de Posición Solar</Text>
         <Text style={styles.subtitle}>Ingrese fecha, hora y ubicación</Text>
@@ -222,9 +228,13 @@ export default function SolarCalculatorScreen() {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
+    flexGrow: 1,
     padding: 20,
+    paddingBottom: 40,
     backgroundColor: '#f5f5f5',
+  },
+  scrollView: {
+    flex: 1,
   },
   header: {
     alignItems: 'center',
