@@ -39,7 +39,30 @@ function updateOrbitCamera(camera: THREE.PerspectiveCamera, orbit: OrbitState) {
   camera.lookAt(orbit.target);
 }
 
+function ensureShaderPrecisionSupport(gl: ExpoWebGLRenderingContext) {
+  const nativeGetShaderPrecisionFormat =
+    typeof gl.getShaderPrecisionFormat === 'function' ? gl.getShaderPrecisionFormat.bind(gl) : null;
+
+  gl.getShaderPrecisionFormat = ((shaderType: number, precisionType: number) => {
+    const format = nativeGetShaderPrecisionFormat?.(shaderType, precisionType) as
+      | Partial<WebGLShaderPrecisionFormat>
+      | undefined;
+
+    if (format && typeof format.precision === 'number') {
+      return format as WebGLShaderPrecisionFormat;
+    }
+
+    return {
+      rangeMin: 1,
+      rangeMax: 1,
+      precision: 1,
+    } as WebGLShaderPrecisionFormat;
+  }) as typeof gl.getShaderPrecisionFormat;
+}
+
 function createRenderer(gl: ExpoWebGLRenderingContext) {
+  ensureShaderPrecisionSupport(gl);
+
   const canvas = {
     width: gl.drawingBufferWidth,
     height: gl.drawingBufferHeight,
@@ -54,6 +77,7 @@ function createRenderer(gl: ExpoWebGLRenderingContext) {
     context: gl as unknown as WebGLRenderingContext,
     antialias: true,
     alpha: false,
+    precision: 'mediump',
   });
 }
 
@@ -160,7 +184,17 @@ export function LocationChunkViewer({ chunkUrl }: LocationChunkViewerProps) {
 
       const width = Math.max(gl.drawingBufferWidth, 1);
       const height = Math.max(gl.drawingBufferHeight, 1);
-      const renderer = createRenderer(gl);
+      let renderer: THREE.WebGLRenderer;
+
+      try {
+        renderer = createRenderer(gl);
+      } catch (error) {
+        setStatus('error');
+        setErrorMessage(
+          error instanceof Error ? error.message : 'No se pudo inicializar el renderizador 3D.',
+        );
+        return;
+      }
 
       renderer.setPixelRatio(1);
       renderer.setSize(width, height, false);
