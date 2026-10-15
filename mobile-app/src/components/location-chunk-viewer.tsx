@@ -49,16 +49,10 @@ export function LocationChunkViewer({ chunkUrl }: LocationChunkViewerProps) {
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
   const sceneRef = useRef<THREE.Scene | null>(null);
   const modelRef = useRef<THREE.Object3D | null>(null);
-  const animationFrameRef = useRef<number | null>(null);
   const loadIdRef = useRef(0);
 
   const cleanup = useCallback(() => {
     loadIdRef.current += 1;
-
-    if (animationFrameRef.current !== null) {
-      cancelAnimationFrame(animationFrameRef.current);
-      animationFrameRef.current = null;
-    }
 
     if (modelRef.current) {
       disposeModel(modelRef.current);
@@ -92,7 +86,7 @@ export function LocationChunkViewer({ chunkUrl }: LocationChunkViewerProps) {
       scene.background = new THREE.Color('#142033');
 
       const camera = new THREE.PerspectiveCamera(42, width / height, 0.01, 100000);
-      camera.position.set(3, 2.5, 5);
+      camera.up.set(0, 0, -1);
 
       scene.add(new THREE.HemisphereLight(0xdcecff, 0x2c3444, 2.2));
 
@@ -134,6 +128,11 @@ export function LocationChunkViewer({ chunkUrl }: LocationChunkViewerProps) {
           }
 
           const model = gltf.scene;
+
+          // The source dataset is Z-Up, while Three.js uses Y-Up.
+          model.rotation.x = -Math.PI / 2;
+          model.updateMatrixWorld(true);
+
           const bounds = new THREE.Box3().setFromObject(model);
 
           if (bounds.isEmpty()) {
@@ -142,9 +141,14 @@ export function LocationChunkViewer({ chunkUrl }: LocationChunkViewerProps) {
 
           const size = bounds.getSize(new THREE.Vector3());
           const center = bounds.getCenter(new THREE.Vector3());
-          const maxDimension = Math.max(size.x, size.y, size.z, 0.001);
+          const horizontalSize = Math.max(size.x, size.z, 0.001);
 
-          model.position.sub(center);
+          // Center the chunk horizontally and place its lowest point on the ground.
+          model.position.x -= center.x;
+          model.position.y -= bounds.min.y;
+          model.position.z -= center.z;
+          model.updateMatrixWorld(true);
+
           model.traverse((object) => {
             const mesh = object as THREE.Mesh;
             if (mesh.isMesh) {
@@ -153,33 +157,29 @@ export function LocationChunkViewer({ chunkUrl }: LocationChunkViewerProps) {
             }
           });
 
-          const grid = new THREE.GridHelper(maxDimension * 1.8, 12, 0x54708f, 0x304158);
-          grid.position.y = -size.y / 2;
+          const grid = new THREE.GridHelper(horizontalSize * 1.15, 16, 0x54708f, 0x304158);
+          grid.position.y = 0;
           scene.add(grid);
           scene.add(model);
           modelRef.current = model;
 
-          const distance = maxDimension / (2 * Math.tan(THREE.MathUtils.degToRad(camera.fov) / 2));
-          camera.near = Math.max(maxDimension / 1000, 0.01);
-          camera.far = Math.max(maxDimension * 100, 100);
-          camera.position.set(maxDimension * 0.85, maxDimension * 0.65, distance * 1.2);
+          const viewSize = Math.max(size.z, size.x / camera.aspect, 0.001);
+          const distance =
+            (viewSize / (2 * Math.tan(THREE.MathUtils.degToRad(camera.fov) / 2))) * 1.15;
+          camera.near = 0.01;
+          camera.far = Math.max(distance + size.y + horizontalSize * 2, 100);
+          camera.position.set(0, distance, 0);
           camera.lookAt(0, 0, 0);
           camera.updateProjectionMatrix();
 
           setStatus('ready');
 
-          const render = () => {
-            if (loadId !== loadIdRef.current) {
-              return;
-            }
+          if (loadId !== loadIdRef.current) {
+            return;
+          }
 
-            model.rotation.y += 0.003;
-            renderer.render(scene, camera);
-            gl.endFrameEXP();
-            animationFrameRef.current = requestAnimationFrame(render);
-          };
-
-          render();
+          renderer.render(scene, camera);
+          gl.endFrameEXP();
         } catch (error) {
           if (loadId !== loadIdRef.current) {
             return;
