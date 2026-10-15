@@ -1,5 +1,13 @@
-import { StyleSheet, Text, View, TextInput, Button, Switch } from 'react-native';
+import { StyleSheet, Text, View, TextInput, Button, ScrollView } from 'react-native';
 import { useState } from 'react';
+
+import { getChunkUrl } from '@/constants/backend';
+import { LocationChunkViewer } from '@/components/location-chunk-viewer';
+
+type SolarPosition = {
+  elevation: number;
+  azimuth: number;
+};
 
 // Simplified solar position calculation
 function calculateSunPosition(date: Date, latitude: number, longitude: number) {
@@ -43,7 +51,6 @@ function calculateSunPosition(date: Date, latitude: number, longitude: number) {
   const epsilon = 23.439 - 0.0000004 * n;
 
   // Right ascension and declination
-  const alpha = Math.atan2(Math.cos(toRad(epsilon)) * Math.sin(toRad(lambda)), Math.cos(toRad(lambda)));
   const delta = Math.asin(Math.sin(toRad(epsilon)) * Math.sin(toRad(lambda)));
 
   // Greenwich mean sidereal time
@@ -83,7 +90,8 @@ export default function SolarCalculatorScreen() {
   const [time, setTime] = useState(new Date());
   const [latitude, setLatitude] = useState('');
   const [longitude, setLongitude] = useState('');
-  const [result, setResult] = useState(null);
+  const [result, setResult] = useState<SolarPosition | null>(null);
+  const [chunkUrl, setChunkUrl] = useState<string | null>(null);
   const [calculating, setCalculating] = useState(false);
 
   const handleCalculate = () => {
@@ -113,15 +121,16 @@ export default function SolarCalculatorScreen() {
       setCalculating(true);
       const position = calculateSunPosition(combinedDate, lat, lon);
       setResult(position);
+      setChunkUrl(getChunkUrl(lat, lon));
       setCalculating(false);
     } catch (error) {
-      alert('Error en el cálculo: ' + error.message);
+      alert('Error en el cálculo: ' + (error instanceof Error ? error.message : 'desconocido'));
       setCalculating(false);
     }
   };
 
   return (
-    <View style={styles.container}>
+    <ScrollView contentContainerStyle={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>Calculadora de Posición Solar</Text>
         <Text style={styles.subtitle}>Ingrese fecha, hora y ubicación</Text>
@@ -203,9 +212,11 @@ export default function SolarCalculatorScreen() {
               {result.elevation >= 0 ? 'Por encima del horizonte' : 'Por debajo del horizonte'}
             </Text>
           </View>
+
+          {chunkUrl && <LocationChunkViewer key={chunkUrl} chunkUrl={chunkUrl} />}
         </View>
       )}
-    </View>
+    </ScrollView>
   );
 }
 

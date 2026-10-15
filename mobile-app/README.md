@@ -16,6 +16,27 @@ This is an [Expo](https://expo.dev) project created with [`create-expo-app`](htt
    npx expo start
    ```
 
+## 3D location chunks
+
+Start the GLB backend from the repository root before pressing the solar
+calculator button:
+
+```bash
+cd ../backend
+npm install
+node server.js
+```
+
+The app uses `http://localhost:3000` on iOS simulators and web, and
+`http://10.0.2.2:3000` on Android emulators. For a physical device, point the
+app at the computer running the backend with `EXPO_PUBLIC_BACKEND_URL`, for
+example:
+
+```powershell
+$env:EXPO_PUBLIC_BACKEND_URL = "http://192.168.1.20:3000"
+npx expo start
+```
+
 In the output, you'll find options to open the app in a
 
 - [development build](https://docs.expo.dev/develop/development-builds/introduction/)
