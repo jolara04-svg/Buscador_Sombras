@@ -178,7 +178,7 @@ export default function SolarCalculatorScreen() {
             keyboardType="numeric"
             value={latitude}
             onChangeText={setLatitude}
-            placeholder="-90 a 90"
+            placeholder="40.4168"
           />
         </View>
 
@@ -189,7 +189,7 @@ export default function SolarCalculatorScreen() {
             keyboardType="numeric"
             value={longitude}
             onChangeText={setLongitude}
-            placeholder="-180 a 180"
+            placeholder="-3.7038"
           />
         </View>
 
