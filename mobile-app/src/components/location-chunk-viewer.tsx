@@ -1,13 +1,6 @@
 import { GLView, type ExpoWebGLRenderingContext } from 'expo-gl';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import {
-  ActivityIndicator,
-  PanResponder,
-  StyleSheet,
-  Text,
-  View,
-  type GestureResponderEvent,
-} from 'react-native';
+import { ActivityIndicator, PanResponder, StyleSheet, Text, View } from 'react-native';
 import * as THREE from 'three';
 import { GLTFLoader, type GLTF } from 'three/examples/jsm/loaders/GLTFLoader.js';
 
@@ -34,21 +27,6 @@ type RenderContext = {
 const MIN_ORBIT_ELEVATION = 0.25;
 const MAX_ORBIT_ELEVATION = Math.PI / 2 - 0.04;
 const ORBIT_SENSITIVITY = 0.01;
-const MIN_ZOOM_DISTANCE = 0.05;
-const MAX_ZOOM_DISTANCE = 100000;
-
-function getPinchDistance(event: GestureResponderEvent) {
-  const [firstTouch, secondTouch] = event.nativeEvent.touches;
-
-  if (!firstTouch || !secondTouch) {
-    return null;
-  }
-
-  return Math.hypot(
-    firstTouch.pageX - secondTouch.pageX,
-    firstTouch.pageY - secondTouch.pageY,
-  );
-}
 
 function updateOrbitCamera(camera: THREE.PerspectiveCamera, orbit: OrbitState) {
   const horizontalDistance = Math.cos(orbit.elevation) * orbit.distance;
@@ -177,7 +155,6 @@ export function LocationChunkViewer({ chunkUrl }: LocationChunkViewerProps) {
     target: new THREE.Vector3(),
   });
   const dragStartRef = useRef({ azimuth: 0, elevation: MAX_ORBIT_ELEVATION });
-  const pinchStartRef = useRef<{ distance: number; cameraDistance: number } | null>(null);
   const loadIdRef = useRef(0);
 
   const cleanup = useCallback(() => {
@@ -215,39 +192,19 @@ export function LocationChunkViewer({ chunkUrl }: LocationChunkViewerProps) {
       onMoveShouldSetPanResponder: (_, gestureState) => {
         const horizontalDrag =
           Math.abs(gestureState.dx) > Math.abs(gestureState.dy) && Math.abs(gestureState.dx) > 8;
-        const pinchGesture = gestureState.numberActiveTouches >= 2;
+        const twoFingerDrag =
+          gestureState.numberActiveTouches >= 2 &&
+          Math.max(Math.abs(gestureState.dx), Math.abs(gestureState.dy)) > 8;
 
-        return horizontalDrag || pinchGesture;
+        return horizontalDrag || twoFingerDrag;
       },
-      onPanResponderGrant: (event) => {
+      onPanResponderGrant: () => {
         dragStartRef.current = {
           azimuth: orbitRef.current.azimuth,
           elevation: orbitRef.current.elevation,
         };
-
-        const distance = getPinchDistance(event);
-        pinchStartRef.current = distance
-          ? { distance, cameraDistance: orbitRef.current.distance }
-          : null;
       },
-      onPanResponderMove: (event, gestureState) => {
-        const pinchDistance = getPinchDistance(event);
-
-        if (pinchDistance !== null) {
-          const pinchStart = pinchStartRef.current ?? {
-            distance: pinchDistance,
-            cameraDistance: orbitRef.current.distance,
-          };
-          pinchStartRef.current = pinchStart;
-          orbitRef.current.distance = THREE.MathUtils.clamp(
-            (pinchStart.cameraDistance * pinchStart.distance) / Math.max(pinchDistance, 0.01),
-            MIN_ZOOM_DISTANCE,
-            MAX_ZOOM_DISTANCE,
-          );
-          renderCurrentFrame();
-          return;
-        }
-
+      onPanResponderMove: (_, gestureState) => {
         orbitRef.current.azimuth = dragStartRef.current.azimuth + gestureState.dx * ORBIT_SENSITIVITY;
         orbitRef.current.elevation = THREE.MathUtils.clamp(
           dragStartRef.current.elevation - gestureState.dy * ORBIT_SENSITIVITY,
@@ -256,14 +213,8 @@ export function LocationChunkViewer({ chunkUrl }: LocationChunkViewerProps) {
         );
         renderCurrentFrame();
       },
-      onPanResponderRelease: () => {
-        pinchStartRef.current = null;
-        renderCurrentFrame();
-      },
-      onPanResponderTerminate: () => {
-        pinchStartRef.current = null;
-        renderCurrentFrame();
-      },
+      onPanResponderRelease: renderCurrentFrame,
+      onPanResponderTerminate: renderCurrentFrame,
     });
 
     setPanResponder(responder);
@@ -438,7 +389,7 @@ export function LocationChunkViewer({ chunkUrl }: LocationChunkViewerProps) {
       </View>
 
       <Text style={styles.caption}>
-        Chunk de edificios de la ubicación seleccionada{`\n`}Desliza para girar y pellizca para hacer zoom
+        Chunk de edificios de la ubicación seleccionada{`\n`}Desliza horizontalmente para girar la cámara
       </Text>
     </View>
   );
