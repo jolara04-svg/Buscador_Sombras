@@ -1,6 +1,6 @@
 import { GLView, type ExpoWebGLRenderingContext } from 'expo-gl';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, PanResponder, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, PanResponder, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import * as THREE from 'three';
 import { GLTFLoader, type GLTF } from 'three/examples/jsm/loaders/GLTFLoader.js';
 
@@ -14,6 +14,8 @@ type OrbitState = {
   azimuth: number;
   elevation: number;
   distance: number;
+  minDistance: number;
+  maxDistance: number;
   target: THREE.Vector3;
 };
 
@@ -27,6 +29,16 @@ type RenderContext = {
 const MIN_ORBIT_ELEVATION = 0.25;
 const MAX_ORBIT_ELEVATION = Math.PI / 2 - 0.04;
 const ORBIT_SENSITIVITY = 0.01;
+const ZOOM_STEP = 1.1;
+
+function getTouchDistance(touches: readonly { pageX: number; pageY: number }[]) {
+  if (touches.length < 2) {
+    return null;
+  }
+
+  const [firstTouch, secondTouch] = touches;
+  return Math.hypot(secondTouch.pageX - firstTouch.pageX, secondTouch.pageY - firstTouch.pageY);
+}
 
 function updateOrbitCamera(camera: THREE.PerspectiveCamera, orbit: OrbitState) {
   const horizontalDistance = Math.cos(orbit.elevation) * orbit.distance;
@@ -152,10 +164,15 @@ export function LocationChunkViewer({ chunkUrl }: LocationChunkViewerProps) {
     azimuth: 0,
     elevation: MAX_ORBIT_ELEVATION,
     distance: 1,
+    minDistance: 0.35,
+    maxDistance: 4,
     target: new THREE.Vector3(),
   });
   const dragStartRef = useRef({ azimuth: 0, elevation: MAX_ORBIT_ELEVATION });
+  const pinchStartDistanceRef = useRef<number | null>(null);
+  const pinchStartOrbitDistanceRef = useRef(1);
   const loadIdRef = useRef(0);
+  const [webCanvas, setWebCanvas] = useState<HTMLCanvasElement | null>(null);
 
   const cleanup = useCallback(() => {
     loadIdRef.current += 1;
@@ -185,6 +202,43 @@ export function LocationChunkViewer({ chunkUrl }: LocationChunkViewerProps) {
     renderContext.gl.endFrameEXP();
   }, []);
 
+  const zoomCamera = useCallback(
+    (factor: number) => {
+      const orbit = orbitRef.current;
+      orbit.distance = THREE.MathUtils.clamp(
+        orbit.distance * factor,
+        orbit.minDistance,
+        orbit.maxDistance,
+      );
+      renderCurrentFrame();
+    },
+    [renderCurrentFrame],
+  );
+
+  const setNativeViewRef = useCallback((nativeRef: unknown) => {
+    if (Platform.OS !== 'web' || typeof HTMLCanvasElement === 'undefined') {
+      return;
+    }
+
+    setWebCanvas(nativeRef instanceof HTMLCanvasElement ? nativeRef : null);
+  }, []);
+
+  useEffect(() => {
+    if (!webCanvas) {
+      return;
+    }
+
+    const handleWheel = (event: WheelEvent) => {
+      event.preventDefault();
+
+      const wheelDirection = THREE.MathUtils.clamp(event.deltaY / 100, -1, 1);
+      zoomCamera(Math.pow(ZOOM_STEP, wheelDirection));
+    };
+
+    webCanvas.addEventListener('wheel', handleWheel, { passive: false });
+    return () => webCanvas.removeEventListener('wheel', handleWheel);
+  }, [webCanvas, zoomCamera]);
+
   const [panResponder, setPanResponder] = useState<ReturnType<typeof PanResponder.create> | null>(null);
 
   useEffect(() => {
@@ -198,13 +252,35 @@ export function LocationChunkViewer({ chunkUrl }: LocationChunkViewerProps) {
 
         return horizontalDrag || twoFingerDrag;
       },
-      onPanResponderGrant: () => {
+      onPanResponderGrant: (event) => {
         dragStartRef.current = {
           azimuth: orbitRef.current.azimuth,
           elevation: orbitRef.current.elevation,
         };
+
+        const touchDistance = getTouchDistance(event.nativeEvent.touches);
+        pinchStartDistanceRef.current = touchDistance;
+        pinchStartOrbitDistanceRef.current = orbitRef.current.distance;
       },
-      onPanResponderMove: (_, gestureState) => {
+      onPanResponderMove: (event, gestureState) => {
+        const touchDistance = getTouchDistance(event.nativeEvent.touches);
+
+        if (touchDistance) {
+          if (!pinchStartDistanceRef.current) {
+            pinchStartDistanceRef.current = touchDistance;
+            pinchStartOrbitDistanceRef.current = orbitRef.current.distance;
+          }
+
+          orbitRef.current.distance = THREE.MathUtils.clamp(
+            (pinchStartOrbitDistanceRef.current * pinchStartDistanceRef.current) / touchDistance,
+            orbitRef.current.minDistance,
+            orbitRef.current.maxDistance,
+          );
+          renderCurrentFrame();
+          return;
+        }
+
+        pinchStartDistanceRef.current = null;
         orbitRef.current.azimuth = dragStartRef.current.azimuth + gestureState.dx * ORBIT_SENSITIVITY;
         orbitRef.current.elevation = THREE.MathUtils.clamp(
           dragStartRef.current.elevation - gestureState.dy * ORBIT_SENSITIVITY,
@@ -213,8 +289,14 @@ export function LocationChunkViewer({ chunkUrl }: LocationChunkViewerProps) {
         );
         renderCurrentFrame();
       },
-      onPanResponderRelease: renderCurrentFrame,
-      onPanResponderTerminate: renderCurrentFrame,
+      onPanResponderRelease: () => {
+        pinchStartDistanceRef.current = null;
+        renderCurrentFrame();
+      },
+      onPanResponderTerminate: () => {
+        pinchStartDistanceRef.current = null;
+        renderCurrentFrame();
+      },
     });
 
     setPanResponder(responder);
@@ -336,6 +418,8 @@ export function LocationChunkViewer({ chunkUrl }: LocationChunkViewerProps) {
             azimuth: 0,
             elevation: MAX_ORBIT_ELEVATION,
             distance,
+            minDistance: distance * 0.35,
+            maxDistance: distance * 4,
             target: new THREE.Vector3(0, 0, 0),
           };
           updateOrbitCamera(camera, orbitRef.current);
@@ -369,9 +453,31 @@ export function LocationChunkViewer({ chunkUrl }: LocationChunkViewerProps) {
       <View style={styles.viewerFrame}>
         <GLView
           {...(panResponder?.panHandlers ?? {})}
+          nativeRef_EXPERIMENTAL={setNativeViewRef}
           style={StyleSheet.absoluteFill}
           onContextCreate={handleContextCreate}
         />
+
+        {status === 'ready' && (
+          <View style={styles.zoomControls}>
+            <Pressable
+              accessibilityLabel="Acercar mapa"
+              accessibilityRole="button"
+              hitSlop={8}
+              onPress={() => zoomCamera(1 / ZOOM_STEP)}
+              style={styles.zoomButton}>
+              <Text style={styles.zoomButtonText}>+</Text>
+            </Pressable>
+            <Pressable
+              accessibilityLabel="Alejar mapa"
+              accessibilityRole="button"
+              hitSlop={8}
+              onPress={() => zoomCamera(ZOOM_STEP)}
+              style={styles.zoomButton}>
+              <Text style={styles.zoomButtonText}>−</Text>
+            </Pressable>
+          </View>
+        )}
 
         {status === 'loading' && (
           <View style={styles.overlay} pointerEvents="none">
@@ -417,6 +523,28 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 24,
     backgroundColor: 'rgba(20, 32, 51, 0.86)',
+  },
+  zoomControls: {
+    position: 'absolute',
+    top: 12,
+    right: 12,
+    gap: 8,
+  },
+  zoomButton: {
+    width: 42,
+    height: 42,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(232, 241, 255, 0.35)',
+    borderRadius: 21,
+    backgroundColor: 'rgba(20, 32, 51, 0.88)',
+  },
+  zoomButtonText: {
+    color: '#ffffff',
+    fontSize: 27,
+    fontWeight: '500',
+    lineHeight: 30,
   },
   overlayText: {
     marginTop: 12,
