@@ -6,7 +6,7 @@ const configuredBackendUrl = process.env.EXPO_PUBLIC_BACKEND_URL?.trim();
 // should set EXPO_PUBLIC_BACKEND_URL to the computer's LAN address.
 export const BACKEND_URL = (
   configuredBackendUrl ||
-  (Platform.OS === 'android' ? 'http://10.0.2.2:3000' : 'http://localhost:3000')
+  (Platform.OS === 'android' ? 'http://10.93.60.58:3000' : 'http://localhost:3000')
 ).replace(/\/$/, '');
 
 export function getChunkUrl(latitude: number, longitude: number) {
