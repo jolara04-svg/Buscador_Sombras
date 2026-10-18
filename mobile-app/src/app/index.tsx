@@ -3,6 +3,7 @@ import { useState } from 'react';
 
 import { getChunkUrl } from '@/constants/backend';
 import { LocationChunkViewer } from '@/components/location-chunk-viewer';
+import { Mapa2D } from '@/components/Mapa2D';
 
 type SolarPosition = {
   elevation: number;
@@ -93,6 +94,7 @@ export default function SolarCalculatorScreen() {
   const [result, setResult] = useState<SolarPosition | null>(null);
   const [chunkUrl, setChunkUrl] = useState<string | null>(null);
   const [calculating, setCalculating] = useState(false);
+  const [mostrarMapa, setMostrarMapa] = useState(false);
 
   const handleCalculate = () => {
     try {
@@ -142,6 +144,18 @@ export default function SolarCalculatorScreen() {
         <Text style={styles.subtitle}>Ingrese fecha, hora y ubicación</Text>
       </View>
 
+      {mostrarMapa && (
+        <View style={{ flex: 1, height: 400, marginBottom: 20 }}>
+          <Mapa2D
+            onSeleccionarCoordenada={(lat, lon) => {
+              setLatitude(lat.toString());
+              setLongitude(lon.toString());
+              setMostrarMapa(false);
+            }}
+          />
+        </View>
+      )}
+
       <View style={styles.form}>
         <View style={styles.inputGroup}>
           <Text style={styles.label}>Fecha:</Text>
@@ -170,6 +184,16 @@ export default function SolarCalculatorScreen() {
             placeholder="HH:MM"
           />
         </View>
+
+        {!mostrarMapa && (
+          <View style={{ marginBottom: 15 }}>
+            <Button
+              title="Seleccionar en mapa"
+              onPress={() => setMostrarMapa(true)}
+              color="#2e7d32"
+            />
+          </View>
+        )}
 
         <View style={styles.inputGroup}>
           <Text style={styles.label}>Latitud (°):</Text>
