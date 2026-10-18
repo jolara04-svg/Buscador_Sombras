@@ -1,6 +1,8 @@
-import { Button, StyleSheet, Text, View } from 'react-native';
+import { Button, StyleSheet, View } from 'react-native';
 
 import { useMapaEstado } from '@/hooks/useMapaEstado';
+import { ThemedText } from '@/components/themed-text';
+import { ThemedView } from '@/components/themed-view';
 
 export function MapaContenedor() {
   const {
@@ -21,18 +23,18 @@ export function MapaContenedor() {
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Estado compartido del mapa</Text>
-      <Text>Latitud: {coordenada.lat.toFixed(4)}</Text>
-      <Text>Longitud: {coordenada.lon.toFixed(4)}</Text>
-      <Text>Vista activa: {vistaActiva}</Text>
-      <Text>Chunk URL: {chunkUrl ?? 'sin valor'}</Text>
-      <Text>
+    <ThemedView style={styles.container}>
+      <ThemedText style={styles.title}>Estado compartido del mapa</ThemedText>
+      <ThemedText>Latitud: {coordenada.lat.toFixed(4)}</ThemedText>
+      <ThemedText>Longitud: {coordenada.lon.toFixed(4)}</ThemedText>
+      <ThemedText>Vista activa: {vistaActiva}</ThemedText>
+      <ThemedText>Chunk URL: {chunkUrl ?? 'sin valor'}</ThemedText>
+      <ThemedText>
         Resultado solar:{' '}
         {resultadoSolar
           ? `elevación ${resultadoSolar.elevation.toFixed(2)}°, acimut ${resultadoSolar.azimuth.toFixed(2)}°`
           : 'sin valor'}
-      </Text>
+      </ThemedText>
 
       <View style={styles.actions}>
         <Button
@@ -41,7 +43,7 @@ export function MapaContenedor() {
         />
         <Button title="Usar coordenada de prueba" onPress={usarCoordenadaPrueba} />
       </View>
-    </View>
+    </ThemedView>
   );
 }
 
