@@ -28,9 +28,9 @@ export default function AppTabs() {
         />
       </NativeTabs.Trigger>
 
-      {/* TEMPORAL: pestaña de prueba del estado del mapa. Eliminar junto con app/mapa-test.tsx al integrar el mapa real. */}
+      {/* Pestaña Mapa */}
       <NativeTabs.Trigger name="mapa-test">
-        <NativeTabs.Trigger.Label>Test</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Label>Mapa</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon
           src={require('@/assets/images/tabIcons/explore.png')}
           renderingMode="template"

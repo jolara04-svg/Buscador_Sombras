@@ -1,14 +1,14 @@
 import { Button, StyleSheet, View } from 'react-native';
 
 import { useMapaEstado } from '@/hooks/useMapaEstado';
-import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { Mapa2D } from '@/components/Mapa2D';
+import { getChunkUrl } from '@/constants/backend';
+import { LocationChunkViewer } from '@/components/location-chunk-viewer';
 
 export function MapaContenedor() {
   const {
-    chunkUrl,
     coordenada,
-    resultadoSolar,
     seleccionarCoordenada,
     setVistaActiva,
     vistaActiva,
@@ -18,46 +18,54 @@ export function MapaContenedor() {
     setVistaActiva((vistaActual) => (vistaActual === '2d' ? '3d' : '2d'));
   };
 
-  const usarCoordenadaPrueba = () => {
-    seleccionarCoordenada(40.42, -3.71);
-  };
-
   return (
-    <ThemedView style={styles.container}>
-      <ThemedText style={styles.title}>Estado compartido del mapa</ThemedText>
-      <ThemedText>Latitud: {coordenada.lat.toFixed(4)}</ThemedText>
-      <ThemedText>Longitud: {coordenada.lon.toFixed(4)}</ThemedText>
-      <ThemedText>Vista activa: {vistaActiva}</ThemedText>
-      <ThemedText>Chunk URL: {chunkUrl ?? 'sin valor'}</ThemedText>
-      <ThemedText>
-        Resultado solar:{' '}
-        {resultadoSolar
-          ? `elevación ${resultadoSolar.elevation.toFixed(2)}°, acimut ${resultadoSolar.azimuth.toFixed(2)}°`
-          : 'sin valor'}
-      </ThemedText>
+    <View style={styles.containerVista}>
+      {vistaActiva === '2d' ? (
+        <Mapa2D
+          onSeleccionarCoordenada={seleccionarCoordenada}
+          initialLat={coordenada.lat}
+          initialLon={coordenada.lon}
+        />
+      ) : (
+        <ThemedView style={styles.container3D}>
+          <LocationChunkViewer key={`${coordenada.lat}-${coordenada.lon}`} chunkUrl={getChunkUrl(coordenada.lat, coordenada.lon)} />
+        </ThemedView>
+      )}
 
-      <View style={styles.actions}>
+      <View style={styles.floatingControls}>
         <Button
           title={`Cambiar a vista ${vistaActiva === '2d' ? '3D' : '2D'}`}
           onPress={alternarVista}
         />
-        <Button title="Usar coordenada de prueba" onPress={usarCoordenadaPrueba} />
       </View>
-    </ThemedView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    gap: 12,
-    padding: 20,
+  containerVista: {
+    flex: 1,
+    width: '100%',
+    height: '100%',
+    position: 'relative',
   },
-  title: {
-    fontSize: 20,
-    fontWeight: 'bold',
+  container3D: {
+    flex: 1,
+    width: '100%',
+    height: '100%',
   },
-  actions: {
-    gap: 12,
-    marginTop: 8,
+  floatingControls: {
+    position: 'absolute',
+    bottom: 20,
+    left: 20,
+    right: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    borderRadius: 8,
+    padding: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
 });

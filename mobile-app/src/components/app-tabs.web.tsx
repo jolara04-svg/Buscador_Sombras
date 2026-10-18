@@ -27,6 +27,11 @@ export default function AppTabs() {
           <TabTrigger name="explore" href="/explore" asChild>
             <TabButton>Explore</TabButton>
           </TabTrigger>
+
+          {/* PESTAÑA MAPA */}
+          <TabTrigger name="mapa-test" href="/mapa-test" asChild>
+            <TabButton>Mapa</TabButton>
+          </TabTrigger>
         </CustomTabList>
       </TabList>
     </Tabs>
