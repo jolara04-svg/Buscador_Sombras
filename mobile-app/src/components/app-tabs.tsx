@@ -27,6 +27,15 @@ export default function AppTabs() {
           renderingMode="template"
         />
       </NativeTabs.Trigger>
+
+      {/* TEMPORAL: pestaña de prueba del estado del mapa. Eliminar junto con app/mapa-test.tsx al integrar el mapa real. */}
+      <NativeTabs.Trigger name="mapa-test">
+        <NativeTabs.Trigger.Label>Test</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Icon
+          src={require('@/assets/images/tabIcons/explore.png')}
+          renderingMode="template"
+        />
+      </NativeTabs.Trigger>
     </NativeTabs>
   );
 }
