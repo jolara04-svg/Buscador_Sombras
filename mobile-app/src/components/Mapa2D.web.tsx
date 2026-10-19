@@ -1,0 +1,88 @@
+import React, { useEffect, useMemo } from 'react';
+import { StyleSheet, View } from 'react-native';
+
+export interface Mapa2DProps {
+  onSeleccionarCoordenada?: (lat: number, lon: number) => void;
+  initialLat?: number;
+  initialLon?: number;
+}
+
+export const Mapa2D: React.FC<Mapa2DProps> = ({
+  onSeleccionarCoordenada,
+  initialLat = 40.4168,
+  initialLon = -3.7038,
+}) => {
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      let data = event.data;
+      if (typeof data === 'string') {
+        try { data = JSON.parse(data); } catch { return; }
+      }
+      if (
+        data &&
+        data.type === 'SELECCIONAR_COORDENADA' &&
+        typeof data.lat === 'number' &&
+        typeof data.lon === 'number'
+      ) {
+        // Aquí está la corrección: pasamos lat y lon por separado
+        onSeleccionarCoordenada?.(data.lat, data.lon);
+      }
+    };
+    window.addEventListener('message', handleMessage);
+    return () => { window.removeEventListener('message', handleMessage); };
+  }, [onSeleccionarCoordenada]);
+
+  const leafletHtml = useMemo(() => {
+    return `<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <style>
+    html, body, #map { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+  <script>
+    (function() {
+      var lat = ${initialLat};
+      var lon = ${initialLon};
+      var map = L.map('map').setView([lat, lon], 16);
+      L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors'
+      }).addTo(map);
+      var marker = L.marker([lat, lon]).addTo(map);
+      map.on('click', function(e) {
+        var clickedLat = e.latlng.lat;
+        var clickedLon = e.latlng.lng;
+        marker.setLatLng(e.latlng);
+        if (window.parent) {
+          window.parent.postMessage({ type: 'SELECCIONAR_COORDENADA', lat: clickedLat, lon: clickedLon }, '*');
+        }
+      });
+    })();
+  </script>
+</body>
+</html>`;
+  }, [initialLat, initialLon]);
+
+  return (
+    <View style={styles.container}>
+      <iframe
+        title="Mapa Leaflet 2D"
+        srcDoc={leafletHtml}
+        style={{ width: '100%', height: '100%', border: 'none', display: 'block' }}
+      />
+    </View>
+  );
+};
+
+export default Mapa2D;
+
+const styles = StyleSheet.create({
+  container: { flex: 1, width: '100%', height: '100%', overflow: 'hidden' },
+});

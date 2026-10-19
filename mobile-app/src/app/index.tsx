@@ -145,7 +145,7 @@ export default function SolarCalculatorScreen() {
       </View>
 
       {mostrarMapa && (
-        <View style={{ flex: 1, height: 400, marginBottom: 20 }}>
+        <View style={{ height: 350, marginBottom: 20 }}>
           <Mapa2D
             onSeleccionarCoordenada={(lat, lon) => {
               setLatitude(lat.toString());
@@ -190,7 +190,7 @@ export default function SolarCalculatorScreen() {
             <Button
               title="Seleccionar en mapa"
               onPress={() => setMostrarMapa(true)}
-              color="#2e7d32"
+              color="#0066cc"
             />
           </View>
         )}

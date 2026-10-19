@@ -53,6 +53,7 @@ const styles = StyleSheet.create({
     flex: 1,
     width: '100%',
     height: '100%',
+    backgroundColor: 'transparent', // Por si el fondo blanco/negro tapa algo
   },
   floatingControls: {
     position: 'absolute',
@@ -61,7 +62,7 @@ const styles = StyleSheet.create({
     right: 20,
     backgroundColor: 'rgba(255, 255, 255, 0.9)',
     borderRadius: 8,
-    padding: 8,
+    padding: 0,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,

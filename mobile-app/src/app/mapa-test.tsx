@@ -5,9 +5,6 @@ import { MapaContenedor } from '@/components/MapaContenedor';
 export default function MapaTestScreen() {
   return (
     <View style={styles.container}>
-      <Text style={styles.notice}>
-        PANTALLA TEMPORAL DE PRUEBA — eliminar tras integrar el mapa real
-      </Text>
       <MapaContenedor />
     </View>
   );
