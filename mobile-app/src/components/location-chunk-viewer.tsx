@@ -75,10 +75,24 @@ function ensureShaderPrecisionSupport(gl: ExpoWebGLRenderingContext) {
 function ensureExpoGlCompatibility(gl: ExpoWebGLRenderingContext) {
   ensureShaderPrecisionSupport(gl);
 
+  const glWithConstants = gl as ExpoWebGLRenderingContext & {
+    VERSION?: number;
+    SCISSOR_BOX?: number;
+    VIEWPORT?: number;
+  };
+  const versionEnum = typeof glWithConstants.VERSION === 'number' ? glWithConstants.VERSION : 0x1f02;
+  const scissorBoxEnum =
+    typeof glWithConstants.SCISSOR_BOX === 'number' ? glWithConstants.SCISSOR_BOX : 0x0c10;
+  const viewportEnum = typeof glWithConstants.VIEWPORT === 'number' ? glWithConstants.VIEWPORT : 0x0ba2;
+
+  // expo-gl may omit these WebGL constants even though Three.js passes them
+  // back into getParameter(). Without the constants, the argument is undefined
+  // and Three.js later calls indexOf() on an undefined WebGL version string.
+  glWithConstants.VERSION ??= versionEnum;
+  glWithConstants.SCISSOR_BOX ??= scissorBoxEnum;
+  glWithConstants.VIEWPORT ??= viewportEnum;
+
   const nativeGetParameter = gl.getParameter.bind(gl);
-  const versionEnum = typeof gl.VERSION === 'number' ? gl.VERSION : 0x1f02;
-  const scissorBoxEnum = typeof gl.SCISSOR_BOX === 'number' ? gl.SCISSOR_BOX : 0x0c10;
-  const viewportEnum = typeof gl.VIEWPORT === 'number' ? gl.VIEWPORT : 0x0ba2;
   const width = Math.max(gl.drawingBufferWidth, 1);
   const height = Math.max(gl.drawingBufferHeight, 1);
 
