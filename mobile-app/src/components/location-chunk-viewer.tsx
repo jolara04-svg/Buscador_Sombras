@@ -63,6 +63,19 @@ function ensureThreeRuntimeGlobals() {
 }
 
 function createRenderer(gl: ExpoWebGLRenderingContext) {
+  if (Platform.OS === 'web') {
+    const webContext = gl as unknown as WebGLRenderingContext;
+    const webCanvas = webContext.canvas as HTMLCanvasElement;
+
+    return new THREE.WebGLRenderer({
+      canvas: webCanvas,
+      context: webContext,
+      antialias: true,
+      alpha: false,
+      precision: 'mediump',
+    });
+  }
+
   const canvas = {
     width: gl.drawingBufferWidth,
     height: gl.drawingBufferHeight,
