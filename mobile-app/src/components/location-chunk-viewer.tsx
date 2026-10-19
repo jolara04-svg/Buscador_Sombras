@@ -51,14 +51,72 @@ function updateOrbitCamera(camera: THREE.PerspectiveCamera, orbit: OrbitState) {
   camera.lookAt(orbit.target);
 }
 
-function ensureShaderPrecisionSupport(gl: ExpoWebGLRenderingContext) {
+function ensureThreeRuntimeGlobals() {
+  if (typeof navigator === 'undefined' || typeof navigator.userAgent === 'string') {
+    return;
+  }
+
+  Object.defineProperty(navigator, 'userAgent', {
+    configurable: true,
+    value: 'React Native',
+  });
+}
+
+function createRenderer(gl: ExpoWebGLRenderingContext) {
+  const canvas = {
+    width: gl.drawingBufferWidth,
+    height: gl.drawingBufferHeight,
+    style: {},
+    addEventListener: () => {},
+    removeEventListener: () => {},
+    getContext: () => gl,
+    clientWidth: gl.drawingBufferWidth,
+    clientHeight: gl.drawingBufferHeight,
+  } as unknown as HTMLCanvasElement;
+
+  const versionEnum = 0x1f02;
+  const scissorBoxEnum = 0x0c10;
+  const viewportEnum = 0x0ba2;
+  const nativeGetParameter = gl.getParameter.bind(gl);
   const nativeGetShaderPrecisionFormat =
     typeof gl.getShaderPrecisionFormat === 'function' ? gl.getShaderPrecisionFormat.bind(gl) : null;
+  const width = Math.max(gl.drawingBufferWidth, 1);
+  const height = Math.max(gl.drawingBufferHeight, 1);
 
-  gl.getShaderPrecisionFormat = ((shaderType: number, precisionType: number) => {
-    const format = nativeGetShaderPrecisionFormat?.(shaderType, precisionType) as
-      | Partial<WebGLShaderPrecisionFormat>
-      | undefined;
+  const getParameter = (parameter: number) => {
+    let value: unknown;
+
+    try {
+      value = nativeGetParameter(parameter);
+    } catch {
+      value = undefined;
+    }
+
+    if (value !== undefined && value !== null) {
+      return value;
+    }
+
+    if (parameter === versionEnum) {
+      return 'WebGL 1.0';
+    }
+
+    if (parameter === scissorBoxEnum || parameter === viewportEnum) {
+      return [0, 0, width, height];
+    }
+
+    return value;
+  };
+
+  const getShaderPrecisionFormat = (shaderType: number, precisionType: number) => {
+    let format: Partial<WebGLShaderPrecisionFormat> | undefined;
+
+    try {
+      format = nativeGetShaderPrecisionFormat?.(shaderType, precisionType) as
+        | Partial<WebGLShaderPrecisionFormat>
+        | undefined;
+    } catch {
+      format = undefined;
+    }
 
     if (format && typeof format.precision === 'number') {
       return format as WebGLShaderPrecisionFormat;
@@ -69,64 +127,41 @@ function ensureShaderPrecisionSupport(gl: ExpoWebGLRenderingContext) {
       rangeMax: 1,
       precision: 1,
     } as WebGLShaderPrecisionFormat;
-  }) as typeof gl.getShaderPrecisionFormat;
-}
-
-function ensureExpoGlCompatibility(gl: ExpoWebGLRenderingContext) {
-  ensureShaderPrecisionSupport(gl);
-
-  const glWithConstants = gl as ExpoWebGLRenderingContext & {
-    VERSION?: number;
-    SCISSOR_BOX?: number;
-    VIEWPORT?: number;
   };
-  const versionEnum = typeof glWithConstants.VERSION === 'number' ? glWithConstants.VERSION : 0x1f02;
-  const scissorBoxEnum =
-    typeof glWithConstants.SCISSOR_BOX === 'number' ? glWithConstants.SCISSOR_BOX : 0x0c10;
-  const viewportEnum = typeof glWithConstants.VIEWPORT === 'number' ? glWithConstants.VIEWPORT : 0x0ba2;
 
-  // expo-gl may omit these WebGL constants even though Three.js passes them
-  // back into getParameter(). Without the constants, the argument is undefined
-  // and Three.js later calls indexOf() on an undefined WebGL version string.
-  glWithConstants.VERSION ??= versionEnum;
-  glWithConstants.SCISSOR_BOX ??= scissorBoxEnum;
-  glWithConstants.VIEWPORT ??= viewportEnum;
+  // expo-gl exposes the WebGL context as a native host object. Assigning
+  // methods or constants directly to that object is not reliable on Hermes,
+  // so Three.js receives a proxy with the browser-facing pieces it expects.
+  const compatibleContext = new Proxy(gl, {
+    get(target, property) {
+      if (property === 'VERSION') {
+        return Reflect.get(target, property, target) ?? versionEnum;
+      }
 
-  const nativeGetParameter = gl.getParameter.bind(gl);
-  const width = Math.max(gl.drawingBufferWidth, 1);
-  const height = Math.max(gl.drawingBufferHeight, 1);
+      if (property === 'SCISSOR_BOX') {
+        return Reflect.get(target, property, target) ?? scissorBoxEnum;
+      }
 
-  gl.getParameter = ((parameter: number) => {
-    const value = nativeGetParameter(parameter);
+      if (property === 'VIEWPORT') {
+        return Reflect.get(target, property, target) ?? viewportEnum;
+      }
 
-    if (value !== undefined && value !== null) {
-      return value;
-    }
+      if (property === 'getParameter') {
+        return getParameter;
+      }
 
-    // expo-gl can return undefined for values that Three.js expects from a browser WebGL context.
-    if (parameter === versionEnum) {
-      return 'WebGL 1.0';
-    }
+      if (property === 'getShaderPrecisionFormat') {
+        return getShaderPrecisionFormat;
+      }
 
-    if (parameter === scissorBoxEnum || parameter === viewportEnum) {
-      return [0, 0, width, height];
-    }
+      if (property === 'canvas') {
+        return canvas;
+      }
 
-    return value;
-  }) as typeof gl.getParameter;
-}
-
-function createRenderer(gl: ExpoWebGLRenderingContext) {
-  ensureExpoGlCompatibility(gl);
-
-  const canvas = {
-    width: gl.drawingBufferWidth,
-    height: gl.drawingBufferHeight,
-    style: {},
-    addEventListener: () => {},
-    removeEventListener: () => {},
-    clientHeight: gl.drawingBufferHeight,
-  } as unknown as HTMLCanvasElement;
+      const value = Reflect.get(target, property, target);
+      return typeof value === 'function' ? value.bind(target) : value;
+    },
+  }) as unknown as ExpoWebGLRenderingContext;
 
   const previousWarn = console.warn;
   console.warn = (...args: unknown[]) => {
@@ -142,7 +177,7 @@ function createRenderer(gl: ExpoWebGLRenderingContext) {
   try {
     return new THREE.WebGLRenderer({
       canvas,
-      context: gl as unknown as WebGLRenderingContext,
+      context: compatibleContext as unknown as WebGLRenderingContext,
       antialias: true,
       alpha: false,
       precision: 'mediump',
@@ -378,6 +413,7 @@ export function LocationChunkViewer({ chunkUrl }: LocationChunkViewerProps) {
           }
 
           const data = await response.arrayBuffer();
+          ensureThreeRuntimeGlobals();
           const loader = new GLTFLoader();
           const gltf = await new Promise<GLTF>((resolve, reject) => {
             loader.parse(data, chunkUrl, resolve, reject);
