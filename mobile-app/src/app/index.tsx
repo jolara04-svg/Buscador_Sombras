@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { getChunkUrl } from '@/constants/backend';
 import { LocationChunkViewer } from '@/components/location-chunk-viewer';
 import { Mapa2D } from '@/components/Mapa2D';
+import { ShadowMap } from "@/components/ShadowMap";
 
 type SolarPosition = {
   elevation: number;
@@ -238,7 +239,7 @@ export default function SolarCalculatorScreen() {
       {/* CONTENEDOR PRINCIPAL DEL VISOR DE MAPA (Altura fija y ancho completo) */}
       <View style={styles.mapContainer}>
         {/* Renderizado condicional: Vista 2D y 2D con sombras */}
-        {(vistaActiva === '2d' || vistaActiva === '2d-sombras') && (
+        {(vistaActiva === '2d' /*|| vistaActiva === '2d-sombras'*/) && (
           <Mapa2D
             onSeleccionarCoordenada={(lat, lon) => {
               // Actualizamos las coordenadas internas del formulario
@@ -250,7 +251,17 @@ export default function SolarCalculatorScreen() {
             }}
           />
         )}
-
+        {/* Randerizado condicional: Vista 2D con sombras provisional */}
+          {vistaActiva==="2d-sombras" && (
+            <ShadowMap
+              chunkURL={getChunkUrl(
+                isNaN(parseFloat(latitude)) ? 40.4168 : parseFloat(latitude),
+                isNaN(parseFloat(longitude)) ? -3.7038 : parseFloat(longitude)
+              )}
+              azimuth={0}
+              elevation={90}
+            />
+          )}
         {/* Renderizado condicional: Vista 3D con visor de fragmentos de modelo */}
         {vistaActiva === '3d' && (
           <LocationChunkViewer
