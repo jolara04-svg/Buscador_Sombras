@@ -6,9 +6,16 @@ interface Mapa2DProps {
   onSeleccionarCoordenada: (lat: number, lon: number) => void;
   initialLat?: number;
   initialLon?: number;
+  origen?: { lat: number; lon: number } | null;
+  destino?: { lat: number; lon: number } | null;
+  modoSeleccion?: 'solar' | 'origen' | 'destino';
+  modoBusqueda?: 'lugar' | 'ruta';
 }
 
-export function Mapa2D({ onSeleccionarCoordenada, initialLat = 40.4168, initialLon = -3.7038 }: Mapa2DProps) {
+export function Mapa2D({ onSeleccionarCoordenada, initialLat = 40.4168, initialLon = -3.7038, origen, destino, modoSeleccion = 'solar', modoBusqueda = 'lugar' }: Mapa2DProps) {
+  // Depuración: registrar en consola las props recibidas por el mapa
+  console.log('Props del mapa:', { origen, destino, modoSeleccion, modoBusqueda });
+
   const webViewRef = useRef<WebView>(null);
 
   const htmlContent = `
@@ -44,12 +51,21 @@ export function Mapa2D({ onSeleccionarCoordenada, initialLat = 40.4168, initialL
           attribution: '&copy; OpenStreetMap contributors'
         }).addTo(map);
 
-        var marker = L.marker([${initialLat}, ${initialLon}]).addTo(map);
+        // El marcador normal (L.marker) solo se pinta si modoBusqueda === 'lugar'
+        ${modoBusqueda === 'lugar' ? `var marker = L.marker([${initialLat}, ${initialLon}]).addTo(map);` : 'var marker = null;'}
+
+        // El círculo verde (origen) solo se pinta si origen no es nulo Y modoBusqueda === 'ruta'
+        ${origen && modoBusqueda === 'ruta' ? `L.circleMarker([${origen.lat}, ${origen.lon}], { color: '#28a745', radius: 8, fillOpacity: 1 }).addTo(map);` : ''}
+
+        // El círculo rojo (destino) solo se pinta si destino no es nulo Y modoBusqueda === 'ruta'
+        ${destino && modoBusqueda === 'ruta' ? `L.circleMarker([${destino.lat}, ${destino.lon}], { color: '#dc3545', radius: 8, fillOpacity: 1 }).addTo(map);` : ''}
 
         map.on('click', function(e) {
           var lat = e.latlng.lat;
           var lon = e.latlng.lng;
-          marker.setLatLng([lat, lon]);
+          if (marker) {
+            marker.setLatLng([lat, lon]);
+          }
           if (window.ReactNativeWebView) {
             window.ReactNativeWebView.postMessage(JSON.stringify({ lat: lat, lon: lon }));
           }

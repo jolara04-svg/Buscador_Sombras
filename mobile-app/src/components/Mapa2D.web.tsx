@@ -5,12 +5,20 @@ export interface Mapa2DProps {
   onSeleccionarCoordenada?: (lat: number, lon: number) => void;
   initialLat?: number;
   initialLon?: number;
+  origen?: { lat: number; lon: number } | null;
+  destino?: { lat: number; lon: number } | null;
+  modoSeleccion?: 'solar' | 'origen' | 'destino';
+  modoBusqueda?: 'lugar' | 'ruta';
 }
 
 export const Mapa2D: React.FC<Mapa2DProps> = ({
   onSeleccionarCoordenada,
   initialLat = 40.4168,
   initialLon = -3.7038,
+  origen,
+  destino,
+  modoSeleccion = 'solar',
+  modoBusqueda = 'lugar',
 }) => {
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
@@ -55,11 +63,22 @@ export const Mapa2D: React.FC<Mapa2DProps> = ({
         maxZoom: 19,
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors'
       }).addTo(map);
-      var marker = L.marker([lat, lon]).addTo(map);
+
+      // El marcador normal (L.marker) solo se pinta si modoBusqueda === 'lugar'
+      ${modoBusqueda === 'lugar' ? `var marker = L.marker([lat, lon]).addTo(map);` : 'var marker = null;'}
+
+      // El círculo verde (origen) solo se pinta si origen no es nulo Y modoBusqueda === 'ruta'
+      ${origen && modoBusqueda === 'ruta' ? `L.circleMarker([${origen.lat}, ${origen.lon}], { color: '#28a745', radius: 8, fillOpacity: 1 }).addTo(map);` : ''}
+
+      // El círculo rojo (destino) solo se pinta si destino no es nulo Y modoBusqueda === 'ruta'
+      ${destino && modoBusqueda === 'ruta' ? `L.circleMarker([${destino.lat}, ${destino.lon}], { color: '#dc3545', radius: 8, fillOpacity: 1 }).addTo(map);` : ''}
+
       map.on('click', function(e) {
         var clickedLat = e.latlng.lat;
         var clickedLon = e.latlng.lng;
-        marker.setLatLng(e.latlng);
+        if (marker) {
+          marker.setLatLng(e.latlng);
+        }
         if (window.parent) {
           window.parent.postMessage({ type: 'SELECCIONAR_COORDENADA', lat: clickedLat, lon: clickedLon }, '*');
         }
@@ -68,7 +87,7 @@ export const Mapa2D: React.FC<Mapa2DProps> = ({
   </script>
 </body>
 </html>`;
-  }, [initialLat, initialLon]);
+  }, [initialLat, initialLon, origen, destino, modoSeleccion, modoBusqueda]);
 
   return (
     <View style={styles.container}>

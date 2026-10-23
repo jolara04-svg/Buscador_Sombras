@@ -104,6 +104,11 @@ export default function SolarCalculatorScreen() {
   const [latitudeDisplay, setLatitudeDisplay] = useState('');
   const [longitudeDisplay, setLongitudeDisplay] = useState('');
 
+  // Estados para la selección de Origen y Destino en el mapa
+  const [origen, setOrigen] = useState<{ lat: number, lon: number } | null>(null);
+  const [destino, setDestino] = useState<{ lat: number, lon: number } | null>(null);
+  const [modoSeleccion, setModoSeleccion] = useState<'solar' | 'origen' | 'destino'>('solar');
+
 
   // Formateo de la fecha (YYYY-MM-DD)
   const [fechaOperacion, setFechaOperacion] = useState(
@@ -199,13 +204,21 @@ export default function SolarCalculatorScreen() {
                         <View style={styles.searchModeButtons}>
                           <Pressable 
                             style={[styles.modeButton, modoBusqueda === 'lugar' && styles.modeButtonActive]}
-                            onPress={() => setModoBusqueda('lugar')}
+                            onPress={() => {
+                              // Sincronizamos con el modo de búsqueda 'lugar' y el modo solar en el mapa
+                              setModoBusqueda('lugar');
+                              setModoSeleccion('solar');
+                            }}
                           >
                             <Text style={styles.modeButtonText}>🔍</Text>
                           </Pressable>
                           <Pressable 
                             style={[styles.modeButton, modoBusqueda === 'ruta' && styles.modeButtonActive]}
-                            onPress={() => setModoBusqueda('ruta')}
+                            onPress={() => {
+                              // Sincronizamos con el modo de búsqueda 'ruta' y aseguramos que el primer clic sea el origen
+                              setModoBusqueda('ruta');
+                              setModoSeleccion('origen');
+                            }}
                           >
                             <Text style={styles.modeButtonText}>🧭</Text>
                           </Pressable>
@@ -241,13 +254,35 @@ export default function SolarCalculatorScreen() {
         {/* Renderizado condicional: Vista 2D y 2D con sombras */}
         {(vistaActiva === '2d' /*|| vistaActiva === '2d-sombras'*/) && (
           <Mapa2D
+            initialLat={parseFloat(latitude) || 40.4168}
+            initialLon={parseFloat(longitude) || -3.7038}
+            // Pasamos el origen, destino, modo de selección y el modo de búsqueda al mapa
+            origen={origen}
+            destino={destino}
+            modoSeleccion={modoSeleccion}
+            modoBusqueda={modoBusqueda}
             onSeleccionarCoordenada={(lat, lon) => {
-              // Actualizamos las coordenadas internas del formulario
-              setLatitude(lat.toString());
-              setLongitude(lon.toString());
-              // Actualizamos las coordenadas de visualización truncadas a 6 decimales
-              setLatitudeDisplay(truncarA6Decimales(lat.toString()));
-              setLongitudeDisplay(truncarA6Decimales(lon.toString()));
+              // Depuración: registrar coordenada seleccionada y el modo actual en consola
+              console.log('Coordenada seleccionada:', { lat, lon, modoBusqueda, modoSeleccion });
+
+              // Si estamos en modo lugar, actualizamos el formulario de cálculo solar
+              if (modoBusqueda === 'lugar') {
+                setLatitude(lat.toString());
+                setLongitude(lon.toString());
+                setLatitudeDisplay(truncarA6Decimales(lat.toString()));
+                setLongitudeDisplay(truncarA6Decimales(lon.toString()));
+              } else if (modoBusqueda === 'ruta') {
+                // Si estamos en modo ruta, alternamos continuamente entre origen y destino
+                if (modoSeleccion === 'origen') {
+                  // Establecemos el punto de origen y pasamos automáticamente a elegir destino
+                  setOrigen({ lat, lon });
+                  setModoSeleccion('destino');
+                } else if (modoSeleccion === 'destino') {
+                  // Establecemos el punto de destino y volvemos a origen para alternar continuamente
+                  setDestino({ lat, lon });
+                  setModoSeleccion('origen');
+                }
+              }
             }}
           />
         )}
