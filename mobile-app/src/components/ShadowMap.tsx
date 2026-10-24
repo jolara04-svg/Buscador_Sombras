@@ -19,6 +19,7 @@ export function ShadowMap({ chunkURL, azimuth, elevation }:ShadowMapProps){
     const [scene,setScene]=useState<THREE.Scene>(new THREE.Scene());
     const [_renderer,setRenderer]=useState<THREE.WebGLRenderer|null>(null);
     const [_context,setContext]=useState<WebGLRenderingContext|null>(null);
+    const ref=useRef(null);
     function isMesh(obj:THREE.Object3D):boolean{
          try{
             return (obj as THREE.Mesh).isMesh;
@@ -55,20 +56,35 @@ export function ShadowMap({ chunkURL, azimuth, elevation }:ShadowMapProps){
             return;
         }
         const loader=new GLTFLoader();
-        const gltf=await loader.loadAsync(chunkURL);
-        const bounds = new THREE.Box3().setFromObject(gltf.scene);
-        const ground=bounds.min.y;
+        let gltf;
+        try{
+            gltf=await loader.loadAsync(chunkURL);
+        }
+        catch{
+            console.log("Failed to obtain chunk");
+        }
         const meshes:THREE.BufferGeometry[]=[];
-        extractMeshes(gltf.scene,meshes);
-        const shadowMaterial=shadowShaderMaterialDefault(azimuth, elevation);
-        meshes.forEach((mesh)=>{addToScene(scene,mesh,shadowMaterial,buildingShaderMaterial)});
-        //scene.add(new THREE.Mesh(new THREE.BoxGeometry(50,50,50),new THREE.MeshBasicMaterial({color:"#FFFFFF"})))
-        renderer.render(scene,camera);
+        if(gltf!==undefined)
+            extractMeshes(gltf.scene,meshes);
+        else 
+            meshes.push(new THREE.BoxGeometry(100,100,100));//A cube, mainly for testing.
+        const x=gl.drawingBufferHeight/gl.drawingBufferWidth
+        const shadowMaterial=shadowShaderMaterialDefault(azimuth, elevation,x);
+        const buildingMaterial=buildingShaderMaterial(x);
+        meshes.forEach((mesh)=>{addToScene(scene,mesh,shadowMaterial,buildingMaterial)});
+        const aspectRatio=gl.drawingBufferWidth/gl.drawingBufferHeight;
+        camera.left=-CAMERA_SIZE*aspectRatio;
+        camera.right=CAMERA_SIZE*aspectRatio;
+        setCamera(camera); 
+        renderer.render(scene,camera);//Creo que los edificios están flotando
     }
     scene.background=new THREE.Color(0,0,255);
     scene.add(camera);
     camera.position.set(0,0,100);
     camera.lookAt(new THREE.Vector3(0,0,0));
     console.log("ShadowMap");
-    return (<GLView onContextCreate={onContextCreate} style={StyleSheet.absoluteFill}></GLView>);
+    return (<GLView
+                onContextCreate={onContextCreate}
+                style={StyleSheet.absoluteFill}
+            />);
 }
