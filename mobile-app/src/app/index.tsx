@@ -1,7 +1,7 @@
 import { StyleSheet, Text, View, TextInput, Button, ScrollView, Pressable } from 'react-native';
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 
-import { getChunkUrl } from '@/constants/backend';
+import { getChunkUrl, BACKEND_URL } from '@/constants/backend';
 import { LocationChunkViewer } from '@/components/location-chunk-viewer';
 import { Mapa2D } from '@/components/Mapa2D';
 import { ShadowMap } from "@/components/ShadowMap";
@@ -97,9 +97,21 @@ export default function SolarCalculatorScreen() {
   const [calculating, setCalculating] = useState(false);
   // Estado para controlar la vista activa del mapa: '2d', '3d' o '2d-sombras'
   const [vistaActiva, setVistaActiva] = useState<'2d' | '3d' | '2d-sombras'>('2d');
-    // Estados para la barra superior
+  
+  // Estados para la barra superior y modos de búsqueda
   const [busqueda, setBusqueda] = useState('');
-  const [modoBusqueda, setModoBusqueda] = useState<'lugar' | 'ruta'>('lugar'); // Nuevo estado para el botón
+  const [modoBusqueda, setModoBusqueda] = useState<'lugar' | 'ruta'>('lugar');
+  
+  // Estados adicionales para el buscador de rutas (Destino y Origen)
+  const [busquedaDestino, setBusquedaDestino] = useState('');
+  const [busquedaOrigen, setBusquedaOrigen] = useState('');
+  const [tipoBusquedaRuta, setTipoBusquedaRuta] = useState<'origen' | 'destino' | null>(null);
+
+  // Estados para el buscador de lugares y debounce
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   // Valores truncados (solo para mostrar en el input)
   const [latitudeDisplay, setLatitudeDisplay] = useState('');
   const [longitudeDisplay, setLongitudeDisplay] = useState('');
@@ -142,10 +154,6 @@ export default function SolarCalculatorScreen() {
       }
 
       // Combine date and time
-      // const combinedDate = new Date(date);
-      // combinedDate.setHours(time.getHours(), time.getMinutes(), 0, 0);
-      // 1. Convertimos los textos de la barra superior a un objeto Date
-      // El formato "YYYY-MM-DDTHH:MM:00" es el que entiende JavaScript
       const fechaHoraString = `${fechaOperacion}T${horaOperacion}:00`;
       const combinedDate = new Date(fechaHoraString);
 
@@ -164,6 +172,47 @@ export default function SolarCalculatorScreen() {
       alert('Error en el cálculo: ' + (error instanceof Error ? error.message : 'desconocido'));
       setCalculating(false);
     }
+  };
+
+  // Función para realizar la petición de búsqueda al backend
+  const handleSearch = async (text: string) => {
+    if (!text || text.trim().length < 2) {
+      setSearchResults([]);
+      setIsSearching(false);
+      return;
+    }
+
+    setIsSearching(true);
+    try {
+      const response = await fetch(`${BACKEND_URL}/api/search?q=${encodeURIComponent(text.trim())}`);
+      if (!response.ok) {
+        throw new Error('Error en la búsqueda');
+      }
+      const data = await response.json();
+      setSearchResults(data);
+    } catch (error) {
+      console.error('Error buscando lugares:', error);
+      setSearchResults([]);
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  // Manejador de cambio de texto en el buscador con debounce de 300ms
+  const handleTextChange = (text: string) => {
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+
+    if (text.trim().length < 2) {
+      setSearchResults([]);
+      setIsSearching(false);
+      return;
+    }
+
+    searchTimeoutRef.current = setTimeout(() => {
+      handleSearch(text);
+    }, 300);
   };
 
   // Función para truncar un número a 6 decimales sin redondear
@@ -191,14 +240,54 @@ export default function SolarCalculatorScreen() {
                 {/* BARRA SUPERIOR TIPO GOOGLE MAPS */}
                     <View style={styles.topBarContainer}>
                       
-                      {/* 1. Buscador con botones integrados */}
+                      {/* 1. Buscador o Inputs de Ruta con botones integrados */}
                       <View style={styles.searchBar}>
-                        <TextInput
-                          style={styles.searchInput}
-                          placeholder={modoBusqueda === 'lugar' ? "Buscar lugar..." : "¿A dónde quieres ir?"}
-                          value={busqueda}
-                          onChangeText={setBusqueda}
-                        />
+                        {modoBusqueda === 'lugar' ? (
+                          <TextInput
+                            style={styles.searchInput}
+                            placeholder="Buscar lugar..."
+                            value={busqueda}
+                            onChangeText={(text) => {
+                              setBusqueda(text);
+                              handleTextChange(text);
+                            }}
+                          />
+                        ) : (
+                          <View style={styles.routeSearchWrapper}>
+                            {/* Input de Destino (siempre visible en modo ruta) */}
+                            <TextInput
+                              style={styles.searchInput}
+                              placeholder="¿A dónde quieres ir?"
+                              value={busquedaDestino}
+                              onChangeText={(text) => {
+                                setBusquedaDestino(text);
+                                setTipoBusquedaRuta('destino');
+                                handleTextChange(text);
+                              }}
+                            />
+                            {/* Input de Origen (solo se muestra si ya se ha seleccionado un destino) */}
+                            {destino !== null && (
+                              <View style={styles.originInputRow}>
+                                <TextInput
+                                  style={styles.searchInput}
+                                  placeholder="¿Desde dónde sales?"
+                                  value={busquedaOrigen}
+                                  onChangeText={(text) => {
+                                    setBusquedaOrigen(text);
+                                    setTipoBusquedaRuta('origen');
+                                    handleTextChange(text);
+                                  }}
+                                />
+                                <Pressable
+                                  style={styles.myLocationButton}
+                                  onPress={() => console.log('Usar mi ubicación')}
+                                >
+                                  <Text style={styles.myLocationButtonText}>📍 Mi ubicación</Text>
+                                </Pressable>
+                              </View>
+                            )}
+                          </View>
+                        )}
                         
                         {/* Botones de modo dentro del buscador */}
                         <View style={styles.searchModeButtons}>
@@ -217,7 +306,8 @@ export default function SolarCalculatorScreen() {
                             onPress={() => {
                               // Sincronizamos con el modo de búsqueda 'ruta' y aseguramos que el primer clic sea el origen
                               setModoBusqueda('ruta');
-                              setModoSeleccion('origen');
+                              setModoSeleccion('destino'); // Por defecto comenzamos buscando el destino
+                              setTipoBusquedaRuta('destino');
                             }}
                           >
                             <Text style={styles.modeButtonText}>🧭</Text>
@@ -248,6 +338,50 @@ export default function SolarCalculatorScreen() {
                       </View>
 
       </View>   
+
+      {/* Panel desplegable con resultados de búsqueda clicables (solo se muestra si hay búsqueda activa y resultados/carga) */}
+      {(((modoBusqueda === 'lugar' && busqueda.trim().length >= 2) || (modoBusqueda === 'ruta' && ((tipoBusquedaRuta === 'destino' && busquedaDestino.trim().length >= 2) || (tipoBusquedaRuta === 'origen' && busquedaOrigen.trim().length >= 2)))) && (isSearching || searchResults.length > 0)) && (
+        <View style={styles.searchResultsContainer}>
+          <ScrollView style={styles.searchResultsScroll} nestedScrollEnabled>
+            {isSearching ? (
+              <Text style={styles.searchStatusText}>Buscando...</Text>
+            ) : (
+              searchResults.map((item, index) => (
+                <Pressable
+                  key={item.id || index}
+                  style={styles.searchResultItem}
+                  onPress={() => {
+                    // Actualizar coordenadas principales para la calculadora solar y vista
+                    setLatitude(String(item.lat));
+                    setLongitude(String(item.lon));
+                    setLatitudeDisplay(truncarA6Decimales(item.lat));
+                    setLongitudeDisplay(truncarA6Decimales(item.lon));
+
+                    if (modoBusqueda === 'lugar') {
+                      setBusqueda(item.nombre);
+                    } else if (modoBusqueda === 'ruta') {
+                      if (tipoBusquedaRuta === 'destino') {
+                        setDestino({ lat: item.lat, lon: item.lon });
+                        setBusquedaDestino(item.nombre);
+                        // Al fijar destino, pasamos a buscar origen automáticamente
+                        setTipoBusquedaRuta('origen');
+                      } else if (tipoBusquedaRuta === 'origen') {
+                        setOrigen({ lat: item.lat, lon: item.lon });
+                        setBusquedaOrigen(item.nombre);
+                      }
+                    }
+                    // Limpiar resultados para cerrar el panel inmediatamente
+                    setSearchResults([]);
+                  }}
+                >
+                  <Text style={styles.searchResultName}>{item.nombre}</Text>
+                  <Text style={styles.searchResultType}>{item.tipo}</Text>
+                </Pressable>
+              ))
+            )}
+          </ScrollView>
+        </View>
+      )}
 
       {/* CONTENEDOR PRINCIPAL DEL VISOR DE MAPA (Altura fija y ancho completo) */}
       <View style={styles.mapContainer}>
@@ -434,121 +568,6 @@ export default function SolarCalculatorScreen() {
           </Pressable>
         </View>
       </View>
-
-      {/*<View style={styles.form}>*/}
-        {/* 
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Fecha:</Text>
-          <TextInput
-            style={styles.input}
-            value={fechaOperacion}
-            onChangeText={(text) => {
-              const newDate = new Date(text);
-              if (!isNaN(newDate.getTime())) setDate(newDate);
-            }}
-            placeholder="YYYY-MM-DD"
-          />
-        </View> */}
-
-        {/* <View style={styles.inputGroup}>
-          <Text style={styles.label}>Hora:</Text>
-          <TextInput
-            style={styles.input}
-            value={horaOperacion}
-            onChangeText={(text) => {
-              const [hours, minutes] = text.split(':');
-              const newDate = new Date(time);
-              newDate.setHours(parseInt(hours) || 0, parseInt(minutes) || 0, 0, 0);
-              if (!isNaN(newDate.getTime())) setTime(newDate);
-            }}
-            placeholder="HH:MM"
-          />
-        </View>*/}
-
-        {/*<View style={styles.inputGroup}>
-          <Text style={styles.label}>Latitud (°):</Text>
-          <TextInput
-            style={styles.input}
-            keyboardType="numeric"
-            value={latitude}
-            onChangeText={setLatitude}
-            placeholder="40.4168"
-          />
-        </View>
-
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Longitud (°):</Text>
-          <TextInput
-            style={styles.input}
-            keyboardType="numeric"
-            value={longitude}
-            onChangeText={setLongitude}
-            placeholder="-3.7038"
-          />
-        </View>*/}
-
-        {/* INDICADOR DE COORDENADAS FLOTANTE EDITABLE */}
-        {/*<View style={styles.coordsBadge}>
-          <Text style={styles.coordsText}>lat</Text>
-          <TextInput
-            style={styles.coordsInput}
-            keyboardType="numeric"
-            value={latitudeDisplay}
-            onChangeText={(text) => {
-              const regex = /^-?\d*\.?\d{0,6}$/;
-              if (regex.test(text) || text === '') {
-                setLatitude(text);        // Guardamos el valor completo (ya limitado a 6)
-                setLatitudeDisplay(text); // Mostramos lo que escribe
-              }
-            }}
-            placeholder="40.4168"
-          />
-          <Text style={styles.coordsText}>,</Text>
-          <Text style={styles.coordsText}>{long</Text>
-          <TextInput
-            style={styles.coordsInput}
-            keyboardType="numeric"
-            value={longitudeDisplay}
-            onChangeText={(text) => {
-              const regex = /^-?\d*\.?\d{0,6}$/;
-              if (regex.test(text) || text === '') {
-                setLongitude(text);
-                setLongitudeDisplay(text);
-              }
-            }}
-            placeholder="-3.7038"
-          />
-        </View>*/}
-
-        {/*<Button
-          title={calculating ? 'Calculando...' : 'Calcular Posición Solar'}
-          onPress={handleCalculate}
-          disabled={calculating}
-          color="#0066cc"
-        />*/}
-      {/*</View>*/}
-
-      {/*{result && (
-        <View style={styles.results}>
-          <Text style={styles.resultsTitle}>Resultados:</Text>
-          <View style={styles.resultItem}>
-            <Text style={styles.resultLabel}>Altura solar:</Text>
-            <Text style={styles.resultValue}>{result.elevation.toFixed(2)}°</Text>
-          </View>
-          <View style={styles.resultItem}>
-            <Text style={styles.resultLabel}>Acimut solar:</Text>
-            <Text style={styles.resultValue}>{result.azimuth.toFixed(2)}°</Text>
-          </View>
-          <View style={styles.resultItem}>
-            <Text style={styles.resultLabel}>Posición:</Text>
-            <Text style={styles.resultValue}>
-              {result.elevation >= 0 ? 'Por encima del horizonte' : 'Por debajo del horizonte'}
-            </Text>
-          </View>
-
-          {chunkUrl && <LocationChunkViewer key={chunkUrl} chunkUrl={chunkUrl} />}
-        </View>
-      )}*/}
     </ScrollView>
   );
 }
@@ -577,66 +596,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#666',
   },
-  form: {
-    backgroundColor: 'white',
-    padding: 20,
-    borderRadius: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  inputGroup: {
-    marginBottom: 20,
-  },
-  label: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 8,
-    color: '#333',
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 6,
-    padding: 12,
-    fontSize: 16,
-    backgroundColor: 'white',
-  },
-  results: {
-    marginTop: 30,
-    backgroundColor: 'white',
-    padding: 20,
-    borderRadius: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  resultsTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 15,
-  },
-  resultItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderColor: '#eee',
-  },
-  resultLabel: {
-    fontSize: 16,
-    color: '#666',
-  },
-  resultValue: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#333',
-  },
   topBarContainer: {
     flexDirection: 'row',
     paddingHorizontal: 15,
@@ -653,7 +612,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderRadius: 10,
     paddingHorizontal: 15,
-    height: 50,
+    paddingVertical: 8,
+    minHeight: 50,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
@@ -662,12 +622,37 @@ const styles = StyleSheet.create({
   },
   searchInput: {
     flex: 1,
-    fontSize: 16,
+    fontSize: 15,
     color: '#333',
+    height: 38,
+  },
+  routeSearchWrapper: {
+    flex: 1,
+    gap: 8,
+  },
+  originInputRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderTopWidth: 1,
+    borderTopColor: '#eee',
+    paddingTop: 6,
+    gap: 8,
+  },
+  myLocationButton: {
+    backgroundColor: '#f0f0f0',
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+    borderRadius: 6,
+  },
+  myLocationButtonText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#0066cc',
   },
   searchModeButtons: {
     flexDirection: 'row',
     gap: 5,
+    marginLeft: 5,
   },
   modeButton: {
     padding: 8,
@@ -679,6 +664,46 @@ const styles = StyleSheet.create({
   },
   modeButtonText: {
     fontSize: 16,
+  },
+  // Estilos para el contenedor desplegable de resultados de búsqueda
+  searchResultsContainer: {
+    marginHorizontal: 15,
+    marginTop: -5,
+    marginBottom: 10,
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    maxHeight: 200,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+    zIndex: 20,
+  },
+  searchResultsScroll: {
+    padding: 10,
+  },
+  searchStatusText: {
+    padding: 10,
+    textAlign: 'center',
+    color: '#666',
+    fontSize: 14,
+  },
+  searchResultItem: {
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+  },
+  searchResultName: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#333',
+  },
+  searchResultType: {
+    fontSize: 12,
+    color: '#888',
+    marginTop: 2,
   },
   datetimeBox: {
     flex: 1,
@@ -715,9 +740,9 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 5,
     zIndex: 100,
-    flexDirection: 'row', // <--- Añadido para poner todo en una línea
+    flexDirection: 'row',
     alignItems: 'center',
-    width: 180, // Reducido de 220 a 170 (ajusta este número a tu gusto)
+    width: 180,
   },
   coordsText: {
     fontSize: 12,
@@ -731,12 +756,11 @@ const styles = StyleSheet.create({
     padding: 0,
     margin: 0,
     marginHorizontal: 0,
-    minWidth: 45,    // Ancho mínimo para números cortos
-    maxWidth: 70,    // Ancho máximo para números largos (6 decimales)
-    flexShrink: 0,   // Evita que el input se encoja
+    minWidth: 45,
+    maxWidth: 70,
+    flexShrink: 0,
     textAlign: 'left',
   },
-  // Contenedor para centrar el badge de coordenadas en el ancho de la pantalla del mapa
   coordsBadgeWrapper: {
     position: 'absolute',
     bottom: 10,
@@ -745,14 +769,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     zIndex: 5,
   },
-  // Contenedor del botón flotante para calcular en la esquina inferior izquierda
   floatingCalculateButtonContainer: {
     position: 'absolute',
     bottom: 10,
     left: 10,
     zIndex: 10,
   },
-  // Estilo visual del botón flotante de cálculo personalizado
   floatingCalculateButton: {
     backgroundColor: '#0066cc',
     paddingVertical: 8,
@@ -764,13 +786,11 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 5,
   },
-  // Texto del botón flotante de cálculo
   floatingCalculateButtonText: {
     color: '#ffffff',
     fontSize: 12,
     fontWeight: 'bold',
   },
-  // Contenedor compacto de resultados flotantes sobre el mapa
   floatingResultsContainer: {
     position: 'absolute',
     bottom: 60,
@@ -786,31 +806,26 @@ const styles = StyleSheet.create({
     elevation: 5,
     minWidth: 160,
   },
-  // Título de los resultados flotantes
   floatingResultsTitle: {
     fontSize: 12,
     fontWeight: 'bold',
     color: '#333',
     marginBottom: 4,
   },
-  // Fila de cada resultado flotante
   floatingResultItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     paddingVertical: 2,
   },
-  // Etiqueta de cada resultado flotante
   floatingResultLabel: {
     fontSize: 12,
     color: '#666',
   },
-  // Valor numérico de cada resultado flotante
   floatingResultValue: {
     fontSize: 12,
     fontWeight: 'bold',
     color: '#333',
   },
-  // Contenedor principal del mapa y visor 3D con altura fija y ancho completo
   mapContainer: {
     height: 450,
     width: '100%',
@@ -820,7 +835,6 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     backgroundColor: '#e5e5e5',
   },
-  // Contenedor del control segmentado flotante ubicado en la esquina inferior derecha
   segmentedControlContainer: {
     position: 'absolute',
     bottom: 10,
@@ -838,28 +852,23 @@ const styles = StyleSheet.create({
     elevation: 5,
     zIndex: 10,
   },
-  // Botón individual de cada segmento
   segmentButton: {
     paddingVertical: 6,
     paddingHorizontal: 12,
     borderRadius: 16,
   },
-  // Estilo visual del segmento cuando está activo
   segmentButtonActive: {
     backgroundColor: '#0066cc',
   },
-  // Estilo del texto normal del segmento
   segmentButtonText: {
     fontSize: 13,
     fontWeight: '600',
     color: '#555',
   },
-  // Estilo del texto del segmento activo
   segmentButtonTextActive: {
     color: '#ffffff',
     fontWeight: 'bold',
   },
-  // Divisor vertical entre cada opción del control segmentado
   segmentDivider: {
     width: 1,
     height: '60%',
