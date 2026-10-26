@@ -21,17 +21,28 @@ void main(){
 
 const deg=Math.PI/180;
 
-const shadowColor:Vector4=new Vector4(0, 0, 0, 1);
-const buildingColor:Vector4=new Vector4(1, 0, 0, 1);
+const shadowColor:Vector4=new Vector4(0, 0, 0, .5);
+const buildingColor:Vector4=new Vector4(1, 0, 0, .5);
+const transparentColor:Vector4=new Vector4(0, 0, 0, 0);
 
 function buildingMatrix(x:number):Matrix4{
     return new Matrix4(
     x, 0, 0, 0,
     0, 1, 0, 0,
-    0, 0, 0, 1,
+    0, 0, 0, 2,
     0, 0, 0, 1
     );
 }
+
+function transparentMatrix(x:number):Matrix4{
+    return new Matrix4(
+    x, 0, 0, 0,
+    0, 1, 0, 0,
+    0, 0, 0, 0.5,
+    0, 0, 0, 1
+    );
+}
+
 function getUniforms(shadowCastMatrix:Matrix4, color:Vector4){
     return {
         "shadowCastMatrix":{
@@ -48,7 +59,7 @@ function getShadowCastMatrixRad(theta:number,phi:number,x:number):Matrix4{
     return new Matrix4(
         x, 0, tg*Math.cos(phi), 0,
         0, 1, tg*Math.sin(phi), 0,
-        0, 0, 0, 0,
+        0, 0, 0, 1,
         0, 0, 0, 1
     );
 }
@@ -81,7 +92,20 @@ function buildingShaderMaterial(x:number):ShaderMaterial{
         side:DoubleSide
     });
 }
+
+function transparentShaderMaterial(x:number):ShaderMaterial{
+    return new ShaderMaterial({
+        uniforms:getUniforms(
+            transparentMatrix(x),
+            transparentColor
+        ),
+            vertexShader:vertexShader,
+        fragmentShader:fragmentShader,
+        side:DoubleSide
+    });
+}
+
 export{ vertexShader, fragmentShader };
 export{ shadowColor, buildingColor };
 export{ getUniforms, getShadowCastMatrixRad, getShadowCastMatrix };
-export{ shadowShaderMaterialColor, shadowShaderMaterialDefault, buildingShaderMaterial };
+export{ shadowShaderMaterialColor, shadowShaderMaterialDefault, buildingShaderMaterial, transparentShaderMaterial };

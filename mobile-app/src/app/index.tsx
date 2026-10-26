@@ -420,15 +420,48 @@ export default function SolarCalculatorScreen() {
             }}
           />
         )}
-        {/* Randerizado condicional: Vista 2D con sombras provisional */}
+        {/* Renderizado condicional: Vista 2D con sombras provisional */}
           {vistaActiva==="2d-sombras" && (
             <ShadowMap
+              //Foreground shadow overlay properties
               chunkURL={getChunkUrl(
                 isNaN(parseFloat(latitude)) ? 40.4168 : parseFloat(latitude),
                 isNaN(parseFloat(longitude)) ? -3.7038 : parseFloat(longitude)
               )}
               azimuth={0}
               elevation={90}
+
+              //Background map properties. Copied them.
+              initialLat={parseFloat(latitude) || 40.4168}
+              initialLon={parseFloat(longitude) || -3.7038}
+              // Pasamos el origen, destino, modo de selección y el modo de búsqueda al mapa
+              origen={origen}
+              destino={destino}
+              modoSeleccion={modoSeleccion}
+              modoBusqueda={modoBusqueda}
+              onSeleccionarCoordenada={(lat, lon) => {
+                // Depuración: registrar coordenada seleccionada y el modo actual en consola
+                console.log('Coordenada seleccionada:', { lat, lon, modoBusqueda, modoSeleccion });
+
+                // Si estamos en modo lugar, actualizamos el formulario de cálculo solar
+                if (modoBusqueda === 'lugar') {
+                  setLatitude(lat.toString());
+                  setLongitude(lon.toString());
+                  setLatitudeDisplay(truncarA6Decimales(lat.toString()));
+                  setLongitudeDisplay(truncarA6Decimales(lon.toString()));
+                } else if (modoBusqueda === 'ruta') {
+                  // Si estamos en modo ruta, alternamos continuamente entre origen y destino
+                  if (modoSeleccion === 'origen') {
+                    // Establecemos el punto de origen y pasamos automáticamente a elegir destino
+                    setOrigen({ lat, lon });
+                    setModoSeleccion('destino');
+                  } else if (modoSeleccion === 'destino') {
+                    // Establecemos el punto de destino y volvemos a origen para alternar continuamente
+                    setDestino({ lat, lon });
+                    setModoSeleccion('origen');
+                  }
+                }
+              }}
             />
           )}
         {/* Renderizado condicional: Vista 3D con visor de fragmentos de modelo */}
