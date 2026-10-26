@@ -428,8 +428,8 @@ export default function SolarCalculatorScreen() {
                 isNaN(parseFloat(latitude)) ? 40.4168 : parseFloat(latitude),
                 isNaN(parseFloat(longitude)) ? -3.7038 : parseFloat(longitude)
               )}
-              azimuth={0}
-              elevation={90}
+              azimuth={result?result.azimuth:0}
+              elevation={result?result.elevation:90}
 
               //Background map properties. Copied them.
               initialLat={parseFloat(latitude) || 40.4168}
