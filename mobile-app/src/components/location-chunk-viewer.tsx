@@ -2,7 +2,8 @@ import { GLView, type ExpoWebGLRenderingContext } from 'expo-gl';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, PanResponder, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import * as THREE from 'three';
-import { GLTFLoader, type GLTF } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { ChunkStream } from './chunk-stream';
+import { getMapGesture, type MapTouch } from './map-gesture';
 
 type LocationChunkViewerProps = {
   chunkUrl: string;
@@ -13,6 +14,7 @@ type ViewerStatus = 'loading' | 'ready' | 'error';
 type OrbitState = {
   azimuth: number;
   elevation: number;
+  // Half the visible map height, in metres (orthographic zoom).
   distance: number;
   minDistance: number;
   maxDistance: number;
@@ -23,29 +25,28 @@ type RenderContext = {
   gl: ExpoWebGLRenderingContext;
   renderer: THREE.WebGLRenderer;
   scene: THREE.Scene;
-  camera: THREE.PerspectiveCamera;
+  camera: THREE.OrthographicCamera;
 };
 
-const MIN_ORBIT_ELEVATION = 0.25;
+const MIN_ORBIT_ELEVATION = THREE.MathUtils.degToRad(25);
 const MAX_ORBIT_ELEVATION = Math.PI / 2 - 0.04;
+const INITIAL_ORBIT_ELEVATION = THREE.MathUtils.degToRad(80);
 const ORBIT_SENSITIVITY = 0.01;
 const ZOOM_STEP = 1.1;
 
-function getTouchDistance(touches: readonly { pageX: number; pageY: number }[]) {
-  if (touches.length < 2) {
-    return null;
-  }
-
-  const [firstTouch, secondTouch] = touches;
-  return Math.hypot(secondTouch.pageX - firstTouch.pageX, secondTouch.pageY - firstTouch.pageY);
-}
-
-function updateOrbitCamera(camera: THREE.PerspectiveCamera, orbit: OrbitState) {
-  const horizontalDistance = Math.cos(orbit.elevation) * orbit.distance;
+function updateOrbitCamera(camera: THREE.OrthographicCamera, orbit: OrbitState, aspect: number) {
+  // Zoom changes the projection extent, independently of camera position.
+  camera.left = -orbit.distance * aspect;
+  camera.right = orbit.distance * aspect;
+  camera.top = orbit.distance;
+  camera.bottom = -orbit.distance;
+  camera.updateProjectionMatrix();
+  const cameraDistance = camera.far * 0.4;
+  const horizontalDistance = Math.cos(orbit.elevation) * cameraDistance;
 
   camera.position.set(
     orbit.target.x + Math.sin(orbit.azimuth) * horizontalDistance,
-    orbit.target.y + Math.sin(orbit.elevation) * orbit.distance,
+    orbit.target.y + Math.sin(orbit.elevation) * cameraDistance,
     orbit.target.z + Math.cos(orbit.azimuth) * horizontalDistance,
   );
   camera.lookAt(orbit.target);
@@ -200,49 +201,46 @@ function createRenderer(gl: ExpoWebGLRenderingContext) {
   }
 }
 
-function disposeModel(model: THREE.Object3D) {
-  model.traverse((object) => {
-    const mesh = object as THREE.Mesh;
-
-    if (!mesh.isMesh) {
-      return;
-    }
-
-    mesh.geometry.dispose();
-
-    const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
-    materials.forEach((material) => material.dispose());
-  });
+export function LocationChunkViewer(props: LocationChunkViewerProps) {
+  return <ChunkViewerSession key={props.chunkUrl} {...props} />;
 }
 
-export function LocationChunkViewer({ chunkUrl }: LocationChunkViewerProps) {
+function ChunkViewerSession({ chunkUrl }: LocationChunkViewerProps) {
   const [status, setStatus] = useState<ViewerStatus>('loading');
   const [errorMessage, setErrorMessage] = useState('');
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
   const sceneRef = useRef<THREE.Scene | null>(null);
-  const modelRef = useRef<THREE.Object3D | null>(null);
+  const streamRef = useRef<ChunkStream | null>(null);
+  const [markers, setMarkers] = useState<{ key: string; x: number; y: number; failed: boolean }[]>([]);
+  const [mode, setMode] = useState<'move' | 'rotate'>('move');
+  const modeRef = useRef(mode);
+  useEffect(() => { modeRef.current = mode; }, [mode]);
+  const frameSize = useRef({ width: 1, height: 320 });
+  const previousTouches = useRef<MapTouch[]>([]);
   const renderContextRef = useRef<RenderContext | null>(null);
   const orbitRef = useRef<OrbitState>({
     azimuth: 0,
-    elevation: MAX_ORBIT_ELEVATION,
+    elevation: INITIAL_ORBIT_ELEVATION,
     distance: 1,
     minDistance: 0.35,
     maxDistance: 4,
     target: new THREE.Vector3(),
   });
-  const dragStartRef = useRef({ azimuth: 0, elevation: MAX_ORBIT_ELEVATION });
-  const pinchStartDistanceRef = useRef<number | null>(null);
-  const pinchStartOrbitDistanceRef = useRef(1);
   const loadIdRef = useRef(0);
   const [webCanvas, setWebCanvas] = useState<HTMLCanvasElement | null>(null);
 
   const cleanup = useCallback(() => {
     loadIdRef.current += 1;
 
-    if (modelRef.current) {
-      disposeModel(modelRef.current);
-      modelRef.current = null;
-    }
+    streamRef.current?.dispose();
+    streamRef.current = null;
+    sceneRef.current?.traverse((object) => {
+      if (object instanceof THREE.GridHelper) {
+        object.geometry.dispose();
+        const materials = Array.isArray(object.material) ? object.material : [object.material];
+        materials.forEach((material) => material.dispose());
+      }
+    });
 
     sceneRef.current = null;
     renderContextRef.current = null;
@@ -259,10 +257,32 @@ export function LocationChunkViewer({ chunkUrl }: LocationChunkViewerProps) {
       return;
     }
 
-    updateOrbitCamera(renderContext.camera, orbitRef.current);
+    const aspect = frameSize.current.width / Math.max(frameSize.current.height, 1);
+    // Expo can resize the canvas after context creation; keep Three's viewport
+    // in sync or part of the drawing buffer is left outside the rendered map.
+    const width = Math.max(renderContext.gl.drawingBufferWidth, 1);
+    const height = Math.max(renderContext.gl.drawingBufferHeight, 1);
+    renderContext.renderer.setViewport(0, 0, width, height);
+    renderContext.renderer.setScissorTest(false);
+    updateOrbitCamera(renderContext.camera, orbitRef.current, aspect);
+    streamRef.current?.update(orbitRef.current.target, orbitRef.current.distance / 0.45, aspect);
     renderContext.renderer.render(renderContext.scene, renderContext.camera);
     renderContext.gl.endFrameEXP();
+    setMarkers((streamRef.current?.markers ?? []).flatMap((marker) => {
+      const projected = marker.position.clone().project(renderContext.camera);
+      if (projected.z < -1 || projected.z > 1 || Math.abs(projected.x) > 1 || Math.abs(projected.y) > 1) return [];
+      return [{ key: marker.key, x: (projected.x + 1) * frameSize.current.width / 2,
+        y: (1 - projected.y) * frameSize.current.height / 2, failed: marker.failed }];
+    }));
   }, []);
+
+  const moveCamera = useCallback((right: number, forward: number) => {
+    const orbit = orbitRef.current;
+    const cos = Math.cos(orbit.azimuth), sin = Math.sin(orbit.azimuth);
+    orbit.target.x += right * cos + forward * sin;
+    orbit.target.z += -right * sin + forward * cos;
+    renderCurrentFrame();
+  }, [renderCurrentFrame]);
 
   const zoomCamera = useCallback(
     (factor: number) => {
@@ -277,6 +297,31 @@ export function LocationChunkViewer({ chunkUrl }: LocationChunkViewerProps) {
     [renderCurrentFrame],
   );
 
+  const tiltCamera = useCallback((dx: number, dy: number) => {
+    const orbit = orbitRef.current;
+    orbit.azimuth += dx * ORBIT_SENSITIVITY;
+    orbit.elevation = THREE.MathUtils.clamp(orbit.elevation - dy * ORBIT_SENSITIVITY,
+      MIN_ORBIT_ELEVATION, MAX_ORBIT_ELEVATION);
+    renderCurrentFrame();
+  }, [renderCurrentFrame]);
+
+  const applyGesture = useCallback((touches: MapTouch[], rotate = false) => {
+    const delta = getMapGesture(previousTouches.current, touches);
+    previousTouches.current = touches;
+    if (!delta) return;
+    if (delta.twoFingers) {
+      const orbit = orbitRef.current;
+      orbit.distance = THREE.MathUtils.clamp(orbit.distance * delta.zoom, orbit.minDistance, orbit.maxDistance);
+      tiltCamera(delta.dx, delta.dy);
+    } else if (rotate || modeRef.current === 'rotate') {
+      tiltCamera(delta.dx, delta.dy);
+    } else {
+      const orbit = orbitRef.current;
+      const scale = 2 * orbit.distance / Math.max(frameSize.current.height, 1);
+      moveCamera(-delta.dx * scale, -delta.dy * scale / Math.sin(orbit.elevation));
+    }
+  }, [moveCamera, tiltCamera]);
+
   const setNativeViewRef = useCallback((nativeRef: unknown) => {
     if (Platform.OS !== 'web' || typeof HTMLCanvasElement === 'undefined') {
       return;
@@ -290,82 +335,119 @@ export function LocationChunkViewer({ chunkUrl }: LocationChunkViewerProps) {
       return;
     }
 
+    let lastWheelTime = -Infinity;
+    let trackpadDrag = false;
     const handleWheel = (event: WheelEvent) => {
       event.preventDefault();
-
+      // Browsers send trackpad two-finger drags as pixel wheel events; pinch
+      // events carry ctrlKey. Keep the classification for the entire gesture.
+      if (event.timeStamp - lastWheelTime > 180) {
+        trackpadDrag = event.deltaMode === 0 && (Math.abs(event.deltaX) > 0 || Math.abs(event.deltaY) < 50);
+      }
+      lastWheelTime = event.timeStamp;
+      if (!event.ctrlKey && !event.metaKey && (event.shiftKey || trackpadDrag)) {
+        tiltCamera(event.deltaX, THREE.MathUtils.clamp(event.deltaY, -40, 40));
+        return;
+      }
       const wheelDirection = THREE.MathUtils.clamp(event.deltaY / 100, -1, 1);
       zoomCamera(Math.pow(ZOOM_STEP, wheelDirection));
     };
 
+    const focusMap = () => webCanvas.focus({ preventScroll: true });
+    const pointers = new Map<number, MapTouch>();
+    let rotatePointer = false;
+    const handlePointerDown = (event: PointerEvent) => {
+      if (event.pointerType === 'mouse' && event.button !== 0 && event.button !== 2) return;
+      event.preventDefault();
+      focusMap();
+      rotatePointer = event.button === 2 || event.shiftKey;
+      pointers.set(event.pointerId, { id: event.pointerId, x: event.clientX, y: event.clientY });
+      previousTouches.current = [...pointers.values()];
+      webCanvas.setPointerCapture(event.pointerId);
+    };
+    const handlePointerMove = (event: PointerEvent) => {
+      if (!pointers.has(event.pointerId)) return;
+      event.preventDefault();
+      pointers.set(event.pointerId, { id: event.pointerId, x: event.clientX, y: event.clientY });
+      applyGesture([...pointers.values()], rotatePointer || event.shiftKey);
+    };
+    const handlePointerEnd = (event: PointerEvent) => {
+      pointers.delete(event.pointerId);
+      previousTouches.current = [...pointers.values()];
+      if (webCanvas.hasPointerCapture(event.pointerId)) webCanvas.releasePointerCapture(event.pointerId);
+    };
+    const handleContextMenu = (event: Event) => event.preventDefault();
+    const oldTouchAction = webCanvas.style.touchAction;
+    webCanvas.style.setProperty('touch-action', 'none');
+    let resizeFrame = 0;
+    const resizeObserver = new ResizeObserver(() => {
+      cancelAnimationFrame(resizeFrame);
+      resizeFrame = requestAnimationFrame(renderCurrentFrame);
+    });
+    resizeObserver.observe(webCanvas);
+    const handleKey = (event: KeyboardEvent) => {
+      const directions: Record<string, [number, number]> = {
+        ArrowLeft: [-1, 0], a: [-1, 0], ArrowRight: [1, 0], d: [1, 0],
+        ArrowUp: [0, -1], w: [0, -1], ArrowDown: [0, 1], s: [0, 1],
+      };
+      const direction = directions[event.key.length === 1 ? event.key.toLowerCase() : event.key];
+      if (!direction || event.ctrlKey || event.metaKey || event.altKey) return;
+      event.preventDefault();
+      const step = orbitRef.current.distance * 0.045;
+      moveCamera(direction[0] * step, direction[1] * step);
+    };
+    webCanvas.setAttribute('tabindex', '0');
+    webCanvas.setAttribute('aria-label', 'Mapa 3D. Usa las flechas o WASD para moverte.');
+    webCanvas.addEventListener('pointerdown', handlePointerDown);
+    webCanvas.addEventListener('pointermove', handlePointerMove);
+    webCanvas.addEventListener('pointerup', handlePointerEnd);
+    webCanvas.addEventListener('pointercancel', handlePointerEnd);
+    webCanvas.addEventListener('lostpointercapture', handlePointerEnd);
+    webCanvas.addEventListener('contextmenu', handleContextMenu);
+    webCanvas.addEventListener('keydown', handleKey);
+
     webCanvas.addEventListener('wheel', handleWheel, { passive: false });
-    return () => webCanvas.removeEventListener('wheel', handleWheel);
-  }, [webCanvas, zoomCamera]);
+    return () => {
+      webCanvas.removeEventListener('wheel', handleWheel);
+      webCanvas.removeEventListener('pointerdown', handlePointerDown);
+      webCanvas.removeEventListener('pointermove', handlePointerMove);
+      webCanvas.removeEventListener('pointerup', handlePointerEnd);
+      webCanvas.removeEventListener('pointercancel', handlePointerEnd);
+      webCanvas.removeEventListener('lostpointercapture', handlePointerEnd);
+      webCanvas.removeEventListener('contextmenu', handleContextMenu);
+      webCanvas.style.setProperty('touch-action', oldTouchAction);
+      resizeObserver.disconnect();
+      cancelAnimationFrame(resizeFrame);
+      previousTouches.current = [];
+      webCanvas.removeEventListener('keydown', handleKey);
+    };
+  }, [webCanvas, zoomCamera, moveCamera, tiltCamera, applyGesture, renderCurrentFrame]);
 
   const [panResponder, setPanResponder] = useState<ReturnType<typeof PanResponder.create> | null>(null);
 
   useEffect(() => {
+    if (Platform.OS === 'web') return;
+    const points = (touches: readonly { identifier: string; pageX: number; pageY: number }[]) =>
+      touches.map((touch) => ({ id: touch.identifier, x: touch.pageX, y: touch.pageY }));
     const responder = PanResponder.create({
-      onMoveShouldSetPanResponder: (_, gestureState) => {
-        const horizontalDrag =
-          Math.abs(gestureState.dx) > Math.abs(gestureState.dy) && Math.abs(gestureState.dx) > 8;
-        const twoFingerDrag =
-          gestureState.numberActiveTouches >= 2 &&
-          Math.max(Math.abs(gestureState.dx), Math.abs(gestureState.dy)) > 8;
-
-        return horizontalDrag || twoFingerDrag;
-      },
-      onPanResponderGrant: (event) => {
-        dragStartRef.current = {
-          azimuth: orbitRef.current.azimuth,
-          elevation: orbitRef.current.elevation,
-        };
-
-        const touchDistance = getTouchDistance(event.nativeEvent.touches);
-        pinchStartDistanceRef.current = touchDistance;
-        pinchStartOrbitDistanceRef.current = orbitRef.current.distance;
-      },
-      onPanResponderMove: (event, gestureState) => {
-        const touchDistance = getTouchDistance(event.nativeEvent.touches);
-
-        if (touchDistance) {
-          if (!pinchStartDistanceRef.current) {
-            pinchStartDistanceRef.current = touchDistance;
-            pinchStartOrbitDistanceRef.current = orbitRef.current.distance;
-          }
-
-          orbitRef.current.distance = THREE.MathUtils.clamp(
-            (pinchStartOrbitDistanceRef.current * pinchStartDistanceRef.current) / touchDistance,
-            orbitRef.current.minDistance,
-            orbitRef.current.maxDistance,
-          );
-          renderCurrentFrame();
-          return;
-        }
-
-        pinchStartDistanceRef.current = null;
-        orbitRef.current.azimuth = dragStartRef.current.azimuth + gestureState.dx * ORBIT_SENSITIVITY;
-        orbitRef.current.elevation = THREE.MathUtils.clamp(
-          dragStartRef.current.elevation - gestureState.dy * ORBIT_SENSITIVITY,
-          MIN_ORBIT_ELEVATION,
-          MAX_ORBIT_ELEVATION,
-        );
-        renderCurrentFrame();
-      },
-      onPanResponderRelease: () => {
-        pinchStartDistanceRef.current = null;
-        renderCurrentFrame();
-      },
-      onPanResponderTerminate: () => {
-        pinchStartDistanceRef.current = null;
-        renderCurrentFrame();
-      },
+      onStartShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponder: () => true,
+      onPanResponderGrant: (event) => { previousTouches.current = points(event.nativeEvent.touches); },
+      onPanResponderStart: (event) => { previousTouches.current = points(event.nativeEvent.touches); },
+      onPanResponderMove: (event) => applyGesture(points(event.nativeEvent.touches)),
+      onPanResponderEnd: (event) => { previousTouches.current = points(event.nativeEvent.touches); },
+      onPanResponderRelease: () => { previousTouches.current = []; },
+      onPanResponderTerminate: () => { previousTouches.current = []; },
     });
-
     setPanResponder(responder);
-  }, [renderCurrentFrame]);
+  }, [applyGesture]);
 
   const handleContextCreate = useCallback(
     (gl: ExpoWebGLRenderingContext) => {
+      cleanup();
+      if (Platform.OS === 'web') {
+        setWebCanvas((gl as unknown as WebGLRenderingContext).canvas as HTMLCanvasElement);
+      }
       const loadId = loadIdRef.current + 1;
       loadIdRef.current = loadId;
       setStatus('loading');
@@ -393,7 +475,8 @@ export function LocationChunkViewer({ chunkUrl }: LocationChunkViewerProps) {
       const scene = new THREE.Scene();
       scene.background = new THREE.Color('#142033');
 
-      const camera = new THREE.PerspectiveCamera(42, width / height, 0.01, 100000);
+      const aspect = width / height;
+      const camera = new THREE.OrthographicCamera(-aspect, aspect, 1, -1, 0.01, 100000);
       camera.up.set(0, 1, 0);
 
       scene.add(new THREE.HemisphereLight(0xdcecff, 0x2c3444, 2.2));
@@ -408,84 +491,30 @@ export function LocationChunkViewer({ chunkUrl }: LocationChunkViewerProps) {
 
       const loadChunk = async () => {
         try {
-          const response = await fetch(chunkUrl);
-
-          if (!response.ok) {
-            let detail = `HTTP ${response.status}`;
-
-            try {
-              const payload = (await response.json()) as { error?: string };
-              if (payload.error) {
-                detail = payload.error;
-              }
-            } catch {
-              // Keep the HTTP status when the backend response is not JSON.
-            }
-
-            throw new Error(detail);
-          }
-
-          const data = await response.arrayBuffer();
           ensureThreeRuntimeGlobals();
-          const loader = new GLTFLoader();
-          const gltf = await new Promise<GLTF>((resolve, reject) => {
-            loader.parse(data, chunkUrl, resolve, reject);
-          });
-
-          if (loadId !== loadIdRef.current) {
-            return;
-          }
-
-          const model = gltf.scene;
-
-          // The source dataset is Z-Up, while Three.js uses Y-Up.
-          model.rotation.x = -Math.PI / 2;
-          model.updateMatrixWorld(true);
-
-          const bounds = new THREE.Box3().setFromObject(model);
-
-          if (bounds.isEmpty()) {
-            throw new Error('El chunk 3D no contiene geometría visible.');
-          }
-
-          const size = bounds.getSize(new THREE.Vector3());
-          const center = bounds.getCenter(new THREE.Vector3());
-          const horizontalSize = Math.max(size.x, size.z, 0.001);
-
-          // Center the chunk horizontally and place its lowest point on the ground.
-          model.position.x -= center.x;
-          model.position.y -= bounds.min.y;
-          model.position.z -= center.z;
-          model.updateMatrixWorld(true);
-
-          model.traverse((object) => {
-            const mesh = object as THREE.Mesh;
-            if (mesh.isMesh) {
-              mesh.castShadow = false;
-              mesh.receiveShadow = false;
-            }
-          });
-
-          const grid = new THREE.GridHelper(horizontalSize * 1.15, 16, 0x54708f, 0x304158);
-          grid.position.y = 0;
+          const stream = new ChunkStream(chunkUrl, renderCurrentFrame);
+          streamRef.current = stream;
+          const size = await stream.initialize();
+          if (loadId !== loadIdRef.current || !size) return;
+          const horizontalSize = stream.tileSize;
+          scene.add(stream.root);
+          const grid = new THREE.GridHelper(horizontalSize * 7, 7 * 8, 0x54708f, 0x304158);
+          grid.position.y = -0.05;
           scene.add(grid);
-          scene.add(model);
-          modelRef.current = model;
 
-          const viewSize = Math.max(size.z, size.x / camera.aspect, 0.001);
-          const distance =
-            (viewSize / (2 * Math.tan(THREE.MathUtils.degToRad(camera.fov) / 2))) * 1.15;
+          const viewSize = Math.max(size.z + size.y, size.x / aspect, 0.001);
+          const distance = viewSize * 0.5 * 1.15;
           camera.near = 0.01;
-          camera.far = Math.max(distance + size.y + horizontalSize * 2, 100);
+          camera.far = Math.max(distance * 8 + size.y + horizontalSize * 8, 100);
           orbitRef.current = {
             azimuth: 0,
-            elevation: MAX_ORBIT_ELEVATION,
+            elevation: INITIAL_ORBIT_ELEVATION,
             distance,
             minDistance: distance * 0.35,
             maxDistance: distance * 4,
             target: new THREE.Vector3(0, 0, 0),
           };
-          updateOrbitCamera(camera, orbitRef.current);
+          updateOrbitCamera(camera, orbitRef.current, aspect);
           camera.updateProjectionMatrix();
           renderContextRef.current = { gl, renderer, scene, camera };
 
@@ -508,12 +537,18 @@ export function LocationChunkViewer({ chunkUrl }: LocationChunkViewerProps) {
 
       void loadChunk();
     },
-    [chunkUrl, renderCurrentFrame],
+    [chunkUrl, renderCurrentFrame, cleanup],
   );
 
   return (
     <View style={styles.card}>
-      <View style={styles.viewerFrame}>
+      <View style={styles.viewerFrame} onLayout={(event) => {
+        frameSize.current = event.nativeEvent.layout;
+        const context = renderContextRef.current;
+        if (context) {
+          renderCurrentFrame();
+        }
+      }}>
         <GLView
           {...(panResponder?.panHandlers ?? {})}
           nativeRef_EXPERIMENTAL={setNativeViewRef}
@@ -521,6 +556,23 @@ export function LocationChunkViewer({ chunkUrl }: LocationChunkViewerProps) {
           onContextCreate={handleContextCreate}
         />
 
+        {markers.map((marker) => (
+          <View key={marker.key} pointerEvents="none" style={[styles.chunkMarker, { left: marker.x - 55, top: marker.y - 20 }]}>
+            {!marker.failed && <ActivityIndicator color="#ffffff" size="small" />}
+            <Text style={styles.markerText}>{marker.failed ? 'Error de carga' : 'Cargando zona…'}</Text>
+          </View>
+        ))}
+
+        {status === 'ready' && (
+          <View style={styles.modeControls}>
+            {(['move', 'rotate'] as const).map((value) => (
+              <Pressable key={value} accessibilityRole="button" accessibilityState={{ selected: mode === value }}
+                onPress={() => setMode(value)} style={[styles.modeButton, mode === value && styles.activeMode]}>
+                <Text style={styles.markerText}>{value === 'move' ? 'Mover' : 'Girar'}</Text>
+              </Pressable>
+            ))}
+          </View>
+        )}
         {status === 'ready' && (
           <View style={styles.zoomControls}>
             <Pressable
@@ -558,13 +610,19 @@ export function LocationChunkViewer({ chunkUrl }: LocationChunkViewerProps) {
       </View>
 
       <Text style={styles.caption}>
-        Chunk de edificios de la ubicación seleccionada{`\n`}Desliza horizontalmente para girar la cámara
+        Arrastra para {mode === 'move' ? 'mover el mapa' : 'girar la cámara'}. Dos dedos: arrastra para inclinar; pellizca para zoom.{`\n`}
+        {Platform.OS === 'web' ? 'Flechas/WASD: mover. Trackpad: dos dedos inclinan, pellizco hace zoom. Ratón: botón derecho o Mayús + rueda para inclinar.' : 'Los chunks vecinos se cargan al explorar el mapa.'}
       </Text>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  chunkMarker: { position: 'absolute', width: 110, padding: 8, borderRadius: 8, alignItems: 'center', backgroundColor: 'rgba(20,32,51,0.9)' },
+  markerText: { color: '#ffffff', fontSize: 12, textAlign: 'center' },
+  modeControls: { position: 'absolute', top: 12, left: 12, flexDirection: 'row', gap: 6 },
+  modeButton: { padding: 10, borderRadius: 8, backgroundColor: '#24364d' },
+  activeMode: { backgroundColor: '#356caa' },
   card: {
     marginTop: 20,
     overflow: 'hidden',
