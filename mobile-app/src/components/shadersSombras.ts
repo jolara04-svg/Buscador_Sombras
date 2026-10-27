@@ -65,7 +65,7 @@ function getShadowCastMatrixRad(theta:number,phi:number,x:number):Matrix4{
 }
 
 function getShadowCastMatrix(azimuth:number, elevation:number, x:number):Matrix4{
-    return getShadowCastMatrixRad(90-deg*elevation, deg*azimuth, x);
+    return getShadowCastMatrixRad(deg*(90-elevation), deg*azimuth, x);
 }
 
 function shadowShaderMaterialColor(azimuth:number, elevation:number, color:Vector4,x:number):ShaderMaterial{
