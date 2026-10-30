@@ -1,7 +1,16 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import { StyleSheet, View } from 'react-native';
 
+export interface MapViewport {
+  centerLat: number;
+  centerLon: number;
+  zoom: number;
+  width: number;
+  height: number;
+}
+
 export interface Mapa2DProps {
+  onViewportChange?: (viewport: MapViewport) => void;
   onSeleccionarCoordenada?: (lat: number, lon: number) => void;
   initialLat?: number;
   initialLon?: number;
@@ -12,21 +21,26 @@ export interface Mapa2DProps {
 }
 
 export const Mapa2D: React.FC<Mapa2DProps> = ({
+  onViewportChange,
   onSeleccionarCoordenada,
   initialLat = 40.4168,
   initialLon = -3.7038,
   origen,
   destino,
-  modoSeleccion = 'solar',
   modoBusqueda = 'lugar',
 }) => {
+  const iframeRef = useRef<HTMLIFrameElement>(null);
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
+      if (event.source !== iframeRef.current?.contentWindow) return;
       let data = event.data;
       if (typeof data === 'string') {
         try { data = JSON.parse(data); } catch { return; }
       }
-      if (
+      if (data?.type === 'MAP_VIEWPORT' &&
+          ['centerLat', 'centerLon', 'zoom', 'width', 'height'].every(key => Number.isFinite(data[key]))) {
+        onViewportChange?.(data);
+      } else if (
         data &&
         data.type === 'SELECCIONAR_COORDENADA' &&
         typeof data.lat === 'number' &&
@@ -38,7 +52,7 @@ export const Mapa2D: React.FC<Mapa2DProps> = ({
     };
     window.addEventListener('message', handleMessage);
     return () => { window.removeEventListener('message', handleMessage); };
-  }, [onSeleccionarCoordenada]);
+  }, [onSeleccionarCoordenada, onViewportChange]);
 
   const leafletHtml = useMemo(() => {
     return `<!DOCTYPE html>
@@ -58,7 +72,15 @@ export const Mapa2D: React.FC<Mapa2DProps> = ({
     (function() {
       var lat = ${initialLat};
       var lon = ${initialLon};
-      var map = L.map('map').setView([lat, lon], 16);
+      var map = L.map('map', { zoomAnimation: false }).setView([lat, lon], 16);
+      function reportViewport() {
+        var center = map.getCenter(), size = map.getSize();
+        window.parent.postMessage({ type: 'MAP_VIEWPORT', centerLat: center.lat,
+          centerLon: center.lng, zoom: map.getZoom(), width: size.x, height: size.y }, '*');
+      }
+      map.on('move zoom resize', reportViewport);
+      new ResizeObserver(function() { map.invalidateSize(); reportViewport(); }).observe(document.getElementById('map'));
+      map.whenReady(reportViewport);
       L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
         maxZoom: 19,
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors'
@@ -87,11 +109,12 @@ export const Mapa2D: React.FC<Mapa2DProps> = ({
   </script>
 </body>
 </html>`;
-  }, [initialLat, initialLon, origen, destino, modoSeleccion, modoBusqueda]);
+  }, [initialLat, initialLon, origen, destino, modoBusqueda]);
 
   return (
     <View style={styles.container}>
       <iframe
+        ref={iframeRef}
         title="Mapa Leaflet 2D"
         srcDoc={leafletHtml}
         style={{ width: '100%', height: '100%', border: 'none', display: 'block' }}

@@ -49,7 +49,7 @@ function getUniforms(shadowCastMatrix:Matrix4, color:Vector4){
             value:shadowCastMatrix
         },
         "shadowColor":{
-            value:color
+            value:color.clone()
         }
     };
 }
@@ -57,15 +57,15 @@ function getUniforms(shadowCastMatrix:Matrix4, color:Vector4){
 function getShadowCastMatrixRad(theta:number,phi:number,x:number):Matrix4{
     const tg=Math.tan(theta);
     return new Matrix4(
-        x, 0, tg*Math.cos(phi), 0,
-        0, 1, tg*Math.sin(phi), 0,
+        x, 0, -tg*Math.sin(phi), 0,
+        0, 1, -tg*Math.cos(phi), 0,
         0, 0, 0, 1,
         0, 0, 0, 1
     );
 }
 
 function getShadowCastMatrix(azimuth:number, elevation:number, x:number):Matrix4{
-    return getShadowCastMatrixRad(90-deg*elevation, deg*azimuth, x);
+    return getShadowCastMatrixRad(deg*(90-Math.max(0.1, elevation)), deg*azimuth, x);
 }
 
 function shadowShaderMaterialColor(azimuth:number, elevation:number, color:Vector4,x:number):ShaderMaterial{
@@ -73,7 +73,8 @@ function shadowShaderMaterialColor(azimuth:number, elevation:number, color:Vecto
         uniforms:getUniforms(getShadowCastMatrix(azimuth,elevation,x), color),
         vertexShader:vertexShader,
         fragmentShader:fragmentShader,
-        side:DoubleSide
+        side:DoubleSide,
+        transparent:true
     });
 }
 
@@ -89,7 +90,8 @@ function buildingShaderMaterial(x:number):ShaderMaterial{
         ),
             vertexShader:vertexShader,
         fragmentShader:fragmentShader,
-        side:DoubleSide
+        side:DoubleSide,
+        transparent:true
     });
 }
 
