@@ -1,5 +1,6 @@
-import { StyleSheet, Text, View, TextInput, Button, ScrollView, Pressable } from 'react-native';
-import { useState, useRef } from 'react';
+import { StyleSheet, Text, View, TextInput, Button, ScrollView, Pressable, Platform } from 'react-native';
+import { useState, useRef, useEffect } from 'react';
+import * as Location from 'expo-location';
 
 import { getChunkUrl, BACKEND_URL } from '@/constants/backend';
 import { LocationChunkViewer } from '@/components/location-chunk-viewer';
@@ -10,6 +11,16 @@ type SolarPosition = {
   elevation: number;
   azimuth: number;
 };
+
+const MADRID_LAT = 40.4168;
+const MADRID_LON = -3.7038;
+
+function truncarA6Decimales(valor: string | number) {
+  const str = String(valor);
+  if (!str.includes('.')) return str;
+  const [entero, decimales] = str.split('.');
+  return `${entero}.${decimales.slice(0, 6)}`;
+}
 
 // Simplified solar position calculation
 function calculateSunPosition(date: Date, latitude: number, longitude: number) {
@@ -115,6 +126,57 @@ export default function SolarCalculatorScreen() {
   // Valores truncados (solo para mostrar en el input)
   const [latitudeDisplay, setLatitudeDisplay] = useState('');
   const [longitudeDisplay, setLongitudeDisplay] = useState('');
+  const [locationStatus, setLocationStatus] = useState<'loading' | 'ready' | 'fallback'>('loading');
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const applyLocation = (lat: number, lon: number) => {
+      if (cancelled || !Number.isFinite(lat) || !Number.isFinite(lon)) return;
+      setLatitude(String(lat));
+      setLongitude(String(lon));
+      setLatitudeDisplay(truncarA6Decimales(lat));
+      setLongitudeDisplay(truncarA6Decimales(lon));
+      setLocationStatus('ready');
+    };
+
+    const applyFallback = () => {
+      if (!cancelled) setLocationStatus('fallback');
+    };
+
+    const requestLocation = async () => {
+      try {
+        if (Platform.OS === 'web') {
+          if (!navigator.geolocation) {
+            applyFallback();
+            return;
+          }
+          navigator.geolocation.getCurrentPosition(
+            ({ coords }) => applyLocation(coords.latitude, coords.longitude),
+            applyFallback,
+            { enableHighAccuracy: true, timeout: 10000, maximumAge: 300000 },
+          );
+          return;
+        }
+
+        const permission = await Location.requestForegroundPermissionsAsync();
+        if (permission.status !== Location.PermissionStatus.GRANTED) {
+          applyFallback();
+          return;
+        }
+        const position = await Location.getCurrentPositionAsync({
+          accuracy: Location.Accuracy.Balanced,
+        });
+        applyLocation(position.coords.latitude, position.coords.longitude);
+      } catch (error) {
+        console.warn('No se pudo obtener la ubicación inicial:', error);
+        applyFallback();
+      }
+    };
+
+    requestLocation();
+    return () => { cancelled = true; };
+  }, []);
 
   // Estados para la selección de Origen y Destino en el mapa
   const [origen, setOrigen] = useState<{ lat: number, lon: number } | null>(null);
@@ -215,14 +277,6 @@ export default function SolarCalculatorScreen() {
     }, 300);
   };
 
-  // Función para truncar un número a 6 decimales sin redondear
-  const truncarA6Decimales = (valor: string | number) => {
-    const str = String(valor);
-    if (!str.includes('.')) return str; // Si no tiene decimales, lo devolvemos tal cual
-    const [entero, decimales] = str.split('.');
-    return `${entero}.${decimales.slice(0, 6)}`; // Cortamos los decimales a 6
-  };
-
   return (
 
     <ScrollView
@@ -235,6 +289,8 @@ export default function SolarCalculatorScreen() {
       <View style={styles.header}>
         <Text style={styles.title}>Calculadora de Posición Solar</Text>
         <Text style={styles.subtitle}>Ingrese fecha, hora y ubicación</Text>
+        {locationStatus === 'loading' && <Text style={styles.locationStatus}>Obteniendo ubicación...</Text>}
+        {locationStatus === 'fallback' && <Text style={styles.locationStatus}>No se pudo obtener tu ubicación. Se muestra Madrid.</Text>}
       </View>
 
                 {/* BARRA SUPERIOR TIPO GOOGLE MAPS */}
@@ -388,8 +444,8 @@ export default function SolarCalculatorScreen() {
         {/* Renderizado condicional: Vista 2D y 2D con sombras */}
         {(vistaActiva === '2d' /*|| vistaActiva === '2d-sombras'*/) && (
           <Mapa2D
-            initialLat={parseFloat(latitude) || 40.4168}
-            initialLon={parseFloat(longitude) || -3.7038}
+            initialLat={parseFloat(latitude) || MADRID_LAT}
+            initialLon={parseFloat(longitude) || MADRID_LON}
             // Pasamos el origen, destino, modo de selección y el modo de búsqueda al mapa
             origen={origen}
             destino={destino}
@@ -432,8 +488,8 @@ export default function SolarCalculatorScreen() {
               elevation={result?result.elevation:90}
 
               //Background map properties. Copied them.
-              initialLat={parseFloat(latitude) || 40.4168}
-              initialLon={parseFloat(longitude) || -3.7038}
+              initialLat={parseFloat(latitude) || MADRID_LAT}
+              initialLon={parseFloat(longitude) || MADRID_LON}
               // Pasamos el origen, destino, modo de selección y el modo de búsqueda al mapa
               origen={origen}
               destino={destino}
@@ -628,6 +684,11 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: 16,
     color: '#666',
+  },
+  locationStatus: {
+    fontSize: 12,
+    color: '#777',
+    marginTop: 6,
   },
   topBarContainer: {
     flexDirection: 'row',
