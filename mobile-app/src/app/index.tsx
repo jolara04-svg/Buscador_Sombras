@@ -165,7 +165,7 @@ export default function SolarCalculatorScreen() {
           return;
         }
         const position = await Location.getCurrentPositionAsync({
-          accuracy: Location.Accuracy.Balanced,
+          accuracy: Location.Accuracy.Highest,
         });
         applyLocation(position.coords.latitude, position.coords.longitude);
       } catch (error) {
