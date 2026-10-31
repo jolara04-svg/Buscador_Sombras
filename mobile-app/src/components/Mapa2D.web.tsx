@@ -72,7 +72,15 @@ export const Mapa2D: React.FC<Mapa2DProps> = ({
     (function() {
       var lat = ${initialLat};
       var lon = ${initialLon};
-      var map = L.map('map', { zoomAnimation: false }).setView([lat, lon], 16);
+      // Inicializar el mapa de Leaflet con opciones de zoom optimizadas y fluidas para web
+      var map = L.map('map', {
+        zoomAnimation: false,
+        zoomSnap: 1,          // Niveles de zoom enteros para una sensación natural
+        zoomDelta: 1,         // Salto de zoom por nivel completo
+        scrollWheelZoom: true,// Zoom con rueda del ratón habilitado y fluido
+        maxZoom: 19,          // Máximo acercamiento para visualización de calles y edificios
+        minZoom: 3            // Mínimo alejamiento
+      }).setView([lat, lon], 16);
       function reportViewport() {
         var center = map.getCenter(), size = map.getSize();
         window.parent.postMessage({ type: 'MAP_VIEWPORT', centerLat: center.lat,

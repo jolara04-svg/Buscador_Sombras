@@ -109,6 +109,11 @@ async function extraerLugaresMadrid() {
       if (lat === null || lon === null) {
         continue;
       }
+      // Filtro de seguridad: Si las coordenadas no están dentro de Madrid (España), ignorar.
+      // Latitud de Madrid: ~40.3 a 40.6 | Longitud: ~ -3.9 a -3.5
+      if (lat < 40.3 || lat > 40.6 || lon < -3.9 || lon > -3.5) {
+        continue;
+      }
 
       const tipo = determinarTipo(el.tags);
       const id = el.id;

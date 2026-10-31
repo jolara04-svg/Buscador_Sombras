@@ -70,13 +70,6 @@
     "lon": -3.6886925
   },
   {
-    "id": 367089552,
-    "nombre": "Madrid Historical Museum",
-    "tipo": "Museo / Atracción",
-    "lat": 41.8760116,
-    "lon": -93.8208135
-  },
-  {
     "id": 845763449,
     "nombre": "El Goloso",
     "tipo": "Estación de Transporte",
@@ -3073,11 +3066,18 @@
     "lon": -3.7164296
   },
   {
+    "id": 14330913389,
+    "nombre": "ESADE",
+    "tipo": "Universidad",
+    "lat": 40.4983846,
+    "lon": -3.7060138
+  },
+  {
     "id": 3996190,
     "nombre": "Rotonda de Arcentales",
     "tipo": "Calle",
-    "lat": 40.4304968,
-    "lon": -3.5971566
+    "lat": 40.4304775,
+    "lon": -3.5972046
   },
   {
     "id": 3996192,
@@ -3195,22 +3195,22 @@
     "id": 4004288,
     "nombre": "Calle de Estocolmo",
     "tipo": "Calle",
-    "lat": 40.4280787,
-    "lon": -3.6000767
+    "lat": 40.4280433,
+    "lon": -3.6000294
   },
   {
     "id": 4004289,
     "nombre": "Calle de San Petersburgo",
     "tipo": "Calle",
-    "lat": 40.4280107,
-    "lon": -3.6007156
+    "lat": 40.4280004,
+    "lon": -3.6007003
   },
   {
     "id": 4004290,
     "nombre": "Calle de Moscú",
     "tipo": "Calle",
-    "lat": 40.4258356,
-    "lon": -3.6007219
+    "lat": 40.4258377,
+    "lon": -3.6006881
   },
   {
     "id": 4004291,
@@ -3300,7 +3300,7 @@
     "id": 4066493,
     "nombre": "Calle de Finlandia",
     "tipo": "Calle",
-    "lat": 40.4223831,
+    "lat": 40.4223848,
     "lon": -3.6028873
   },
   {
@@ -3315,14 +3315,14 @@
     "nombre": "Calle de Bélgica",
     "tipo": "Calle",
     "lat": 40.4293995,
-    "lon": -3.6010392
+    "lon": -3.6010286
   },
   {
     "id": 4066497,
     "nombre": "Calle de Albania",
     "tipo": "Calle",
-    "lat": 40.4287097,
-    "lon": -3.6008764
+    "lat": 40.4287163,
+    "lon": -3.6008697
   },
   {
     "id": 4066557,
@@ -3601,8 +3601,8 @@
     "id": 4100156,
     "nombre": "Calle de Versalles",
     "tipo": "Calle",
-    "lat": 40.4161248,
-    "lon": -3.6178272
+    "lat": 40.4161289,
+    "lon": -3.6178303
   },
   {
     "id": 4100158,
@@ -3650,8 +3650,8 @@
     "id": 4100165,
     "nombre": "Calle Glasgow",
     "tipo": "Calle",
-    "lat": 40.418345,
-    "lon": -3.6127471
+    "lat": 40.4183583,
+    "lon": -3.612757
   },
   {
     "id": 4100167,
@@ -4644,8 +4644,8 @@
     "id": 4308719,
     "nombre": "Calle de Torrox",
     "tipo": "Calle",
-    "lat": 40.36836,
-    "lon": -3.6889621
+    "lat": 40.3683476,
+    "lon": -3.6889595
   },
   {
     "id": 4309013,
@@ -5579,13 +5579,6 @@
     "lon": -3.7145803
   },
   {
-    "id": 4348612,
-    "nombre": "Plaza de la Independencia",
-    "tipo": "Calle",
-    "lat": 40.419823,
-    "lon": -3.6881682
-  },
-  {
     "id": 4349010,
     "nombre": "Paseo del Prado",
     "tipo": "Calle",
@@ -6387,8 +6380,8 @@
     "id": 4494478,
     "nombre": "Avenida de la Perla",
     "tipo": "Calle",
-    "lat": 40.3709571,
-    "lon": -3.6942905
+    "lat": 40.3709566,
+    "lon": -3.6942893
   },
   {
     "id": 4494674,
@@ -9152,8 +9145,8 @@
     "id": 7252066,
     "nombre": "Calle de Mariano Serrano",
     "tipo": "Calle",
-    "lat": 40.4703881,
-    "lon": -3.7017149
+    "lat": 40.470368,
+    "lon": -3.7017143
   },
   {
     "id": 7252076,
@@ -10575,139 +10568,6 @@
     "tipo": "Calle",
     "lat": 40.4215906,
     "lon": -3.6990083
-  },
-  {
-    "id": 7719305,
-    "nombre": "Selma Street",
-    "tipo": "Calle",
-    "lat": 31.03504,
-    "lon": -85.3953719
-  },
-  {
-    "id": 7719791,
-    "nombre": "Alamo Street",
-    "tipo": "Calle",
-    "lat": 31.0359764,
-    "lon": -85.3909424
-  },
-  {
-    "id": 7719965,
-    "nombre": "Broad Street",
-    "tipo": "Calle",
-    "lat": 31.0365795,
-    "lon": -85.3939253
-  },
-  {
-    "id": 7720962,
-    "nombre": "Eldorado Street",
-    "tipo": "Calle",
-    "lat": 31.0350793,
-    "lon": -85.38989
-  },
-  {
-    "id": 7721396,
-    "nombre": "Ashley Lane",
-    "tipo": "Calle",
-    "lat": 31.0392494,
-    "lon": -85.4043916
-  },
-  {
-    "id": 7721505,
-    "nombre": "Elba Street",
-    "tipo": "Calle",
-    "lat": 31.033462,
-    "lon": -85.3899744
-  },
-  {
-    "id": 7721808,
-    "nombre": "Milton Drive",
-    "tipo": "Calle",
-    "lat": 31.0417724,
-    "lon": -85.3995381
-  },
-  {
-    "id": 7721811,
-    "nombre": "Vuelta Street",
-    "tipo": "Calle",
-    "lat": 31.0359619,
-    "lon": -85.3921983
-  },
-  {
-    "id": 7722293,
-    "nombre": "B J Mixon Road",
-    "tipo": "Calle",
-    "lat": 31.0188799,
-    "lon": -85.3931351
-  },
-  {
-    "id": 7723236,
-    "nombre": "Paraiso Street",
-    "tipo": "Calle",
-    "lat": 31.0330776,
-    "lon": -85.38882
-  },
-  {
-    "id": 7724725,
-    "nombre": "Oats Road",
-    "tipo": "Calle",
-    "lat": 31.0406926,
-    "lon": -85.4019742
-  },
-  {
-    "id": 7725128,
-    "nombre": "School Street",
-    "tipo": "Calle",
-    "lat": 31.0343881,
-    "lon": -85.3973697
-  },
-  {
-    "id": 7725160,
-    "nombre": "Pine Street",
-    "tipo": "Calle",
-    "lat": 31.0382981,
-    "lon": -85.3959108
-  },
-  {
-    "id": 7725224,
-    "nombre": "Hill Street",
-    "tipo": "Calle",
-    "lat": 31.0364703,
-    "lon": -85.3967636
-  },
-  {
-    "id": 7725319,
-    "nombre": "Sonny Mixon Road",
-    "tipo": "Calle",
-    "lat": 31.03312,
-    "lon": -85.4289616
-  },
-  {
-    "id": 7725426,
-    "nombre": "Harden Road",
-    "tipo": "Calle",
-    "lat": 31.0485488,
-    "lon": -85.4091492
-  },
-  {
-    "id": 7725480,
-    "nombre": "Decatur Road",
-    "tipo": "Calle",
-    "lat": 31.0255903,
-    "lon": -85.3806986
-  },
-  {
-    "id": 7725856,
-    "nombre": "December Road",
-    "tipo": "Calle",
-    "lat": 31.0351614,
-    "lon": -85.4111358
-  },
-  {
-    "id": 7726111,
-    "nombre": "High Street",
-    "tipo": "Calle",
-    "lat": 31.0360159,
-    "lon": -85.3955265
   },
   {
     "id": 7726285,
@@ -12680,8 +12540,8 @@
     "id": 7996983,
     "nombre": "Calle de Álvarez",
     "tipo": "Calle",
-    "lat": 40.4709511,
-    "lon": -3.6997348
+    "lat": 40.4709581,
+    "lon": -3.699719
   },
   {
     "id": 7996998,
@@ -12785,8 +12645,8 @@
     "id": 8014139,
     "nombre": "Avenida de Abrantes",
     "tipo": "Calle",
-    "lat": 40.3738028,
-    "lon": -3.7364657
+    "lat": 40.3737902,
+    "lon": -3.7364544
   },
   {
     "id": 8014150,
@@ -12946,8 +12806,8 @@
     "id": 8039235,
     "nombre": "Calle de Molina",
     "tipo": "Calle",
-    "lat": 40.4702587,
-    "lon": -3.6998335
+    "lat": 40.4702555,
+    "lon": -3.6998341
   },
   {
     "id": 8039238,
@@ -12967,8 +12827,8 @@
     "id": 8039309,
     "nombre": "Calle del Arroyo",
     "tipo": "Calle",
-    "lat": 40.4692285,
-    "lon": -3.7016463
+    "lat": 40.469239,
+    "lon": -3.7016286
   },
   {
     "id": 8039316,
@@ -13016,8 +12876,8 @@
     "id": 8039353,
     "nombre": "Calle del Cantueso",
     "tipo": "Calle",
-    "lat": 40.4686514,
-    "lon": -3.7039948
+    "lat": 40.4686487,
+    "lon": -3.7040128
   },
   {
     "id": 8039387,
@@ -13030,14 +12890,14 @@
     "id": 8039394,
     "nombre": "Travesía del Arroyo",
     "tipo": "Calle",
-    "lat": 40.4699732,
-    "lon": -3.7018696
+    "lat": 40.4699676,
+    "lon": -3.7018585
   },
   {
     "id": 8039395,
     "nombre": "Calle de Manuela Mínguez",
     "tipo": "Calle",
-    "lat": 40.4695418,
+    "lat": 40.4695366,
     "lon": -3.7037322
   },
   {
@@ -13443,8 +13303,8 @@
     "id": 8818634,
     "nombre": "Calle de Motril",
     "tipo": "Calle",
-    "lat": 40.3685155,
-    "lon": -3.6909779
+    "lat": 40.3685193,
+    "lon": -3.690984
   },
   {
     "id": 8818759,
@@ -17748,127 +17608,8 @@
     "id": 13861918,
     "nombre": "Calle de la Mezquita",
     "tipo": "Calle",
-    "lat": 40.3736667,
-    "lon": -3.6907837
-  },
-  {
-    "id": 14174846,
-    "nombre": "Perkins Avenue",
-    "tipo": "Calle",
-    "lat": 40.8526428,
-    "lon": -101.5436442
-  },
-  {
-    "id": 14174864,
-    "nombre": "Longfellow Street",
-    "tipo": "Calle",
-    "lat": 40.8491922,
-    "lon": -101.5423546
-  },
-  {
-    "id": 14174872,
-    "nombre": "Ford Avenue",
-    "tipo": "Calle",
-    "lat": 40.848164,
-    "lon": -101.5396085
-  },
-  {
-    "id": 14174964,
-    "nombre": "Aldrich Street",
-    "tipo": "Calle",
-    "lat": 40.8472191,
-    "lon": -101.5431003
-  },
-  {
-    "id": 14177298,
-    "nombre": "Road 339",
-    "tipo": "Calle",
-    "lat": 40.836139,
-    "lon": -101.5135275
-  },
-  {
-    "id": 14177918,
-    "nombre": "Howell Street",
-    "tipo": "Calle",
-    "lat": 40.8461928,
-    "lon": -101.5423862
-  },
-  {
-    "id": 14179362,
-    "nombre": "Hardy Avenue",
-    "tipo": "Calle",
-    "lat": 40.848681,
-    "lon": -101.5423285
-  },
-  {
-    "id": 14179368,
-    "nombre": "North Railway Street",
-    "tipo": "Calle",
-    "lat": 40.852081,
-    "lon": -101.5442656
-  },
-  {
-    "id": 14179372,
-    "nombre": "Denison Avenue",
-    "tipo": "Calle",
-    "lat": 40.8506661,
-    "lon": -101.54645
-  },
-  {
-    "id": 14179399,
-    "nombre": "Ames Avenue",
-    "tipo": "Calle",
-    "lat": 40.8485861,
-    "lon": -101.5409753
-  },
-  {
-    "id": 14179557,
-    "nombre": "Road 337.5",
-    "tipo": "Calle",
-    "lat": 40.8703778,
-    "lon": -101.5441898
-  },
-  {
-    "id": 14179561,
-    "nombre": "Lowell Street",
-    "tipo": "Calle",
-    "lat": 40.8481841,
-    "lon": -101.5417054
-  },
-  {
-    "id": 14179583,
-    "nombre": "Whittier Street",
-    "tipo": "Calle",
-    "lat": 40.8502972,
-    "lon": -101.5425856
-  },
-  {
-    "id": 14179888,
-    "nombre": "Stone Street",
-    "tipo": "Calle",
-    "lat": 40.8540875,
-    "lon": -101.539624
-  },
-  {
-    "id": 14180012,
-    "nombre": "Stevens Avenue",
-    "tipo": "Calle",
-    "lat": 40.8487956,
-    "lon": -101.5382157
-  },
-  {
-    "id": 14180021,
-    "nombre": "South Railway Street",
-    "tipo": "Calle",
-    "lat": 40.8511286,
-    "lon": -101.5436899
-  },
-  {
-    "id": 14180262,
-    "nombre": "Highway 23",
-    "tipo": "Calle",
-    "lat": 40.837088,
-    "lon": -101.410868
+    "lat": 40.3736751,
+    "lon": -3.6907382
   },
   {
     "id": 14304060,
@@ -19673,8 +19414,8 @@
     "id": 15219919,
     "nombre": "Calle de Mercedes Fórmica",
     "tipo": "Calle",
-    "lat": 40.4220125,
-    "lon": -3.6650449
+    "lat": 40.4220088,
+    "lon": -3.6650343
   },
   {
     "id": 15219930,
@@ -20352,8 +20093,8 @@
     "id": 15241781,
     "nombre": "Calle Cruz del Sur",
     "tipo": "Calle",
-    "lat": 40.409728,
-    "lon": -3.6687084
+    "lat": 40.4097278,
+    "lon": -3.6687086
   },
   {
     "id": 15241787,
@@ -20982,8 +20723,8 @@
     "id": 15591944,
     "nombre": "Calle del Arándano",
     "tipo": "Calle",
-    "lat": 40.4693901,
-    "lon": -3.7024584
+    "lat": 40.4693857,
+    "lon": -3.7024496
   },
   {
     "id": 15591946,
@@ -21019,433 +20760,6 @@
     "tipo": "Calle",
     "lat": 40.4096238,
     "lon": -3.6326368
-  },
-  {
-    "id": 15823217,
-    "nombre": "Southern Prairie Drive",
-    "tipo": "Calle",
-    "lat": 41.8676764,
-    "lon": -93.8195009
-  },
-  {
-    "id": 15824694,
-    "nombre": "Raven Lane",
-    "tipo": "Calle",
-    "lat": 41.8705837,
-    "lon": -93.8313856
-  },
-  {
-    "id": 15827000,
-    "nombre": "High Trestle Trail",
-    "tipo": "Calle",
-    "lat": 41.8737456,
-    "lon": -93.8314111
-  },
-  {
-    "id": 15827757,
-    "nombre": "South Main Street",
-    "tipo": "Calle",
-    "lat": 41.874928,
-    "lon": -93.822982
-  },
-  {
-    "id": 15829022,
-    "nombre": "Edgewood Lane",
-    "tipo": "Calle",
-    "lat": 41.8708439,
-    "lon": -93.8283707
-  },
-  {
-    "id": 15829027,
-    "nombre": "South Madison Street",
-    "tipo": "Calle",
-    "lat": 41.871418,
-    "lon": -93.8141185
-  },
-  {
-    "id": 15831082,
-    "nombre": "Gerald Street",
-    "tipo": "Calle",
-    "lat": 41.8794849,
-    "lon": -93.8141452
-  },
-  {
-    "id": 15831118,
-    "nombre": "South Kennedy Avenue",
-    "tipo": "Calle",
-    "lat": 41.8731447,
-    "lon": -93.815678
-  },
-  {
-    "id": 15831186,
-    "nombre": "North Market Street",
-    "tipo": "Calle",
-    "lat": 41.8804946,
-    "lon": -93.8243213
-  },
-  {
-    "id": 15831187,
-    "nombre": "West 21st Street",
-    "tipo": "Calle",
-    "lat": 41.878751,
-    "lon": -93.823664
-  },
-  {
-    "id": 15831213,
-    "nombre": "South Market Street",
-    "tipo": "Calle",
-    "lat": 41.8725275,
-    "lon": -93.8242618
-  },
-  {
-    "id": 15831500,
-    "nombre": "North State Street",
-    "tipo": "Calle",
-    "lat": 41.87825,
-    "lon": -93.8204335
-  },
-  {
-    "id": 15831611,
-    "nombre": "West 5th Street",
-    "tipo": "Calle",
-    "lat": 41.8730053,
-    "lon": -93.8242191
-  },
-  {
-    "id": 15831634,
-    "nombre": "Little Street",
-    "tipo": "Calle",
-    "lat": 41.8777215,
-    "lon": -93.8236265
-  },
-  {
-    "id": 15831666,
-    "nombre": "North Locust Street",
-    "tipo": "Calle",
-    "lat": 41.8790506,
-    "lon": -93.825632
-  },
-  {
-    "id": 15831686,
-    "nombre": "Steven Street",
-    "tipo": "Calle",
-    "lat": 41.8807015,
-    "lon": -93.8123121
-  },
-  {
-    "id": 15831764,
-    "nombre": "West 6th Street",
-    "tipo": "Calle",
-    "lat": 41.8720555,
-    "lon": -93.822654
-  },
-  {
-    "id": 15831807,
-    "nombre": "East Greene Street",
-    "tipo": "Calle",
-    "lat": 41.8714175,
-    "lon": -93.812586
-  },
-  {
-    "id": 15831816,
-    "nombre": "West 7th Street",
-    "tipo": "Calle",
-    "lat": 41.8711141,
-    "lon": -93.8229053
-  },
-  {
-    "id": 15831817,
-    "nombre": "South Water Street",
-    "tipo": "Calle",
-    "lat": 41.8756321,
-    "lon": -93.8217175
-  },
-  {
-    "id": 15831955,
-    "nombre": "West 8th Street",
-    "tipo": "Calle",
-    "lat": 41.8708645,
-    "lon": -93.8278116
-  },
-  {
-    "id": 15832038,
-    "nombre": "North Kennedy Avenue",
-    "tipo": "Calle",
-    "lat": 41.8774061,
-    "lon": -93.815683
-  },
-  {
-    "id": 15832172,
-    "nombre": "Washington Street",
-    "tipo": "Calle",
-    "lat": 41.8714155,
-    "lon": -93.810973
-  },
-  {
-    "id": 15832197,
-    "nombre": "East North Street",
-    "tipo": "Calle",
-    "lat": 41.8779696,
-    "lon": -93.8035723
-  },
-  {
-    "id": 15832224,
-    "nombre": "South Cedar Street",
-    "tipo": "Calle",
-    "lat": 41.875901,
-    "lon": -93.817871
-  },
-  {
-    "id": 15832313,
-    "nombre": "East 1st Street",
-    "tipo": "Calle",
-    "lat": 41.876827,
-    "lon": -93.82061
-  },
-  {
-    "id": 15832331,
-    "nombre": "Market Street",
-    "tipo": "Calle",
-    "lat": 41.8784896,
-    "lon": -93.8243035
-  },
-  {
-    "id": 15832547,
-    "nombre": "Milwaukee Street",
-    "tipo": "Calle",
-    "lat": 41.87258,
-    "lon": -93.817435
-  },
-  {
-    "id": 15832594,
-    "nombre": "West 2nd Street",
-    "tipo": "Calle",
-    "lat": 41.8757614,
-    "lon": -93.8256169
-  },
-  {
-    "id": 15832803,
-    "nombre": "North Union Street",
-    "tipo": "Calle",
-    "lat": 41.8782585,
-    "lon": -93.8191644
-  },
-  {
-    "id": 15832805,
-    "nombre": "East 6th Street",
-    "tipo": "Calle",
-    "lat": 41.872111,
-    "lon": -93.8156513
-  },
-  {
-    "id": 15832821,
-    "nombre": "Newton Road",
-    "tipo": "Calle",
-    "lat": 41.8808597,
-    "lon": -93.8166133
-  },
-  {
-    "id": 15832833,
-    "nombre": "Kingman Boulevard",
-    "tipo": "Calle",
-    "lat": 41.881015,
-    "lon": -93.8140365
-  },
-  {
-    "id": 15832857,
-    "nombre": "West 3rd Street",
-    "tipo": "Calle",
-    "lat": 41.8749439,
-    "lon": -93.821694
-  },
-  {
-    "id": 15832891,
-    "nombre": "Maple Ridge Lane",
-    "tipo": "Calle",
-    "lat": 41.8821897,
-    "lon": -93.8180349
-  },
-  {
-    "id": 15832971,
-    "nombre": "East 8th Street",
-    "tipo": "Calle",
-    "lat": 41.8706935,
-    "lon": -93.812955
-  },
-  {
-    "id": 15833043,
-    "nombre": "North Walnut Street",
-    "tipo": "Calle",
-    "lat": 41.877367,
-    "lon": -93.8270265
-  },
-  {
-    "id": 15833076,
-    "nombre": "East 22nd Street",
-    "tipo": "Calle",
-    "lat": 41.879672,
-    "lon": -93.818063
-  },
-  {
-    "id": 15833121,
-    "nombre": "South Walnut Street",
-    "tipo": "Calle",
-    "lat": 41.8732352,
-    "lon": -93.826961
-  },
-  {
-    "id": 15833213,
-    "nombre": "East 9th Street",
-    "tipo": "Calle",
-    "lat": 41.8697475,
-    "lon": -93.8180555
-  },
-  {
-    "id": 15833310,
-    "nombre": "West 22nd Street",
-    "tipo": "Calle",
-    "lat": 41.8796535,
-    "lon": -93.821098
-  },
-  {
-    "id": 15833328,
-    "nombre": "West North Street",
-    "tipo": "Calle",
-    "lat": 41.877928,
-    "lon": -93.827864
-  },
-  {
-    "id": 15833494,
-    "nombre": "Fairview Drive",
-    "tipo": "Calle",
-    "lat": 41.8806025,
-    "lon": -93.8184363
-  },
-  {
-    "id": 15833496,
-    "nombre": "Locust Street",
-    "tipo": "Calle",
-    "lat": 41.8808685,
-    "lon": -93.825837
-  },
-  {
-    "id": 15833601,
-    "nombre": "Rose Road",
-    "tipo": "Calle",
-    "lat": 41.915538,
-    "lon": -93.8295145
-  },
-  {
-    "id": 15833658,
-    "nombre": "East 2nd Street",
-    "tipo": "Calle",
-    "lat": 41.875909,
-    "lon": -93.815522
-  },
-  {
-    "id": 15833735,
-    "nombre": "Linden Lane",
-    "tipo": "Calle",
-    "lat": 41.8770548,
-    "lon": -93.834736
-  },
-  {
-    "id": 15833747,
-    "nombre": "South Delander Street",
-    "tipo": "Calle",
-    "lat": 41.87632,
-    "lon": -93.829009
-  },
-  {
-    "id": 15833836,
-    "nombre": "Annex Road",
-    "tipo": "Calle",
-    "lat": 41.879488,
-    "lon": -93.815369
-  },
-  {
-    "id": 15833869,
-    "nombre": "North Main Street",
-    "tipo": "Calle",
-    "lat": 41.8791075,
-    "lon": -93.8230155
-  },
-  {
-    "id": 15833938,
-    "nombre": "Leo Bimbi Parkway",
-    "tipo": "Calle",
-    "lat": 41.87026,
-    "lon": -93.8241719
-  },
-  {
-    "id": 15833964,
-    "nombre": "South Greene Street",
-    "tipo": "Calle",
-    "lat": 41.8764465,
-    "lon": -93.8131161
-  },
-  {
-    "id": 15834106,
-    "nombre": "Grigsby Court",
-    "tipo": "Calle",
-    "lat": 41.8781465,
-    "lon": -93.8291308
-  },
-  {
-    "id": 15834394,
-    "nombre": "South Union Street",
-    "tipo": "Calle",
-    "lat": 41.8715938,
-    "lon": -93.818928
-  },
-  {
-    "id": 15834529,
-    "nombre": "County Line Road",
-    "tipo": "Calle",
-    "lat": 41.876929,
-    "lon": -93.8100535
-  },
-  {
-    "id": 15834535,
-    "nombre": "East 3rd Street",
-    "tipo": "Calle",
-    "lat": 41.874956,
-    "lon": -93.8185346
-  },
-  {
-    "id": 15834668,
-    "nombre": "North Water Street",
-    "tipo": "Calle",
-    "lat": 41.8791343,
-    "lon": -93.8217505
-  },
-  {
-    "id": 15834685,
-    "nombre": "West 4th Street",
-    "tipo": "Calle",
-    "lat": 41.8741345,
-    "lon": -93.8272106
-  },
-  {
-    "id": 15834721,
-    "nombre": "North Delander Street",
-    "tipo": "Calle",
-    "lat": 41.877364,
-    "lon": -93.8290065
-  },
-  {
-    "id": 15834904,
-    "nombre": "Sycamore Street",
-    "tipo": "Calle",
-    "lat": 41.8702183,
-    "lon": -93.8166237
-  },
-  {
-    "id": 15834936,
-    "nombre": "West 1st Street",
-    "tipo": "Calle",
-    "lat": 41.876799,
-    "lon": -93.827848
   },
   {
     "id": 15996113,
@@ -21689,28 +21003,28 @@
     "id": 16915037,
     "nombre": "Calle de Eduardo Barreiros",
     "tipo": "Calle",
-    "lat": 40.3750137,
-    "lon": -3.6952632
+    "lat": 40.3750097,
+    "lon": -3.6952643
   },
   {
     "id": 17024902,
     "nombre": "Calle del Campo",
     "tipo": "Calle",
-    "lat": 40.369649,
-    "lon": -3.6930279
+    "lat": 40.369651,
+    "lon": -3.6930261
   },
   {
     "id": 17025037,
     "nombre": "Calle de La Popular Madrileña",
     "tipo": "Calle",
-    "lat": 40.3712398,
-    "lon": -3.6931133
+    "lat": 40.3712439,
+    "lon": -3.6931271
   },
   {
     "id": 17025054,
     "nombre": "Calle de Peralejo",
     "tipo": "Calle",
-    "lat": 40.3728415,
+    "lat": 40.3728392,
     "lon": -3.6933432
   },
   {
@@ -21724,22 +21038,22 @@
     "id": 17025118,
     "nombre": "Calle de Rochapea",
     "tipo": "Calle",
-    "lat": 40.3713506,
-    "lon": -3.6912977
+    "lat": 40.3713496,
+    "lon": -3.6912968
   },
   {
     "id": 17025157,
     "nombre": "Calle de Fitero",
     "tipo": "Calle",
-    "lat": 40.3719542,
-    "lon": -3.6902826
+    "lat": 40.3719484,
+    "lon": -3.6902923
   },
   {
     "id": 17025204,
     "nombre": "Calle de Navascués",
     "tipo": "Calle",
-    "lat": 40.3724513,
-    "lon": -3.6904214
+    "lat": 40.3724541,
+    "lon": -3.6904218
   },
   {
     "id": 17025216,
@@ -21760,28 +21074,28 @@
     "nombre": "Calle de Corella",
     "tipo": "Calle",
     "lat": 40.3717084,
-    "lon": -3.6889291
+    "lon": -3.6889332
   },
   {
     "id": 17025330,
     "nombre": "Calle de Zalacaín",
     "tipo": "Calle",
-    "lat": 40.3716836,
-    "lon": -3.6893373
+    "lat": 40.3716846,
+    "lon": -3.6893408
   },
   {
     "id": 17025365,
     "nombre": "Calle de Amaya",
     "tipo": "Calle",
-    "lat": 40.3716594,
-    "lon": -3.6897372
+    "lat": 40.3716625,
+    "lon": -3.6897355
   },
   {
     "id": 17025397,
     "nombre": "Calle de Lecumberri",
     "tipo": "Calle",
-    "lat": 40.3717262,
-    "lon": -3.6902137
+    "lat": 40.3717286,
+    "lon": -3.6902095
   },
   {
     "id": 17025424,
@@ -21801,8 +21115,8 @@
     "id": 17060884,
     "nombre": "Calle de Taconera",
     "tipo": "Calle",
-    "lat": 40.3713247,
-    "lon": -3.6917204
+    "lat": 40.3713257,
+    "lon": -3.6917085
   },
   {
     "id": 17252038,
@@ -22823,8 +22137,8 @@
     "id": 23056203,
     "nombre": "Calle de la Unanimidad",
     "tipo": "Calle",
-    "lat": 40.3614619,
-    "lon": -3.6932899
+    "lat": 40.3614741,
+    "lon": -3.6933111
   },
   {
     "id": 23056204,
@@ -25259,15 +24573,15 @@
     "id": 23377633,
     "nombre": "Calle de Torrelaguna",
     "tipo": "Calle",
-    "lat": 40.4546229,
-    "lon": -3.6605326
+    "lat": 40.4546188,
+    "lon": -3.6605202
   },
   {
     "id": 23377678,
     "nombre": "Calle de José Silva",
     "tipo": "Calle",
     "lat": 40.4540611,
-    "lon": -3.659907
+    "lon": -3.659915
   },
   {
     "id": 23377698,
@@ -26414,8 +25728,8 @@
     "id": 23572221,
     "nombre": "Calle de Sauceda",
     "tipo": "Calle",
-    "lat": 40.5027234,
-    "lon": -3.6630706
+    "lat": 40.5027262,
+    "lon": -3.6630703
   },
   {
     "id": 23572294,
@@ -27268,8 +26582,8 @@
     "id": 23785477,
     "nombre": "Calle de Rabé de las Calzadas",
     "tipo": "Calle",
-    "lat": 40.5066151,
-    "lon": -3.6704823
+    "lat": 40.5066183,
+    "lon": -3.6704853
   },
   {
     "id": 23785487,
@@ -32287,8 +31601,8 @@
     "id": 27241080,
     "nombre": "Calle del Pintor Ignacio de Zuloaga",
     "tipo": "Calle",
-    "lat": 40.4850838,
-    "lon": -3.6508341
+    "lat": 40.4850651,
+    "lon": -3.6508044
   },
   {
     "id": 27268912,
@@ -32322,8 +31636,8 @@
     "id": 27273258,
     "nombre": "Calle del Pintor Antonio Saura",
     "tipo": "Calle",
-    "lat": 40.4840839,
-    "lon": -3.6493998
+    "lat": 40.4840675,
+    "lon": -3.649372
   },
   {
     "id": 27273259,
@@ -32784,8 +32098,8 @@
     "id": 27497576,
     "nombre": "Calle Carrero Juan Ramón",
     "tipo": "Calle",
-    "lat": 40.3792176,
-    "lon": -3.7287582
+    "lat": 40.3792052,
+    "lon": -3.7287612
   },
   {
     "id": 27497577,
@@ -32868,8 +32182,8 @@
     "id": 27498287,
     "nombre": "Calle de Francisco Paino",
     "tipo": "Calle",
-    "lat": 40.3819093,
-    "lon": -3.7287121
+    "lat": 40.3819113,
+    "lon": -3.7287196
   },
   {
     "id": 27498288,
@@ -33015,15 +32329,15 @@
     "id": 27508518,
     "nombre": "Calle Alfonso Martínez Conde",
     "tipo": "Calle",
-    "lat": 40.3809717,
-    "lon": -3.7296756
+    "lat": 40.3809728,
+    "lon": -3.7296797
   },
   {
     "id": 27508519,
     "nombre": "Calle del Papagallo",
     "tipo": "Calle",
-    "lat": 40.3814348,
-    "lon": -3.7292397
+    "lat": 40.3814315,
+    "lon": -3.729253
   },
   {
     "id": 27508520,
@@ -35875,13 +35189,6 @@
     "lon": -3.7897703
   },
   {
-    "id": 27880007,
-    "nombre": "Calle del Teniente General José de Querol Lombardero",
-    "tipo": "Calle",
-    "lat": 40.3800406,
-    "lon": -3.789324
-  },
-  {
     "id": 27880009,
     "nombre": "Calle de Oliva de Plasencia",
     "tipo": "Calle",
@@ -36130,7 +35437,7 @@
     "id": 27884978,
     "nombre": "Calle de San Fortunato",
     "tipo": "Calle",
-    "lat": 40.3731514,
+    "lat": 40.3731444,
     "lon": -3.6904343
   },
   {
@@ -36683,8 +35990,8 @@
     "id": 27886385,
     "nombre": "Calle del Afécto",
     "tipo": "Calle",
-    "lat": 40.3594271,
-    "lon": -3.6909824
+    "lat": 40.3594461,
+    "lon": -3.6909845
   },
   {
     "id": 27886400,
@@ -36795,8 +36102,8 @@
     "id": 27888383,
     "nombre": "Glorieta de Málaga",
     "tipo": "Calle",
-    "lat": 40.3755164,
-    "lon": -3.6956232
+    "lat": 40.3748574,
+    "lon": -3.6956327
   },
   {
     "id": 27888416,
@@ -40538,7 +39845,7 @@
   },
   {
     "id": 28195094,
-    "nombre": "Calle de Isabela Saberana",
+    "nombre": "Calle de Isabela Saverana",
     "tipo": "Calle",
     "lat": 40.3684791,
     "lon": -3.7594544
@@ -41370,13 +40677,6 @@
     "lon": -3.6044429
   },
   {
-    "id": 28385575,
-    "nombre": "Vereda de las Tapias del Monte Viñuelas",
-    "tipo": "Calle",
-    "lat": 40.6046718,
-    "lon": -3.6126987
-  },
-  {
     "id": 28390304,
     "nombre": "Calle de Abril",
     "tipo": "Calle",
@@ -42108,8 +41408,8 @@
     "id": 28730485,
     "nombre": "Calle de San Simplicio",
     "tipo": "Calle",
-    "lat": 40.3732651,
-    "lon": -3.6912832
+    "lat": 40.3732414,
+    "lon": -3.6912902
   },
   {
     "id": 28730615,
@@ -44348,8 +43648,8 @@
     "id": 28815701,
     "nombre": "Calle Eje 1",
     "tipo": "Calle",
-    "lat": 40.366481,
-    "lon": -3.653257
+    "lat": 40.3664886,
+    "lon": -3.6532336
   },
   {
     "id": 28815717,
@@ -44880,8 +44180,8 @@
     "id": 28906224,
     "nombre": "Calle de Robert Capa",
     "tipo": "Calle",
-    "lat": 40.3788529,
-    "lon": -3.7896801
+    "lat": 40.3788625,
+    "lon": -3.7896338
   },
   {
     "id": 28906844,
@@ -50323,13 +49623,6 @@
     "lon": -3.7639999
   },
   {
-    "id": 32338182,
-    "nombre": "Calle Abedul",
-    "tipo": "Calle",
-    "lat": 40.6173444,
-    "lon": -3.6251764
-  },
-  {
     "id": 32354436,
     "nombre": "Calle de Alverja",
     "tipo": "Calle",
@@ -50998,8 +50291,8 @@
     "id": 33691940,
     "nombre": "Avenida Eje Central",
     "tipo": "Calle",
-    "lat": 40.3658202,
-    "lon": -3.6527536
+    "lat": 40.3658349,
+    "lon": -3.6527303
   },
   {
     "id": 33691941,
@@ -51982,13 +51275,6 @@
     "lon": -3.7929614
   },
   {
-    "id": 36855877,
-    "nombre": "South State Street",
-    "tipo": "Calle",
-    "lat": 41.8737665,
-    "lon": -93.8204175
-  },
-  {
     "id": 36872979,
     "nombre": "Camino de Navahermosa",
     "tipo": "Calle",
@@ -52057,13 +51343,6 @@
     "tipo": "Calle",
     "lat": 40.4692751,
     "lon": -3.7053507
-  },
-  {
-    "id": 37058957,
-    "nombre": "334th Road",
-    "tipo": "Calle",
-    "lat": 41.8750376,
-    "lon": -93.8471784
   },
   {
     "id": 37065876,
@@ -52440,8 +51719,8 @@
     "id": 41726688,
     "nombre": "Camino del Pozo del Tío Raimundo",
     "tipo": "Calle",
-    "lat": 40.3749192,
-    "lon": -3.6510936
+    "lat": 40.3749146,
+    "lon": -3.6510923
   },
   {
     "id": 41768082,
@@ -52505,6 +51784,13 @@
     "tipo": "Calle",
     "lat": 40.4325271,
     "lon": -3.7191413
+  },
+  {
+    "id": 43405576,
+    "nombre": "Plaza de la Independencia",
+    "tipo": "Calle",
+    "lat": 40.4202176,
+    "lon": -3.6890748
   },
   {
     "id": 43407392,
@@ -53457,34 +52743,6 @@
     "tipo": "Calle",
     "lat": 40.4139735,
     "lon": -3.6860893
-  },
-  {
-    "id": 49366000,
-    "nombre": "Jonathan Drive",
-    "tipo": "Calle",
-    "lat": 41.8828477,
-    "lon": -93.8204062
-  },
-  {
-    "id": 49366001,
-    "nombre": "Madelyn Lane",
-    "tipo": "Calle",
-    "lat": 41.8826513,
-    "lon": -93.819187
-  },
-  {
-    "id": 49366003,
-    "nombre": "Swede Point Drive",
-    "tipo": "Calle",
-    "lat": 41.8828557,
-    "lon": -93.8180802
-  },
-  {
-    "id": 49366004,
-    "nombre": "Peterson Parkway",
-    "tipo": "Calle",
-    "lat": 41.8831674,
-    "lon": -93.8168756
   },
   {
     "id": 49778432,
@@ -56367,7 +55625,7 @@
     "id": 95564993,
     "nombre": "Calle Eje 3",
     "tipo": "Calle",
-    "lat": 40.3636066,
+    "lat": 40.3636031,
     "lon": -3.6515032
   },
   {
@@ -57349,20 +56607,6 @@
     "tipo": "Calle",
     "lat": 40.3975413,
     "lon": -3.6926064
-  },
-  {
-    "id": 105763508,
-    "nombre": "East 21st Street",
-    "tipo": "Calle",
-    "lat": 41.8787785,
-    "lon": -93.818055
-  },
-  {
-    "id": 105764734,
-    "nombre": "Commercial Drive",
-    "tipo": "Calle",
-    "lat": 41.8681019,
-    "lon": -93.8172949
   },
   {
     "id": 106594107,
@@ -60095,11 +59339,18 @@
     "lon": -3.6429297
   },
   {
+    "id": 131553948,
+    "nombre": "Calle del Teniente General José de Querol Lombardero",
+    "tipo": "Calle",
+    "lat": 40.3800832,
+    "lon": -3.7892773
+  },
+  {
     "id": 131553951,
     "nombre": "Calle del Doctor Fidel Pagés Miravé",
     "tipo": "Calle",
-    "lat": 40.3798564,
-    "lon": -3.7877732
+    "lat": 40.3798418,
+    "lon": -3.7877715
   },
   {
     "id": 131751223,
@@ -62016,8 +61267,8 @@
     "id": 147129188,
     "nombre": "Calle de Bucarest",
     "tipo": "Calle",
-    "lat": 40.4263616,
-    "lon": -3.6020669
+    "lat": 40.4263561,
+    "lon": -3.602064
   },
   {
     "id": 147129193,
@@ -62671,20 +61922,6 @@
     "lon": -3.7029311
   },
   {
-    "id": 166575097,
-    "nombre": "Road 337",
-    "tipo": "Calle",
-    "lat": 40.8398687,
-    "lon": -101.5516681
-  },
-  {
-    "id": 166576638,
-    "nombre": "Forbes Avenue",
-    "tipo": "Calle",
-    "lat": 40.8487105,
-    "lon": -101.5451754
-  },
-  {
     "id": 166827849,
     "nombre": "Palacio de la Música",
     "tipo": "Museo / Atracción",
@@ -62830,6 +62067,13 @@
     "tipo": "Parque",
     "lat": 40.4005918,
     "lon": -3.7098397
+  },
+  {
+    "id": 171493371,
+    "nombre": "BUS",
+    "tipo": "Calle",
+    "lat": 40.4837537,
+    "lon": -3.6163915
   },
   {
     "id": 171710202,
@@ -65395,10 +64639,10 @@
   },
   {
     "id": 210814085,
-    "nombre": "Parque de la Quinta de la Fuente del Berro",
+    "nombre": "Jardines de Sancho Dávila",
     "tipo": "Parque",
-    "lat": 40.4254596,
-    "lon": -3.661332
+    "lat": 40.4268155,
+    "lon": -3.6608185
   },
   {
     "id": 211712038,
@@ -70557,7 +69801,7 @@
     "nombre": "Calle de Berrioplana",
     "tipo": "Calle",
     "lat": 40.3747577,
-    "lon": -3.7357683
+    "lon": -3.735759
   },
   {
     "id": 334270375,
@@ -71491,13 +70735,6 @@
     "lon": -3.6354019
   },
   {
-    "id": 366721914,
-    "nombre": "BUS",
-    "tipo": "Calle",
-    "lat": 40.492626,
-    "lon": -3.6986227
-  },
-  {
     "id": 366806275,
     "nombre": "Camarena",
     "tipo": "Calle",
@@ -71809,8 +71046,8 @@
     "id": 400836762,
     "nombre": "UNED - Centro de zona Las Tablas",
     "tipo": "Universidad",
-    "lat": 40.504482,
-    "lon": -3.6661659
+    "lat": 40.5044853,
+    "lon": -3.6661685
   },
   {
     "id": 401655797,
@@ -71937,13 +71174,6 @@
     "tipo": "Calle",
     "lat": 40.3833457,
     "lon": -3.701773
-  },
-  {
-    "id": 412406120,
-    "nombre": "Calle San Fortunato",
-    "tipo": "Calle",
-    "lat": 40.3737254,
-    "lon": -3.689177
   },
   {
     "id": 412525046,
@@ -72237,7 +71467,7 @@
     "nombre": "Calle Crotón",
     "tipo": "Calle",
     "lat": 40.4681992,
-    "lon": -3.7074276
+    "lon": -3.7074269
   },
   {
     "id": 439693965,
@@ -72250,8 +71480,8 @@
     "id": 443193315,
     "nombre": "Museo de Sanidad e Higiene Pública",
     "tipo": "Museo / Atracción",
-    "lat": 40.4762859,
-    "lon": -3.690988
+    "lat": 40.476286,
+    "lon": -3.6909877
   },
   {
     "id": 444052143,
@@ -72576,32 +71806,11 @@
     "lon": -3.5881896
   },
   {
-    "id": 481054739,
-    "nombre": "Jensen Park",
-    "tipo": "Parque",
-    "lat": 41.8746227,
-    "lon": -93.8223827
-  },
-  {
-    "id": 481054747,
-    "nombre": "Edgewood Park",
-    "tipo": "Parque",
-    "lat": 41.8696071,
-    "lon": -93.8251072
-  },
-  {
     "id": 481277458,
     "nombre": "Jardín de la Carbonera",
     "tipo": "Parque",
     "lat": 40.4132107,
     "lon": -3.717964
-  },
-  {
-    "id": 481290916,
-    "nombre": "ESADE",
-    "tipo": "Universidad",
-    "lat": 40.4984972,
-    "lon": -3.705896
   },
   {
     "id": 481659102,
@@ -73661,13 +72870,6 @@
     "lon": -3.6508719
   },
   {
-    "id": 675590207,
-    "nombre": "Parkview Lane",
-    "tipo": "Calle",
-    "lat": 41.8701964,
-    "lon": -93.8223865
-  },
-  {
     "id": 675710245,
     "nombre": "Calle Varsovia",
     "tipo": "Calle",
@@ -73976,13 +73178,6 @@
     "lon": -3.7475155
   },
   {
-    "id": 787057354,
-    "nombre": "Brodie Lane",
-    "tipo": "Calle",
-    "lat": 41.8698221,
-    "lon": -93.814143
-  },
-  {
     "id": 788139880,
     "nombre": "Calle Costureras",
     "tipo": "Calle",
@@ -74030,13 +73225,6 @@
     "tipo": "Calle",
     "lat": 40.4008773,
     "lon": -3.6880122
-  },
-  {
-    "id": 807405090,
-    "nombre": "Road 338",
-    "tipo": "Calle",
-    "lat": 40.8828425,
-    "lon": -101.533931
   },
   {
     "id": 807541207,
@@ -74900,13 +74088,6 @@
     "lon": -3.7542613
   },
   {
-    "id": 1110950785,
-    "nombre": "Springer Court",
-    "tipo": "Calle",
-    "lat": 41.8799586,
-    "lon": -93.8112895
-  },
-  {
     "id": 1111337004,
     "nombre": "Plazuela de Lina Morgan",
     "tipo": "Plaza",
@@ -75652,8 +74833,8 @@
     "id": 1293523478,
     "nombre": "Camino de Hormigueras",
     "tipo": "Calle",
-    "lat": 40.3742357,
-    "lon": -3.6516192
+    "lat": 40.3742109,
+    "lon": -3.6516027
   },
   {
     "id": 1295730170,
@@ -75698,13 +74879,6 @@
     "lon": -3.6017944
   },
   {
-    "id": 1312919265,
-    "nombre": "Commerce Street",
-    "tipo": "Calle",
-    "lat": 31.0392007,
-    "lon": -85.3941476
-  },
-  {
     "id": 1316342003,
     "nombre": "Calle Circonita",
     "tipo": "Calle",
@@ -75722,8 +74896,8 @@
     "id": 1320807934,
     "nombre": "Conexión Anillo Verde / Carril Bici Villa de Vallecas",
     "tipo": "Calle",
-    "lat": 40.3667952,
-    "lon": -3.6534493
+    "lat": 40.366797,
+    "lon": -3.6534528
   },
   {
     "id": 1328108396,
@@ -76450,8 +75624,8 @@
     "id": 1435557130,
     "nombre": "Calle del Cabo de Infantería Idoia Rodríguez Buján",
     "tipo": "Calle",
-    "lat": 40.3803324,
-    "lon": -3.7878826
+    "lat": 40.3803257,
+    "lon": -3.7878838
   },
   {
     "id": 1435557131,
@@ -77126,13 +76300,6 @@
     "lon": -3.6649169
   },
   {
-    "id": 1526795601,
-    "nombre": "Arco Barrio Chino Usera",
-    "tipo": "Museo / Atracción",
-    "lat": 40.3831764,
-    "lon": -3.7077828
-  },
-  {
     "id": 1527256532,
     "nombre": "Museo Acciona / Auditorio",
     "tipo": "Museo / Atracción",
@@ -77355,5 +76522,19 @@
     "tipo": "Plaza",
     "lat": 40.4990973,
     "lon": -3.7292569
+  },
+  {
+    "id": 1572438982,
+    "nombre": "UNED Campus Senda del Rey",
+    "tipo": "Universidad",
+    "lat": 40.4370038,
+    "lon": -3.7359702
+  },
+  {
+    "id": 1573965552,
+    "nombre": "Parque de la Quinta de la Fuente del Berro",
+    "tipo": "Parque",
+    "lat": 40.4228458,
+    "lon": -3.661332
   }
 ]

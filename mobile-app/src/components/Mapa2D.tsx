@@ -38,7 +38,14 @@ export function Mapa2D({ onSeleccionarCoordenada, initialLat = 40.4168, initialL
       <div id="map"></div>
       <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
       <script>
-        var map = L.map('map').setView([${initialLat}, ${initialLon}], 16);
+        // Inicializar el mapa de Leaflet con opciones de zoom optimizadas y fluidas
+        var map = L.map('map', {
+          zoomSnap: 1,          // Fuerza niveles de zoom enteros para evitar saltos extraños
+          zoomDelta: 1,         // Incremento/decremento de zoom de 1 en 1 por clic o pellizco
+          scrollWheelZoom: true,// Habilitar zoom con la rueda del ratón con total fluidez
+          maxZoom: 19,          // Nivel máximo de zoom para ver detalles de edificios
+          minZoom: 3            // Nivel mínimo de zoom global
+        }).setView([${initialLat}, ${initialLon}], 16);
 
         // Usamos CartoDB (más rápido y fiable que OSM público)
         //L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {

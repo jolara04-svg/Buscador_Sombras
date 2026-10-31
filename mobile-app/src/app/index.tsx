@@ -123,6 +123,12 @@ export default function SolarCalculatorScreen() {
   const [isSearching, setIsSearching] = useState(false);
   const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Estado para la navegación con teclado en los resultados de búsqueda (versión web)
+  const [selectedIndex, setSelectedIndex] = useState(-1);
+
+  // Referencia para el ScrollView de resultados de búsqueda (permite auto-scroll al navegar con teclado)
+  const searchScrollRef = useRef<ScrollView>(null);
+
   // Valores truncados (solo para mostrar en el input)
   const [latitudeDisplay, setLatitudeDisplay] = useState('');
   const [longitudeDisplay, setLongitudeDisplay] = useState('');
@@ -215,13 +221,44 @@ export default function SolarCalculatorScreen() {
         return;
       }
 
-      // Combine date and time
-      const fechaHoraString = `${fechaOperacion}T${horaOperacion}:00`;
+      // Normalización flexible de la hora (ej: convierte "8:30" en "08:30" añadiendo un cero inicial)
+      let horaNormalizada = horaOperacion.trim();
+      const horaRegex = /^(\d):(\d{2})$/;
+      if (horaRegex.test(horaNormalizada)) {
+        horaNormalizada = horaNormalizada.replace(horaRegex, '0$1:$2');
+      }
+
+      // Normalización flexible de la fecha admitiendo formatos con barras o guiones
+      let fechaNormalizada = fechaOperacion.trim();
+      const currentYear = new Date().getFullYear();
+
+      // Caso 1: Formato con año (ej: 20/10/2026 o 20-10-2026) -> convierte a AAAA-MM-DD
+      const fechaConAnioRegex = /^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/;
+      if (fechaConAnioRegex.test(fechaNormalizada)) {
+        fechaNormalizada = fechaNormalizada.replace(fechaConAnioRegex, (_, d, m, y) => {
+          const dia = d.padStart(2, '0');
+          const mes = m.padStart(2, '0');
+          return `${y}-${mes}-${dia}`;
+        });
+      } else {
+        // Caso 2: Formato sin año (ej: 20/10 o 20-10) -> asume el año actual
+        const fechaSinAnioRegex = /^(\d{1,2})[\/\-](\d{1,2})$/;
+        if (fechaSinAnioRegex.test(fechaNormalizada)) {
+          fechaNormalizada = fechaNormalizada.replace(fechaSinAnioRegex, (_, d, m) => {
+            const dia = d.padStart(2, '0');
+            const mes = m.padStart(2, '0');
+            return `${currentYear}-${mes}-${dia}`;
+          });
+        }
+      }
+
+      // Combinar fecha y hora normalizadas en formato ISO para el objeto Date
+      const fechaHoraString = `${fechaNormalizada}T${horaNormalizada}:00`;
       const combinedDate = new Date(fechaHoraString);
 
-      // 2. Validamos que la fecha no sea inválida
+      // Validamos que la fecha resultante no sea inválida tras la normalización
       if (isNaN(combinedDate.getTime())) {
-        alert('Formato de fecha u hora inválido. Usa AAAA-MM-DD y HH:MM');
+        alert('Formato de fecha u hora no reconocido. Usa AAAA-MM-DD y HH:MM');
         return;
       }
 
@@ -277,6 +314,69 @@ export default function SolarCalculatorScreen() {
     }, 300);
   };
 
+  // Función auxiliar para manejar la selección de un resultado de búsqueda (clic o Enter)
+  const handleSelectResult = (item: any) => {
+    // Actualizar coordenadas principales para la calculadora solar y vista
+    setLatitude(String(item.lat));
+    setLongitude(String(item.lon));
+    setLatitudeDisplay(truncarA6Decimales(item.lat));
+    setLongitudeDisplay(truncarA6Decimales(item.lon));
+
+    if (modoBusqueda === 'lugar') {
+      setBusqueda(item.nombre);
+    } else if (modoBusqueda === 'ruta') {
+      if (tipoBusquedaRuta === 'destino') {
+        setDestino({ lat: item.lat, lon: item.lon });
+        setBusquedaDestino(item.nombre);
+        // Al fijar destino, pasamos a buscar origen automáticamente
+        setTipoBusquedaRuta('origen');
+      } else if (tipoBusquedaRuta === 'origen') {
+        setOrigen({ lat: item.lat, lon: item.lon });
+        setBusquedaOrigen(item.nombre);
+      }
+    }
+    // Limpiar resultados y reiniciar índice seleccionado para cerrar el panel inmediatamente
+    setSearchResults([]);
+    setSelectedIndex(-1);
+  };
+
+  // Manejador de eventos de teclado (Flechas Arriba/Abajo y Enter) para la lista de resultados
+  const handleKeyPress = (e: any) => {
+    const key = e.nativeEvent.key;
+    if (key === 'ArrowDown') {
+      setSelectedIndex((prev) => {
+        // Incrementar índice seleccionado sin exceder la cantidad de resultados
+        const newIndex = prev < searchResults.length - 1 ? prev + 1 : prev;
+        // Desplazar automáticamente el contenedor de resultados de búsqueda tras el renderizado
+        setTimeout(() => {
+          const itemHeight = 60; // Altura estimada de cada elemento de resultado en píxeles
+          if (newIndex >= 0) {
+            searchScrollRef.current?.scrollTo({ y: newIndex * itemHeight, animated: true });
+          }
+        }, 50);
+        return newIndex;
+      });
+    } else if (key === 'ArrowUp') {
+      setSelectedIndex((prev) => {
+        // Decrementar índice seleccionado sin bajar de -1
+        const newIndex = prev > -1 ? prev - 1 : -1;
+        // Desplazar automáticamente el contenedor de resultados (vuelve al inicio si es -1)
+        setTimeout(() => {
+          const itemHeight = 60;
+          if (newIndex >= 0) {
+            searchScrollRef.current?.scrollTo({ y: newIndex * itemHeight, animated: true });
+          } else {
+            searchScrollRef.current?.scrollTo({ y: 0, animated: true });
+          }
+        }, 50);
+        return newIndex;
+      });
+    } else if (key === 'Enter' && selectedIndex >= 0 && selectedIndex < searchResults.length) {
+      e.preventDefault?.();
+      handleSelectResult(searchResults[selectedIndex]);
+    }
+  };
+
   return (
 
     <ScrollView
@@ -299,28 +399,68 @@ export default function SolarCalculatorScreen() {
                       {/* 1. Buscador o Inputs de Ruta con botones integrados */}
                       <View style={styles.searchBar}>
                         {modoBusqueda === 'lugar' ? (
-                          <TextInput
-                            style={styles.searchInput}
-                            placeholder="Buscar lugar..."
-                            value={busqueda}
-                            onChangeText={(text) => {
-                              setBusqueda(text);
-                              handleTextChange(text);
-                            }}
-                          />
-                        ) : (
-                          <View style={styles.routeSearchWrapper}>
-                            {/* Input de Destino (siempre visible en modo ruta) */}
+                          <View style={styles.searchLugarRow}>
                             <TextInput
                               style={styles.searchInput}
-                              placeholder="¿A dónde quieres ir?"
-                              value={busquedaDestino}
+                              placeholder="Buscar lugar..."
+                              value={busqueda}
                               onChangeText={(text) => {
-                                setBusquedaDestino(text);
-                                setTipoBusquedaRuta('destino');
+                                setBusqueda(text);
+                                setSelectedIndex(-1); // Reiniciar selección al teclear
                                 handleTextChange(text);
                               }}
+                              onKeyPress={handleKeyPress}
                             />
+                            {/* Botón para limpiar la búsqueda de lugar (visible solo si hay texto escrito) */}
+                            {busqueda.length > 0 && (
+                              <Pressable
+                                style={styles.clearLugarButton}
+                                onPress={() => {
+                                  // Limpiar el estado de búsqueda
+                                  setBusqueda('');
+                                  // Limpiar los resultados de búsqueda para cerrar el desplegable
+                                  setSearchResults([]);
+                                }}
+                              >
+                                <Text style={styles.clearLugarButtonText}>✕</Text>
+                              </Pressable>
+                            )}
+                          </View>
+                        ) : (
+                          <View style={styles.routeSearchWrapper}>
+                            {/* Input de Destino (siempre visible en modo ruta) y botón de limpiar ruta */}
+                            <View style={styles.routeDestinationRow}>
+                              <TextInput
+                                style={styles.searchInput}
+                                placeholder="¿A dónde quieres ir?"
+                                value={busquedaDestino}
+                                onChangeText={(text) => {
+                                  setBusquedaDestino(text);
+                                  setTipoBusquedaRuta('destino');
+                                  setSelectedIndex(-1); // Reiniciar selección al teclear
+                                  handleTextChange(text);
+                                }}
+                                onKeyPress={handleKeyPress}
+                              />
+                              {/* Botón para limpiar la ruta (visible exclusivamente en modo ruta, al lado del destino) */}
+                              <Pressable
+                                style={styles.clearRouteButton}
+                                onPress={() => {
+                                  // Limpiar estados de origen y destino a null
+                                  setOrigen(null);
+                                  setDestino(null);
+                                  // Limpiar textos de búsqueda de origen y destino
+                                  setBusquedaDestino('');
+                                  setBusquedaOrigen('');
+                                  // Volver a poner el modo de selección en 'origen'
+                                  setModoSeleccion('origen');
+                                  // Cerrar el desplegable de resultados de búsqueda
+                                  setSearchResults([]);
+                                }}
+                              >
+                                <Text style={styles.clearRouteButtonText}>✕</Text>
+                              </Pressable>
+                            </View>
                             {/* Input de Origen (solo se muestra si ya se ha seleccionado un destino) */}
                             {destino !== null && (
                               <View style={styles.originInputRow}>
@@ -331,8 +471,10 @@ export default function SolarCalculatorScreen() {
                                   onChangeText={(text) => {
                                     setBusquedaOrigen(text);
                                     setTipoBusquedaRuta('origen');
+                                    setSelectedIndex(-1); // Reiniciar selección al teclear
                                     handleTextChange(text);
                                   }}
+                                  onKeyPress={handleKeyPress}
                                 />
                                 <Pressable
                                   style={styles.myLocationButton}
@@ -398,37 +540,18 @@ export default function SolarCalculatorScreen() {
       {/* Panel desplegable con resultados de búsqueda clicables (solo se muestra si hay búsqueda activa y resultados/carga) */}
       {(((modoBusqueda === 'lugar' && busqueda.trim().length >= 2) || (modoBusqueda === 'ruta' && ((tipoBusquedaRuta === 'destino' && busquedaDestino.trim().length >= 2) || (tipoBusquedaRuta === 'origen' && busquedaOrigen.trim().length >= 2)))) && (isSearching || searchResults.length > 0)) && (
         <View style={styles.searchResultsContainer}>
-          <ScrollView style={styles.searchResultsScroll} nestedScrollEnabled>
+          <ScrollView ref={searchScrollRef} style={styles.searchResultsScroll} nestedScrollEnabled>
             {isSearching ? (
               <Text style={styles.searchStatusText}>Buscando...</Text>
             ) : (
               searchResults.map((item, index) => (
                 <Pressable
                   key={item.id || index}
-                  style={styles.searchResultItem}
-                  onPress={() => {
-                    // Actualizar coordenadas principales para la calculadora solar y vista
-                    setLatitude(String(item.lat));
-                    setLongitude(String(item.lon));
-                    setLatitudeDisplay(truncarA6Decimales(item.lat));
-                    setLongitudeDisplay(truncarA6Decimales(item.lon));
-
-                    if (modoBusqueda === 'lugar') {
-                      setBusqueda(item.nombre);
-                    } else if (modoBusqueda === 'ruta') {
-                      if (tipoBusquedaRuta === 'destino') {
-                        setDestino({ lat: item.lat, lon: item.lon });
-                        setBusquedaDestino(item.nombre);
-                        // Al fijar destino, pasamos a buscar origen automáticamente
-                        setTipoBusquedaRuta('origen');
-                      } else if (tipoBusquedaRuta === 'origen') {
-                        setOrigen({ lat: item.lat, lon: item.lon });
-                        setBusquedaOrigen(item.nombre);
-                      }
-                    }
-                    // Limpiar resultados para cerrar el panel inmediatamente
-                    setSearchResults([]);
-                  }}
+                  style={[
+                    styles.searchResultItem,
+                    index === selectedIndex && { backgroundColor: '#e0e0e0' } // Resaltar opción seleccionada con teclado
+                  ]}
+                  onPress={() => handleSelectResult(item)}
                 >
                   <Text style={styles.searchResultName}>{item.nombre}</Text>
                   <Text style={styles.searchResultType}>{item.tipo}</Text>
@@ -723,6 +846,41 @@ const styles = StyleSheet.create({
   routeSearchWrapper: {
     flex: 1,
     gap: 8,
+  },
+  /* Estilos para la fila del buscador de lugar y su botón de borrado */
+  searchLugarRow: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  clearLugarButton: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+    backgroundColor: '#f0f0f0',
+  },
+  clearLugarButtonText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#666',
+  },
+  /* Estilos para la fila del input de destino y el botón de limpiar ruta */
+  routeDestinationRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  clearRouteButton: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+    backgroundColor: '#ffeeee',
+  },
+  clearRouteButtonText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#cc0000',
   },
   originInputRow: {
     flexDirection: 'row',
