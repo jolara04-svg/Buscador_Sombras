@@ -95,35 +95,3 @@ node --test tests/map-gesture.test.cjs
 node --test tests/shadow-map.test.cjs
 node --test tests/chunk-stream.test.cjs
 ```
-
-5. Guion rápido para explicarlo en directo
-------------------------------------------
-
-Las pruebas no modifican la aplicación. El backend se prueba levantando un servidor aislado y verificando sus endpoints. La app móvil prueba la lógica crítica con mocks, sin depender de un dispositivo físico, de una conexión real ni del renderizado 3D.
-
-Después de modificar el código, basta con volver a ejecutar `npm test` en el directorio correspondiente. Si alguna prueba falla, Node mostrará el nombre de la prueba y el error para localizar la regresión.
-
-Las pruebas del backend están en `backend/test` y las pruebas de la app móvil están en `mobile-app/tests`.
-
-### Peatones y ciclistas
-* Rutas que minimizan la exposición solar
-* Preferencias ajustables: sombra y distancia
-* Mapa 3D interactivo
-
-### Conductores
-* Búsqueda de aparcamiento cerca de las facultades de la UCM
-* Estimación de sombra durante la estancia del coche
-* Recomendación según cercanía y sombra
-
-## ¿Qué es necesario instalar para poder utilizar nuestra aplicación?
-Pincha en el enlace correspondiente para instalar nuestra aplicación y completa los siguientes pasos para ponerla en marcha en tu dispositivo:
-
-### Requisitos previos de instalación
-
-* **Verifica tu sistema operativo:** Asegúrate de que tu equipo cumpla con los requisitos mínimos de compatibilidad (Windows, macOS o Linux, según corresponda).
-* **Conexión a internet estable:** Necesaria para descargar los paquetes complementarios y sincronizar los datos iniciales de la aplicación.
-* **Dependencias recomendadas:** Algunas herramientas adicionales, como entornos de ejecución o librerías específicas, podrían solicitarse automáticamente durante el asistente de instalación.
-
-> **Consejo:** Sigue detalladamente cada instrucción que aparezca en pantalla tras hacer clic en el instalador para asegurarte de que todas las funciones queden configuradas correctamente.
-
-
