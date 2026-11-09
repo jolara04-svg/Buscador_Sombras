@@ -23,7 +23,7 @@ export function disposeChunk(model: THREE.Object3D) {
 // Streams one or more datasets that share the same tile manifest and neighbour policy.
 export class ChunkStream {
   readonly root = new THREE.Group();
-  readonly roots: Record<ChunkLayer, THREE.Group> = { buildings: this.root, trees: new THREE.Group() };
+  readonly roots: Record<ChunkLayer, THREE.Group> = { buildings: new THREE.Group(), trees: new THREE.Group() };
   readonly origin: { x: number; y: number };
   readonly tileSize: number;
   private base: string;
@@ -50,7 +50,7 @@ export class ChunkStream {
       this.entries.set(layer, new Map());
       this.manifests.set(layer, null);
       this.enabled.set(layer, options.layers ? options.layers.includes(layer) : layer === 'buildings');
-      if (layer === 'trees' && this.isLayerEnabled(layer)) this.root.add(this.roots[layer]);
+      this.root.add(this.roots[layer]);
       this.roots[layer].visible = this.isLayerEnabled(layer);
     }
   }
@@ -60,7 +60,6 @@ export class ChunkStream {
     this.enabled.set(layer, enabled);
     const root = this.roots[layer];
     root.visible = enabled;
-    if (enabled && layer === 'trees' && root.parent !== this.root) this.root.add(root);
     if (!enabled) {
       const entries = this.entries.get(layer)!;
       for (const entry of entries.values()) {
@@ -68,7 +67,6 @@ export class ChunkStream {
         if (entry.model) { root.remove(entry.model); disposeChunk(entry.model); }
       }
       entries.clear();
-      if (layer === 'trees' && root.parent === this.root) this.root.remove(root);
     }
     this.changed();
   }
@@ -77,17 +75,22 @@ export class ChunkStream {
   async initialize() {
     const enabled = (['buildings', 'trees'] as ChunkLayer[]).filter((layer) => this.isLayerEnabled(layer));
     if (!enabled.length) return new THREE.Vector3(this.tileSize, 0, this.tileSize);
-    const sizes: THREE.Vector3[] = [];
-    for (const layer of enabled) {
+    const sizes = (await Promise.all(enabled.map(async (layer) => {
       const controller = new AbortController(); const key = `${this.origin.x}/${this.origin.y}`;
       const entry: Entry = { controller }; this.entries.get(layer)!.set(key, entry);
-      const model = await this.fetchModel(layer, this.origin.x, this.origin.y, controller.signal);
-      if (!this.active || !this.isLayerEnabled(layer)) { disposeChunk(model); continue; }
-      const bounds = new THREE.Box3().setFromObject(model); if (bounds.isEmpty()) { disposeChunk(model); continue; }
-      this.ground.set(layer, bounds.min.y); model.position.y = -bounds.min.y; entry.model = model; this.roots[layer].add(model); sizes.push(bounds.getSize(new THREE.Vector3()));
-      void this.fetchManifest(layer, controller.signal);
-    }
-    return sizes[0] ?? null;
+      try {
+        const model = await this.fetchModel(layer, this.origin.x, this.origin.y, controller.signal);
+        if (!this.active || !this.isLayerEnabled(layer)) { disposeChunk(model); return null; }
+        const bounds = new THREE.Box3().setFromObject(model); if (bounds.isEmpty()) { disposeChunk(model); return null; }
+        this.ground.set(layer, bounds.min.y); model.position.y = -bounds.min.y; entry.model = model; this.roots[layer].add(model);
+        void this.fetchManifest(layer, controller.signal);
+        return bounds.getSize(new THREE.Vector3());
+      } catch (error) {
+        if (!this.active || !this.isLayerEnabled(layer) || controller.signal.aborted) return null;
+        throw error;
+      }
+    }))).filter((size): size is THREE.Vector3 => size !== null);
+    return sizes.length ? sizes.reduce((combined, size) => combined.max(size), new THREE.Vector3()) : null;
   }
 
   update(target: THREE.Vector3, distance: number, aspect: number) {

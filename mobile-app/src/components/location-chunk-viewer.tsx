@@ -621,7 +621,7 @@ function ChunkViewerSession({ chunkUrl, layers = ['buildings', 'trees'], selecti
             </Pressable>
           </View>
         )}
-        {selection && weights && onSelectionChange && onWeightChange && (
+        {status === 'ready' && selection && weights && onSelectionChange && onWeightChange && (
           <ShadowLayerControls selection={selection} weights={weights} onSelectionChange={(next) => {
             onSelectionChange(next);
             const stream = streamRef.current;

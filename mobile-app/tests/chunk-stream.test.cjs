@@ -71,13 +71,14 @@ test('ChunkStream loads neighbours, deduplicates, evicts and aborts', async () =
     stream.update(new THREE.Vector3(), 100, 1);
     assert.equal(pending.length, 3);
     await drain();
-    assert.equal(stream.root.children.length, 9);
+    assert.equal(stream.roots.buildings.children.length, 9);
+    assert.equal(stream.roots.trees.children.length, 0);
     assert.equal(stream.markers.length, 0);
     const count = requests.length;
     stream.update(new THREE.Vector3(), 100, 1);
     assert.equal(requests.length, count);
     stream.update(new THREE.Vector3(stream.tileSize * 10, 0, 0), 100, 1);
-    assert.equal(stream.root.children.length, 0);
+    assert.equal(stream.roots.buildings.children.length, 0);
     const outstanding = [...pending];
     stream.dispose();
     assert.ok(outstanding.every(({ signal }) => signal.aborted));
@@ -113,10 +114,15 @@ test('ChunkStream obtiene árboles por la capa separada y permite ocultarla', as
     assert.equal(stream.isLayerEnabled('trees'), true);
     stream.setLayerEnabled('trees', false);
     assert.equal(stream.isLayerEnabled('trees'), false);
-    assert.equal(stream.roots.trees.parent, null);
+    assert.equal(stream.roots.trees.parent, stream.root);
+    assert.equal(stream.roots.trees.visible, false);
     assert.doesNotThrow(() => stream.setLayerEnabled('buildings', false));
+    assert.equal(stream.root.visible, true);
+    assert.equal(stream.roots.buildings.visible, false);
+    assert.doesNotThrow(() => stream.setLayerEnabled('trees', true));
+    assert.equal(stream.roots.trees.visible, true);
     assert.doesNotThrow(() => stream.setLayerEnabled('buildings', true));
-    assert.equal(stream.roots.buildings, stream.root);
+    assert.equal(stream.roots.buildings.parent, stream.root);
   } finally {
     stream.dispose();
     global.fetch = originalFetch;
