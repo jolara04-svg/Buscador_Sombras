@@ -20,6 +20,7 @@ export function disposeChunk(model: THREE.Object3D) {
   });
 }
 
+
 /**
  * Clase encargada de gestionar el streaming y la carga progresiva de chunks 3D de edificios adyacentes.
  */
@@ -39,12 +40,15 @@ export class ChunkStream {
   private ground = new Map<ChunkLayer, number>();
   private active = true;
 
+
+  
+
   /**
    * Crea una instancia de ChunkStream para la ubicación dada.
    * @param {string} url - URL de la petición del chunk inicial.
    * @param {() => void} changed - Callback de notificación de cambios para re-renderizado.
    */
-  constructor(url: string, private changed: () => void) {
+constructor(url: string, private changed: () => void, options: { layers?: ChunkLayer[] } = {}) {
     const parsed = new URL(url);
     const lat = Number(parsed.searchParams.get('lat'));
     const lon = Number(parsed.searchParams.get('lon'));
