@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { vertexShader, fragmentShader, getShadowCastMatrix } from '/project-shader.js';
-import { project, evaluateEdge, distance } from './core.mjs';
+import { project, evaluateEdge, distance, combineShadowReaders } from './core.mjs';
 import { atlasAt, makeAdjacency, dijkstra, largestComponent, summarizeRoute } from './routing.mjs';
 
 const now = () => performance.now();
@@ -25,28 +25,33 @@ async function json(url) {
   return response.json();
 }
 
-let renderer, target, material, scene;
+let renderer, target, material, scenes;
 try {
   const started = now();
   sampleMemory('start');
   const [metadata, graph, generation] = await Promise.all([
     json('/scale/metadata'), json('/data/scale-graph.json'), json('/data/scale-generation.json')]);
   const graphLoaded = now();
-  const { config, tiles } = metadata;
+  const { config, tiles = [], tilesBySource = { buildings: tiles }, shadowSources = ['buildings'], shadowWeights } = metadata;
+  const activeSources = shadowSources.filter(source => ['buildings', 'trees'].includes(source));
   if (graph.config.sizeM !== config.sizeM || graph.config.center.lat !== config.center.lat || graph.config.center.lon !== config.center.lon) throw new Error('Configuracion y grafo no coinciden; regenera --scale');
   const initialServerMemory = await json('/scale/memory');
   sampleMemory('graph-loaded');
-  document.querySelector('#progress').textContent = `Grafo: ${graph.nodes.length} nodos, ${graph.edges.length} aristas. Cargando ${tiles.length} GLB…`;
-  scene = new THREE.Scene();
+  const requestedTiles = activeSources.reduce((total, source) => total + (tilesBySource[source] || []).length, 0);
+  document.querySelector('#progress').textContent = `Grafo: ${graph.nodes.length} nodos, ${graph.edges.length} aristas. Cargando ${requestedTiles} GLB…`;
+  scenes = Object.fromEntries(activeSources.map(source => [source, new THREE.Scene()]));
   const projection = getShadowCastMatrix(config.azimuthDeg, config.elevationDeg, 1);
   material = new THREE.ShaderMaterial({ vertexShader, fragmentShader,
     uniforms: { shadowCastMatrix: { value: projection }, shadowColor: { value: new THREE.Vector4(1, 1, 1, 1) } },
     side: THREE.DoubleSide, depthTest: false, depthWrite: false, blending: THREE.NoBlending });
   const loader = new GLTFLoader();
+  const sourceStats = Object.fromEntries(activeSources.map(source => [source, { tiles: 0, meshes: 0, triangles: 0, maxHeightM: 0, geometryBytes: 0 }]));
   let downloadMs = 0, parseMs = 0, prepareMs = 0, geometryBytes = 0, triangles = 0, maxHeightM = 0;
   const bufferSet = new Set(), perTile = [];
   const buildingsStarted = now();
-  for (const tile of tiles) {
+  for (const source of activeSources) for (const tile of tilesBySource[source] || []) {
+    const stats = sourceStats[source];
+    stats.tiles++;
     const t0 = now();
     const response = await fetch(tile.url, { cache: 'no-store' });
     if (!response.ok) throw new Error(`GLB no disponible: ${tile.url}`);
@@ -60,14 +65,16 @@ try {
     const offset = project(tile.center.lat, tile.center.lon, config.center);
     const ratio = Math.cos(config.center.lat * Math.PI / 180) / Math.cos(tile.center.lat * Math.PI / 180);
     for (const g of geometries) {
-      maxHeightM = Math.max(maxHeightM, g.boundingBox.max.z - bounds.min.z);
+      const height = g.boundingBox.max.z - bounds.min.z;
+      maxHeightM = Math.max(maxHeightM, height);
+      stats.maxHeightM = Math.max(stats.maxHeightM, height);
       g.translate(0, 0, -bounds.min.z); g.scale(ratio, ratio, 1); g.translate(offset[0], offset[1], 0);
       // El shader solo usa position e index: descartar normales, UV y otros
       // atributos que no aportan informacion a este paso de proyeccion.
       for (const key of Object.keys(g.attributes)) if (key !== 'position') g.deleteAttribute(key);
       for (const attr of [g.attributes.position, g.index].filter(Boolean)) {
         const arrayBuffer = attr.array.buffer;
-        if (!bufferSet.has(arrayBuffer)) { bufferSet.add(arrayBuffer); geometryBytes += arrayBuffer.byteLength; }
+        if (!bufferSet.has(arrayBuffer)) { bufferSet.add(arrayBuffer); geometryBytes += arrayBuffer.byteLength; stats.geometryBytes += arrayBuffer.byteLength; }
       }
       const count = (g.index?.count || g.attributes.position.count) / 3;
       triangles += count;
@@ -79,7 +86,7 @@ try {
       }
       const mesh = new THREE.Mesh(g, material); mesh.frustumCulled = false;
       mesh.userData.projectedBounds = box; mesh.userData.triangles = count;
-      scene.add(mesh);
+      scenes[source].add(mesh); stats.meshes++; stats.triangles += count;
     }
     gltf.scene.traverse(o => {
       if (o.isMesh) { o.geometry.dispose(); for (const m of Array.isArray(o.material) ? o.material : [o.material]) m.dispose(); }
@@ -132,33 +139,45 @@ try {
       document.querySelector('#progress').textContent = `${cols ** 2} zonas · repetición ${repetition + 1}/${config.repetitions}`;
       await yieldUI();
       const t0 = now();
-      const atlas = [], maskTimings = [];
+      const atlas = Object.fromEntries(activeSources.map(source => [source, []]));
+      const maskTimings = [];
       let renderMs = 0, readMs = 0, packMs = 0;
       for (let row = 0; row < cols; row++) for (let col = 0; col < cols; col++) {
         const x0 = bounds.minX + col * config.zoneSizeM, y0 = bounds.minY + row * config.zoneSizeM;
         let submittedTriangles = 0;
-        for (const mesh of scene.children) {
+        for (const source of activeSources) for (const mesh of scenes[source].children) {
           const b = mesh.userData.projectedBounds;
           mesh.visible = b.max.x >= x0 && b.min.x < x0 + config.zoneSizeM && b.max.y >= y0 && b.min.y < y0 + config.zoneSizeM;
           if (mesh.visible) submittedTriangles += mesh.userData.triangles;
         }
         camera.position.set(x0 + zHalf, y0 + zHalf, 1000);
-        const r0 = now();
-        renderer.setRenderTarget(target); renderer.render(scene, camera);
-        const r1 = now();
-        renderer.readRenderTargetPixels(target, 0, 0, config.resolution, config.resolution, rgba);
-        const r2 = now();
-        // Persistir solo 1 byte por pixel, reutilizando el staging RGBA y el
-        // render target. No acumulamos nueve render targets de 4 MB cada uno.
-        const mask = new Uint8Array(config.resolution ** 2);
-        for (let p = 0; p < mask.length; p++) mask[p] = rgba[p * 4] >= 128 ? 1 : 0;
-        atlas.push(mask);
-        const r3 = now();
-        renderMs += r1 - r0; readMs += r2 - r1; packMs += r3 - r2;
-        maskTimings.push({ row, col, submittedTriangles, renderMs: r1 - r0, readbackMs: r2 - r1, packMs: r3 - r2 });
+        let cellRenderMs = 0, cellReadMs = 0, cellPackMs = 0;
+        for (const source of activeSources) {
+          const renderStarted = now();
+          renderer.setRenderTarget(target); renderer.clear(); renderer.render(scenes[source], camera);
+          const renderFinished = now();
+          renderer.readRenderTargetPixels(target, 0, 0, config.resolution, config.resolution, rgba);
+          const readFinished = now();
+          // Persistir solo 1 byte por pixel, reutilizando el staging RGBA y el
+          // render target. No acumulamos nueve render targets de 4 MB cada uno.
+          const mask = new Uint8Array(config.resolution ** 2);
+          for (let p = 0; p < mask.length; p++) mask[p] = rgba[p * 4] >= 128 ? 1 : 0;
+          atlas[source].push(mask);
+          const packed = now();
+          cellRenderMs += renderFinished - renderStarted;
+          cellReadMs += readFinished - renderFinished;
+          cellPackMs += packed - readFinished;
+        }
+        renderMs += cellRenderMs; readMs += cellReadMs; packMs += cellPackMs;
+        maskTimings.push({ row, col, submittedTriangles, renderMs: cellRenderMs, readbackMs: cellReadMs, packMs: cellPackMs, sources: activeSources });
       }
       const t1 = now();
-      const readMask = (x, y) => atlasAt(atlas, bounds, cols, config.zoneSizeM, config.resolution, x, y);
+      const readSource = source => activeSources.includes(source)
+        ? (x, y) => atlasAt(atlas[source], bounds, cols, config.zoneSizeM, config.resolution, x, y)
+        : null;
+      const readMask = activeSources.length
+        ? combineShadowReaders(readSource('buildings'), readSource('trees'), shadowWeights)
+        : () => 0;
       const exposure = edges.map(e => evaluateEdge(e, readMask, config.sampleStepM, config.sunPenalty));
       const t2 = now();
       if (exposure.some(e => e.cost === null)) throw new Error('Muestra sin cobertura entre mascaras');
@@ -194,7 +213,7 @@ try {
         evaluateEdgesMs: t2 - t1, adjacencyMs: t3 - t2, routeBatchMs: t4 - t3,
         pipelineMs: t4 - t0, cachedSearchMs: stats(cachedSearchTimes), maskTimings,
         samples: sum(exposure, 'samples'), shadeM: sum(exposure, 'shadeM'), sunM: sum(exposure, 'sunM'),
-        atlasCpuBytes: atlas.reduce((a, m) => a + m.byteLength, 0),
+        atlasCpuBytes: Object.values(atlas).reduce((total, masks) => total + masks.reduce((a, m) => a + m.byteLength, 0), 0),
         // Solo fracciones en Float32, sin IDs ni contenedores: limite inferior.
         compactExposurePayloadBytes: exposure.length * 4, routes
       };
@@ -249,7 +268,7 @@ try {
       }
       // Liberar referencias: la siguiente repeticion puede recoger el atlas.
       // El GC de JS no garantiza liberacion inmediata; las medidas lo reflejan.
-      atlas.length = 0;
+      for (const source of activeSources) atlas[source].length = 0;
     }
     scenarios.push({ zones: cols ** 2, sideM: side, areaKm2: side ** 2 / 1e6, edges: edges.length,
       nodes: components.totalNodes, components: components.count, largestComponentNodes: components.nodes.length,
@@ -265,9 +284,12 @@ try {
   const report = {
     generatedAt: new Date().toISOString(), config, generation,
     graph: { nodes: graph.nodes.length, edges: graph.edges.length, jsonBytes: generation.graphBytes },
-    buildings: { tiles: tiles.length, requestedTiles: metadata.requestedTileCount,
-      downloadedBytes: tiles.reduce((a, t) => a + t.bytes, 0), meshes: scene.children.length, triangles,
-      retainedGeometryCpuBytes: geometryBytes, maxHeightM, shadowReachM, casterMarginM: config.casterMarginM, perTile },
+    buildings: { tiles: sourceStats.buildings?.tiles || 0, requestedTiles: metadata.requestedTileCount,
+      downloadedBytes: (tilesBySource.buildings || []).reduce((a, t) => a + t.bytes, 0),
+      meshes: sourceStats.buildings?.meshes || 0, triangles: sourceStats.buildings?.triangles || 0,
+      retainedGeometryCpuBytes: sourceStats.buildings?.geometryBytes || 0,
+      maxHeightM: sourceStats.buildings?.maxHeightM || 0, shadowReachM, casterMarginM: config.casterMarginM, perTile },
+    shadowSources: activeSources, shadowWeights, sources: sourceStats,
     loadTimingMs: { graphAndMetadataFetchParse: graphLoaded - started, buildingStage: buildingsLoaded - buildingsStarted,
       glbDownload: downloadMs, glbParse: parseMs, glbPrepare: prepareMs,
       // Este total incluye inicializacion, nueve ensayos y visualizacion: no es
@@ -285,7 +307,7 @@ try {
       interZonePairsSucceeded: finalView.routes.filter(r => r.shaded && r.sourceZone !== r.targetZone).length,
       comparisonsChecked: 'Coste ponderado de ruta sombreada <= coste de ruta corta; longitud de ruta corta <= sombreada' },
     limitations: ['Datos locales, sin latencia de Internet en peticiones de rutas', 'GLB cache no-store pero cache del sistema operativo no vaciada',
-      'Sol fijo; suelo plano y normalizacion de alturas por chunk; sin arboles',
+      'Sol fijo; suelo plano y normalizacion de alturas por chunk',
       'Tiles ausentes no certifican ausencia de edificios; margen comprobado solo con alturas cargadas',
       'Endpoints elegidos en componente debil mayor, sin snapping ni validacion de accesos',
       'Misma escena ampliada residente para comparar 1/4/9 zonas; se filtran meshes por bounds proyectados',
@@ -300,13 +322,13 @@ try {
     cortaM: r.shortest?.lengthM, sombreadaM: r.shaded?.lengthM, solCortaM: r.shortest?.sunM, solSombreadaM: r.shaded?.sunM }));
   document.querySelector('#status').textContent = JSON.stringify({ loadTimingMs: report.loadTimingMs,
     firstNineZoneRequestMs: report.firstNineZoneRequestMs, memory: { jsHeapObservedMB: report.memory.largestObservedJsHeapBytes / 1048576,
-      geometryMB: geometryBytes / 1048576, atlasMB: 9, stagingMB: 4, renderTargetColorMB: 4 }, routes: summaries,
+      geometryMB: geometryBytes / 1048576, atlasMB: 9 * activeSources.length, stagingMB: 4, renderTargetColorMB: 4 }, routes: summaries,
     limitations: report.limitations }, null, 2);
   document.querySelector('#progress').textContent = 'Prueba completada. Selecciona una ruta para comparar distancia y sombra.';
-  target.dispose(); material.dispose(); scene.traverse(o => { if (o.isMesh) o.geometry.dispose(); }); renderer.dispose();
+  target.dispose(); material.dispose(); Object.values(scenes).forEach(sourceScene => sourceScene.traverse(o => { if (o.isMesh) o.geometry.dispose(); })); renderer.dispose();
   window.experimentResult = report;
 } catch (error) {
   window.experimentError = error.stack || String(error);
   document.querySelector('#status').textContent = window.experimentError;
-  target?.dispose(); material?.dispose(); scene?.traverse(o => { if (o.isMesh) o.geometry.dispose(); }); renderer?.dispose();
+  target?.dispose(); material?.dispose(); Object.values(scenes || {}).forEach(sourceScene => sourceScene.traverse(o => { if (o.isMesh) o.geometry.dispose(); })); renderer?.dispose();
 }

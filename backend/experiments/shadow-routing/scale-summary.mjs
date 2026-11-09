@@ -7,6 +7,11 @@ export async function writeScaleSummary(report, outputUrl) {
   const mib = n => f(n / 1048576);
   const full = report.scenarios.find(s => s.zones === 9);
   const routes = full.repetitions[0].routes;
+  const sourceLabels = { buildings: 'edificios', trees: 'vegetación' };
+  const sourceSummary = Object.entries(report.sources || {}).map(([source, stats]) =>
+    `${sourceLabels[source] || source}: ${stats.tiles} GLB, ${stats.triangles.toLocaleString('es-ES')} triángulos`).join('; ');
+  const weightSummary = Object.entries(report.shadowWeights || {}).map(([source, weight]) =>
+    `${sourceLabels[source] || source}=${weight}`).join(', ');
   const text = `# Resultado de la prueba ampliada
 
 Fecha de ejecución (UTC): ${report.generatedAt}.
@@ -22,18 +27,18 @@ Fecha de ejecución (UTC): ${report.generatedAt}.
 2. Conservar un único grafo de **${report.graph.nodes} nodos y ${report.graph.edges}
    aristas**, con direcciones peatonales. No se corta el grafo en las fronteras
    de las máscaras. El JSON ocupa ${mib(report.graph.jsonBytes)} MiB.
-3. Cargar **${report.buildings.tiles} GLB**, ${f(report.buildings.downloadedBytes / 1e6)} MB
-   de archivos y ${report.buildings.triangles.toLocaleString('es-ES')} triángulos.
-   Se incluye contexto exterior para sombras entrantes. La altura máxima del
-   modelo cargado produce ${f(report.buildings.shadowReachM)} m de desplazamiento,
-   menor que el margen configurado de ${report.buildings.casterMarginM} m.
+3. Cargar las capas seleccionadas (${sourceSummary}). Se incluye contexto exterior
+   para sombras entrantes. La altura máxima del modelo cargado produce
+   ${f(report.buildings.shadowReachM)} m de desplazamiento, menor que el margen
+   configurado de ${report.buildings.casterMarginM} m.
 4. Reutilizar el shader del proyecto para crear máscaras independientes de
    512 × 512 m a 0,5 m/píxel. Cada máscara se renderiza en el mismo target de
    1024 × 1024, se lee de una vez y se reduce a un byte por píxel. Se descartan
    meshes cuyos límites PROYECTADOS no intersectan la zona, no sus límites originales.
 5. Muestrear los caminos cada 2 m como máximo. Una arista que cruza una frontera
-   consulta ambas máscaras. Acumular sombra y sol por longitud y aplicar
-   peso = metros_sombra + 4 × metros_sol. La nueva visualización colorea cada
+   consulta las máscaras de todas las fuentes activas, combinadas con los pesos
+   ${weightSummary}. Acumular sombra y sol por longitud y aplicar peso =
+   metros_sombra + 4 × metros_sol. La nueva visualización colorea cada
    intervalo: verde coincide con sombra según la resolución de muestreo; naranja con sol.
 6. Implementar Dijkstra con lista de adyacencia y heap binario. Comparar tres
    pares de extremos: SO→NE, NO→SE y oeste→este, para cada uno por distancia y
@@ -46,12 +51,12 @@ Fecha de ejecución (UTC): ${report.generatedAt}.
 ## Tiempos observados
 
 Carga local del grafo y metadata: **${f(report.loadTimingMs.graphAndMetadataFetchParse)} ms**.
-Carga y preparación de todos los edificios: **${f(report.loadTimingMs.buildingStage)} ms**,
+Carga y preparación de todas las capas: **${f(report.loadTimingMs.buildingStage)} ms**,
 incluyendo ${f(report.loadTimingMs.glbDownload)} ms de transferencia local,
 ${f(report.loadTimingMs.glbParse)} ms de parseo y ${f(report.loadTimingMs.glbPrepare)} ms
 de transformación/preparación.
 
-Medianas de tres repeticiones, con edificios ya cargados:
+Medianas de tres repeticiones, con las capas ya cargadas:
 
 | Zonas | Superficie km² | Aristas | Máscaras ms | Muestreo ms | 6 búsquedas y métricas ms | Proceso completo ms |
 |---:|---:|---:|---:|---:|---:|---:|
@@ -118,7 +123,7 @@ reutilizar esos valores entre usuarios sin regenerar sombras por petición.
 un solo Sol fijo y WebGL por software (SwiftShader). Los datos proceden de disco
 local y no se ha vaciado la caché del sistema operativo. Tres repeticiones no
 permiten predecir capacidad concurrente ni extrapolar linealmente a todo el municipio.
-Faltan validación de relieve, árboles, georreferencia, cobertura y accesos; un
+Faltan validación de relieve, georreferencia, cobertura y accesos; un
 tile ausente no certifica ausencia de edificios. El grafo tiene componentes
 desconectados y los endpoints se eligieron explícitamente en el mayor.
 

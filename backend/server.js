@@ -4,7 +4,18 @@ const fs = require('fs');
 const cors = require('cors');
 const Fuse = require('fuse.js');
 
-const manifest = require('./madrid_chunks/manifest.json');
+const manifests = {
+  buildings: require('./madrid_chunks/manifest.json'),
+  trees: require('./madrid_trees/manifest.json'),
+};
+const layerDirectories = {
+  buildings: 'madrid_chunks',
+  trees: 'madrid_trees',
+};
+const layerNames = {
+  buildings: 'edificios',
+  trees: 'árboles',
+};
 
 const app = express();
 const PORT = 3000;
@@ -58,14 +69,49 @@ function latLonToTile(lat, lon, zoom = 16) {
 }
 
 // Comprueba si tenemos ese chunk en coordenadas Mercator.
-function chunkExiste(x, y) {
-  const ys = manifest[String(x)];
+function getLayer(layer) {
+  return typeof layer === 'string' && Object.prototype.hasOwnProperty.call(manifests, layer)
+    ? layer
+    : null;
+}
+
+function isTileCoordinate(value) {
+  return /^\d+$/.test(value);
+}
+
+function chunkExiste(layer, x, y) {
+  const layerManifest = manifests[layer];
+  const ys = layerManifest[String(x)];
   return ys ? ys.includes(String(y)) : false;
+}
+
+function chunkPath(layer, z, x, y) {
+  return path.join(__dirname, layerDirectories[layer], String(z), String(x), `${y}.glb`);
+}
+
+function sendChunk(req, res, layer, z, x, y) {
+  if (!getLayer(layer)) {
+    return res.status(400).json({ error: 'La capa debe ser "buildings" o "trees".' });
+  }
+  if (Number(z) !== ZOOM || !isTileCoordinate(x) || !isTileCoordinate(y) || !chunkExiste(layer, x, y)) {
+    return res.status(404).json({ error: `No existe ese chunk de ${layer}.` });
+  }
+
+  res.setHeader('Content-Type', 'model/gltf-binary');
+  return res.sendFile(chunkPath(layer, z, x, y));
 }
 
 // Endpoint para obtener el manifest
 app.get('/manifest', (req, res) => {
-  res.json(manifest);
+  res.json(manifests.buildings);
+});
+
+app.get('/manifest/:layer', (req, res) => {
+  const layer = getLayer(req.params.layer);
+  if (!layer) {
+    return res.status(400).json({ error: 'La capa debe ser "buildings" o "trees".' });
+  }
+  return res.json(manifests[layer]);
 });
 
 // -------------------------------------------------------------
@@ -92,6 +138,10 @@ app.get('/api/search', (req, res) => {
 // Ejemplo: GET /chunk?lat=40.4168&lon=-3.7038
 // -------------------------------------------------------------
 app.get('/chunk', (req, res) => {
+  const layer = req.query.layer || 'buildings';
+  if (!getLayer(layer)) {
+    return res.status(400).json({ error: 'La capa debe ser "buildings" o "trees".' });
+  }
   const lat = parseFloat(req.query.lat);
   const lon = parseFloat(req.query.lon);
 
@@ -103,19 +153,15 @@ app.get('/chunk', (req, res) => {
   const { x, y, z } = latLonToTile(lat, lon, ZOOM);
 
   // 2. Comprobamos si el chunk existe
-  if (!chunkExiste(x, y)) {
+  if (!chunkExiste(layer, x, y)) {
     return res.status(404).json({
-      error: 'Sin edificios 3D en esta zona.',
+      error: `Sin ${layerNames[layer]} 3D en esta zona.`,
       tile: { z, x, y }
     });
   }
 
   // 3. Ruta al archivo .glb
-  const filePath = path.join(__dirname, 'madrid_chunks', String(z), String(x), `${y}.glb`);
-
-  // 4. Enviamos el archivo con la cabecera MIME correcta para glTF binario
-  res.setHeader('Content-Type', 'model/gltf-binary');
-  res.sendFile(filePath);
+  return sendChunk(req, res, layer, z, x, y);
 });
 
 // -------------------------------------------------------------
@@ -124,15 +170,12 @@ app.get('/chunk', (req, res) => {
 // -------------------------------------------------------------
 app.get('/tiles/:z/:x/:y.glb', (req, res) => {
   const { z, x, y } = req.params;
-  
-  if (Number(z) !== ZOOM || !chunkExiste(x, y)) {
-    return res.status(404).send('Not Found');
-  }
+  return sendChunk(req, res, 'buildings', z, x, y);
+});
 
-  const filePath = path.join(__dirname, 'madrid_chunks', z, x, `${y}.glb`);
-
-  res.setHeader('Content-Type', 'model/gltf-binary');
-  res.sendFile(filePath);
+app.get('/tiles/:layer/:z/:x/:y.glb', (req, res) => {
+  const { layer, z, x, y } = req.params;
+  return sendChunk(req, res, layer, z, x, y);
 });
 
 app.listen(PORT, () => {

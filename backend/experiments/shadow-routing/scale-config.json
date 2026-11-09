@@ -9,5 +9,7 @@
   "azimuthDeg": 180,
   "elevationDeg": 35,
   "sunPenalty": 4,
-  "repetitions": 3
+  "repetitions": 3,
+  "shadowSources": ["buildings", "trees"],
+  "shadowWeights": { "buildings": 1.0, "trees": 0.75 }
 }

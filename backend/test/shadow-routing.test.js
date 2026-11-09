@@ -82,6 +82,20 @@ test('exposicion: ponderar longitud, conservar metros y penalizar solo sol', asy
   assert.equal(evaluateEdge(edge, () => null).cost, null);
   assert.throws(() => evaluateEdge(edge, () => 0, 0));
 });
+test('fuentes de sombra: combina edificios y arboles con pesos configurables', async () => {
+  const { combineShadowSources, combineShadowReaders, DEFAULT_SHADOW_WEIGHTS, evaluateEdge } = await core;
+  assert.equal(DEFAULT_SHADOW_WEIGHTS.buildings, 1);
+  assert.equal(DEFAULT_SHADOW_WEIGHTS.trees, 0.75);
+  assert.equal(combineShadowSources(1, null), 1);
+  assert.equal(combineShadowSources(null, 1), 0.75);
+  assert.equal(combineShadowSources(0.5, 0.5), 0.875);
+  assert.equal(combineShadowSources(null, null), null);
+  const read = combineShadowReaders(() => 0, () => 1, { buildings: 1, trees: 0.75 });
+  const edge = evaluateEdge({ id: 'weighted', geometry: [[0, 0], [4, 0]] }, read, 1, 4);
+  assert.equal(edge.shadeM, 3);
+  assert.equal(edge.sunM, 1);
+  assert.equal(edge.cost, 7);
+});
 test('grafo: identidad OSM, accesos peatonales y direccion propia', async () => {
   const { buildGraph, unproject, project } = await core;
   const config = { center: { lat: 40.45, lon: -3.73 }, sizeM: 512 };

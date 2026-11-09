@@ -187,9 +187,10 @@ function applyMaterials(objs:Object3D[], triangles:Sheet[], paralelograms:Sheet[
     const meshes:Mesh[]=[];
     triangles.forEach((sheet)=>applyMaterial(geometries, sheet, light, color, layer, triangleDefines, meshes));
     paralelograms.forEach((sheet)=>applyMaterial(geometries, sheet, light, color, layer, paralelogramDefines, meshes));
+    return meshes;
 }
 
-function applyMaterialsNone(objs:Object3D, azimuth:number, elevation:number, color:Vector4, layer:number):Mesh[]{
+function applyMaterialsNone(objs:Object3D[], azimuth:number, elevation:number, color:Vector4, layer:number):Mesh[]{
     const light:Vector3=vecFromPolar(pi180*azimuth, pi180*elevation);
     const geometries:BufferGeometry[]=extractGeometries(objs);
     const meshes:Mesh[]=[];

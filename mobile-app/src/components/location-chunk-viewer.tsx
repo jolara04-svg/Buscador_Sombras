@@ -665,7 +665,7 @@ const styles = StyleSheet.create({
   },
   zoomControls: {
     position: 'absolute',
-    top: 12,
+    bottom: 12,
     right: 12,
     gap: 8,
   },

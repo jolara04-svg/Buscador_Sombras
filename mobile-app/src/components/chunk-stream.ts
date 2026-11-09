@@ -2,7 +2,10 @@ import * as THREE from 'three';
 import { GLTFLoader, type GLTF } from 'three/examples/jsm/loaders/GLTFLoader.js';
 
 const TILE_COUNT = 2 ** 16;
-export type ChunkMarker = { key: string; position: THREE.Vector3; failed: boolean };
+export type ChunkLayer = 'buildings' | 'trees';
+export type ChunkMarker = { key: string; position: THREE.Vector3; failed: boolean; layer?: ChunkLayer };
+
+type Entry = { model?: THREE.Object3D; marker?: ChunkMarker; controller: AbortController };
 
 export function disposeChunk(model: THREE.Object3D) {
   model.traverse((object) => {
@@ -13,126 +16,96 @@ export function disposeChunk(model: THREE.Object3D) {
   });
 }
 
-// Dataset coordinates are local ENU around each Slippy tile's centre, in metres.
+// Streams one or more datasets that share the same tile manifest and neighbour policy.
 export class ChunkStream {
   readonly root = new THREE.Group();
+  readonly roots: Record<ChunkLayer, THREE.Group> = { buildings: this.root, trees: new THREE.Group() };
   readonly origin: { x: number; y: number };
   readonly tileSize: number;
   private base: string;
-  private entries = new Map<string, { model?: THREE.Object3D; marker?: ChunkMarker; controller: AbortController }>();
-  private manifest: Record<string, string[]> | null = null;
-  private active = true;
+  private entries = new Map<ChunkLayer, Map<string, Entry>>();
+  private manifests = new Map<ChunkLayer, Record<string, string[]> | null>();
+  private enabled = new Map<ChunkLayer, boolean>();
   private desired = new Set<string>();
-  private queue: { x: number; y: number }[] = [];
+  private queue: { layer: ChunkLayer; x: number; y: number }[] = [];
   private running = 0;
-  private ground = 0;
+  private ground = new Map<ChunkLayer, number>();
+  private active = true;
 
-  constructor(url: string, private changed: () => void) {
+  constructor(url: string, private changed: () => void, options: { layers?: ChunkLayer[] } = {}) {
     const parsed = new URL(url);
     const lat = Number(parsed.searchParams.get('lat'));
     const lon = Number(parsed.searchParams.get('lon'));
     if (!Number.isFinite(lat) || !Number.isFinite(lon)) throw new Error('Ubicación 3D inválida.');
     const rad = lat * Math.PI / 180;
-    this.origin = {
-      x: Math.floor((lon + 180) / 360 * TILE_COUNT),
-      y: Math.floor((1 - Math.asinh(Math.tan(rad)) / Math.PI) / 2 * TILE_COUNT),
-    };
+    this.origin = { x: Math.floor((lon + 180) / 360 * TILE_COUNT), y: Math.floor((1 - Math.asinh(Math.tan(rad)) / Math.PI) / 2 * TILE_COUNT) };
     const centreLat = Math.atan(Math.sinh(Math.PI * (1 - 2 * (this.origin.y + 0.5) / TILE_COUNT)));
     this.tileSize = 2 * Math.PI * 6378137 * Math.cos(centreLat) / TILE_COUNT;
     this.base = parsed.origin;
+    for (const layer of ['buildings', 'trees'] as ChunkLayer[]) {
+      this.entries.set(layer, new Map());
+      this.manifests.set(layer, null);
+      this.enabled.set(layer, options.layers ? options.layers.includes(layer) : layer === 'buildings');
+      if (layer === 'trees' && this.isLayerEnabled(layer)) this.root.add(this.roots[layer]);
+      this.roots[layer].visible = this.isLayerEnabled(layer);
+    }
   }
 
-  get markers() {
-    return [...this.entries.values()].flatMap((entry) => entry.marker ? [entry.marker] : []);
+  get markers() { return [...this.entries].flatMap(([layer, entries]) => [...entries.values()].flatMap((entry) => entry.marker ? [{ ...entry.marker, layer }] : [])); }
+  setLayerEnabled(layer: ChunkLayer, enabled: boolean) {
+    this.enabled.set(layer, enabled);
+    const root = this.roots[layer];
+    root.visible = enabled;
+    if (enabled && root.parent !== this.root) this.root.add(root);
+    if (!enabled) {
+      const entries = this.entries.get(layer)!;
+      for (const entry of entries.values()) {
+        entry.controller.abort();
+        if (entry.model) { root.remove(entry.model); disposeChunk(entry.model); }
+      }
+      entries.clear();
+      if (layer === 'trees' && root.parent === this.root) this.root.remove(root);
+    }
+    this.changed();
   }
+  isLayerEnabled(layer: ChunkLayer) { return this.enabled.get(layer) === true; }
 
   async initialize() {
-    const controller = new AbortController();
-    const key = `${this.origin.x}/${this.origin.y}`;
-    this.entries.set(key, { controller });
-    const model = await this.fetchModel(this.origin.x, this.origin.y, controller.signal);
-    if (!this.active) { disposeChunk(model); return null; }
-    const bounds = new THREE.Box3().setFromObject(model);
-    if (bounds.isEmpty()) { disposeChunk(model); throw new Error('El chunk no contiene geometría visible.'); }
-    this.ground = bounds.min.y;
-    model.position.y = -this.ground;
-    this.entries.set(key, { model, controller });
-    this.root.add(model);
-    // Coverage is optional: HTTP 404 still identifies missing tiles if it is unavailable.
-    void fetch(`${this.base}/manifest`, { signal: controller.signal }).then(async (response) => {
-      if (response.ok && this.active) this.manifest = await response.json();
-    }).catch(() => {});
-    return bounds.getSize(new THREE.Vector3());
+    const enabled = (['buildings', 'trees'] as ChunkLayer[]).filter((layer) => this.isLayerEnabled(layer));
+    if (!enabled.length) return new THREE.Vector3(this.tileSize, 0, this.tileSize);
+    const sizes: THREE.Vector3[] = [];
+    for (const layer of enabled) {
+      const controller = new AbortController(); const key = `${this.origin.x}/${this.origin.y}`;
+      const entry: Entry = { controller }; this.entries.get(layer)!.set(key, entry);
+      const model = await this.fetchModel(layer, this.origin.x, this.origin.y, controller.signal);
+      if (!this.active || !this.isLayerEnabled(layer)) { disposeChunk(model); continue; }
+      const bounds = new THREE.Box3().setFromObject(model); if (bounds.isEmpty()) { disposeChunk(model); continue; }
+      this.ground.set(layer, bounds.min.y); model.position.y = -bounds.min.y; entry.model = model; this.roots[layer].add(model); sizes.push(bounds.getSize(new THREE.Vector3()));
+      void this.fetchManifest(layer, controller.signal);
+    }
+    return sizes[0] ?? null;
   }
 
   update(target: THREE.Vector3, distance: number, aspect: number) {
     if (!this.active) return;
-    const cx = this.origin.x + Math.round(target.x / this.tileSize);
-    const cy = this.origin.y + Math.round(target.z / this.tileSize);
+    const cx = this.origin.x + Math.round(target.x / this.tileSize), cy = this.origin.y + Math.round(target.z / this.tileSize);
     const radius = Math.min(3, Math.max(1, Math.ceil(distance * Math.max(1, aspect) * 0.45 / this.tileSize)));
-    this.desired.clear();
-    this.queue = [];
-    for (let ring = 0; ring <= radius; ring++) {
-      for (let dx = -ring; dx <= ring; dx++) for (let dy = -ring; dy <= ring; dy++) {
-        if (Math.max(Math.abs(dx), Math.abs(dy)) !== ring) continue;
-        const x = cx + dx, y = cy + dy, key = `${x}/${y}`;
-        if (this.manifest && !this.manifest[String(x)]?.includes(String(y))) continue;
-        this.desired.add(key);
-        if (!this.entries.has(key)) this.queue.push({ x, y });
+    this.desired.clear(); this.queue = [];
+    for (let ring = 0; ring <= radius; ring++) for (let dx = -ring; dx <= ring; dx++) for (let dy = -ring; dy <= ring; dy++) {
+      if (Math.max(Math.abs(dx), Math.abs(dy)) !== ring) continue;
+      const x = cx + dx, y = cy + dy, key = `${x}/${y}`;
+      this.desired.add(key);
+      for (const layer of ['buildings', 'trees'] as ChunkLayer[]) {
+        const manifest = this.manifests.get(layer);
+        if (this.isLayerEnabled(layer) && !this.entries.get(layer)!.has(key) && (!manifest || manifest[String(x)]?.includes(String(y)))) this.queue.push({ layer, x, y });
       }
     }
-    for (const [key, entry] of this.entries) {
-      if (this.desired.has(key)) continue;
-      entry.controller.abort();
-      if (entry.model) { this.root.remove(entry.model); disposeChunk(entry.model); }
-      this.entries.delete(key);
-    }
+    for (const [layer, entries] of this.entries) for (const [key, entry] of entries) if (!this.desired.has(key) || !this.isLayerEnabled(layer)) { entry.controller.abort(); if (entry.model) { this.roots[layer].remove(entry.model); disposeChunk(entry.model); } entries.delete(key); }
     this.pump();
   }
 
-  private pump() {
-    while (this.active && this.running < 3 && this.queue.length) {
-      const { x, y } = this.queue.shift()!;
-      const key = `${x}/${y}`;
-      const controller = new AbortController();
-      const marker: ChunkMarker = { key, position: new THREE.Vector3((x - this.origin.x) * this.tileSize, 0, (y - this.origin.y) * this.tileSize), failed: false };
-      const entry = { controller, marker } as { controller: AbortController; marker?: ChunkMarker; model?: THREE.Object3D };
-      this.entries.set(key, entry);
-      this.running++;
-      void this.fetchModel(x, y, controller.signal).then((model) => {
-        if (!this.active || this.entries.get(key) !== entry) { disposeChunk(model); return; }
-        model.position.set(marker.position.x, -this.ground, marker.position.z);
-        entry.model = model;
-        entry.marker = undefined;
-        this.root.add(model);
-      }).catch((error: unknown) => {
-        if (controller.signal.aborted) return;
-        marker.failed = true;
-        if (error instanceof Error && error.message === 'HTTP 404') entry.marker = undefined;
-      }).finally(() => {
-        this.running--;
-        if (this.active) { this.pump(); this.changed(); }
-      });
-    }
-  }
-
-  private async fetchModel(x: number, y: number, signal: AbortSignal) {
-    const url = `${this.base}/tiles/16/${x}/${y}.glb`;
-    const response = await fetch(url, { signal });
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    const data = await response.arrayBuffer();
-    const gltf = await new Promise<GLTF>((resolve, reject) => new GLTFLoader().parse(data, `${this.base}/tiles/16/${x}/`, resolve, reject));
-    gltf.scene.rotation.x = -Math.PI / 2;
-    gltf.scene.updateMatrixWorld(true);
-    return gltf.scene;
-  }
-
-  dispose() {
-    this.active = false;
-    this.queue = [];
-    for (const entry of this.entries.values()) entry.controller.abort();
-    disposeChunk(this.root);
-    this.entries.clear();
-    this.root.clear();
-  }
+  private async fetchManifest(layer: ChunkLayer, signal: AbortSignal) { try { const response = await fetch(`${this.base}/manifest/${layer}`, { signal }); if (response.ok) this.manifests.set(layer, await response.json()); } catch {} }
+  private pump() { while (this.active && this.running < 3 && this.queue.length) { const { layer, x, y } = this.queue.shift()!; const key = `${x}/${y}`, controller = new AbortController(); const marker = { key, position: new THREE.Vector3((x - this.origin.x) * this.tileSize, 0, (y - this.origin.y) * this.tileSize), failed: false, layer }; const entry: Entry = { controller, marker }; this.entries.get(layer)!.set(key, entry); this.running++; void this.fetchModel(layer, x, y, controller.signal).then((model) => { if (!this.active || this.entries.get(layer)!.get(key) !== entry || !this.isLayerEnabled(layer)) { disposeChunk(model); return; } model.position.set(marker.position.x, -(this.ground.get(layer) ?? 0), marker.position.z); entry.model = model; entry.marker = undefined; this.roots[layer].add(model); }).catch((error) => { if (!controller.signal.aborted && error instanceof Error && error.message !== 'HTTP 404') marker.failed = true; }).finally(() => { this.running--; if (this.active) { this.pump(); this.changed(); } }); } }
+  private async fetchModel(layer: ChunkLayer, x: number, y: number, signal: AbortSignal) { const response = await fetch(`${this.base}/tiles/${layer}/16/${x}/${y}.glb`, { signal }); if (!response.ok) throw new Error(`HTTP ${response.status}`); const data = await response.arrayBuffer(); const gltf = await new Promise<GLTF>((resolve, reject) => new GLTFLoader().parse(data, `${this.base}/tiles/${layer}/16/${x}/`, resolve, reject)); gltf.scene.rotation.x = -Math.PI / 2; gltf.scene.updateMatrixWorld(true); return gltf.scene; }
+  dispose() { this.active = false; this.queue = []; for (const entries of this.entries.values()) for (const entry of entries.values()) entry.controller.abort(); disposeChunk(this.root); this.entries.forEach((entries) => entries.clear()); this.root.clear(); }
 }

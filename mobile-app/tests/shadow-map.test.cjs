@@ -20,6 +20,8 @@ function load(relativePath) {
 
 const { mercator, chunkReference, metersPerPixel } = load('shadow-map-projection.ts');
 const { getShadowCastMatrix, shadowShaderMaterialDefault } = load('shadersSombras.ts');
+const { DEFAULT_SHADOW_LAYER_SELECTION, DEFAULT_SHADOW_LAYER_WEIGHTS, normalizeShadowLayerWeights } = load('shadow-settings.ts');
+const { sourceUrl, sourceOpacity } = load('shadow-map-sources.ts');
 const near = (actual, expected, message) => assert.ok(Math.abs(actual - expected) < 1e-6,
   `${message}: ${actual} != ${expected}`);
 
@@ -67,4 +69,14 @@ test('shadow materials own independent matrix and color uniforms', () => {
     second.uniforms.shadowCastMatrix.value.elements[0]);
   first.dispose();
   second.dispose();
+});
+
+test('shadow sources expose both layers and configurable default weights', () => {
+  assert.deepEqual(DEFAULT_SHADOW_LAYER_SELECTION, { buildings: true, trees: true });
+  assert.deepEqual(DEFAULT_SHADOW_LAYER_WEIGHTS, { buildings: 1, trees: 0.75 });
+  assert.deepEqual(normalizeShadowLayerWeights({ buildings: '2.5', trees: -1 }), { buildings: 2.5, trees: 0.75 });
+  const base = 'http://localhost:3000/chunk?lat=40.4168&lon=-3.7038';
+  assert.match(sourceUrl(base, 'trees'), /layer=trees/);
+  assert.equal(sourceUrl(base, 'buildings', { buildings: false, trees: true }), null);
+  assert.equal(sourceOpacity('trees', { trees: 0.75 }), 0.75);
 });

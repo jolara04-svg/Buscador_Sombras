@@ -2,6 +2,32 @@
 // Se conserva el factor Mercator del centro, adecuado para este experimento de 512 m.
 const R = 6378137;
 const rad = Math.PI / 180;
+export const DEFAULT_SHADOW_WEIGHTS = Object.freeze({ buildings: 1, trees: 0.75 });
+
+// Una mascara puede provenir de varias fuentes. null significa que esa fuente
+// no tiene cobertura en el punto y no debe interpretarse como sol.
+export function combineShadowSources(buildings, trees, weights = DEFAULT_SHADOW_WEIGHTS) {
+  const buildingWeight = Number.isFinite(weights?.buildings) && weights.buildings >= 0
+    ? weights.buildings : DEFAULT_SHADOW_WEIGHTS.buildings;
+  const treeWeight = Number.isFinite(weights?.trees) && weights.trees >= 0
+    ? weights.trees : DEFAULT_SHADOW_WEIGHTS.trees;
+  let value = 0;
+  let covered = false;
+  if (buildings !== null && buildings !== undefined) {
+    value += Math.max(0, Math.min(1, buildings)) * buildingWeight;
+    covered = true;
+  }
+  if (trees !== null && trees !== undefined) {
+    value += Math.max(0, Math.min(1, trees)) * treeWeight;
+    covered = true;
+  }
+  return covered ? Math.min(1, value) : null;
+}
+
+export function combineShadowReaders(readBuildings, readTrees, weights = DEFAULT_SHADOW_WEIGHTS) {
+  return (x, y) => combineShadowSources(readBuildings?.(x, y) ?? null, readTrees?.(x, y) ?? null, weights);
+}
+
 export function project(lat, lon, center) {
   const scale = Math.cos(center.lat * rad);
   return [R * (lon - center.lon) * rad * scale,

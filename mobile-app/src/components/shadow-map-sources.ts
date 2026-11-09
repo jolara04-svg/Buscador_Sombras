@@ -1,33 +1,37 @@
-import type { BufferGeometry } from 'three';
+import type { ShadowLayer, ShadowLayerSelection, ShadowLayerWeights } from './shadow-settings';
 
-export type ShadowSource = 'buildings' | 'vegetation';
-export type ShadowSourceSelection = Partial<Record<ShadowSource, boolean | string>>;
+export type ShadowSource = ShadowLayer;
+export type ShadowSourceSelection = ShadowLayerSelection;
 
-export const SHADOW_SOURCE_WEIGHTS: Record<ShadowSource, number> = {
+export const SHADOW_SOURCE_WEIGHTS: ShadowLayerWeights = {
   buildings: 1,
-  vegetation: 0.75,
+  trees: 0.75,
 };
 
 export function sourceEnabled(selection: ShadowSourceSelection | undefined, source: ShadowSource) {
-  const value = selection?.[source];
-  return value !== false;
+  return selection?.[source] !== false;
 }
 
+// Convierte la URL compatible existente /chunk?lat=...&lon=... en una URL para
+// la capa pedida. Los endpoints directos de teselas se mantienen igualmente.
 export function sourceUrl(baseUrl: string, source: ShadowSource, selection?: ShadowSourceSelection) {
-  const configured = selection?.[source];
-  if (typeof configured === 'string' && configured.length > 0) return configured;
-  if (source === 'buildings') return baseUrl;
-
-  // Keep the existing chunk URL as the building source. Vegetation datasets use
-  // the sibling `-vegetation.glb` convention, while callers may provide an
-  // explicit URL through `sources.vegetation` when their backend differs.
-  if (/\.glb(?:$|\?)/i.test(baseUrl)) {
-    return baseUrl.replace(/\.glb(?=($|\?))/i, '-vegetation.glb');
+  if (selection?.[source] === false) return null;
+  const url = new URL(baseUrl);
+  if (url.pathname.endsWith('/chunk')) {
+    url.searchParams.set('layer', source);
+    return url.toString();
   }
-  return `${baseUrl.replace(/\/$/, '')}/vegetation.glb`;
+
+  const directTile = url.pathname.match(/^(.*\/tiles\/)(?:(buildings|trees)\/)?(\d+)\/(\d+)\/(\d+)\.glb$/);
+  if (directTile) {
+    url.pathname = `${directTile[1]}${source}/${directTile[3]}/${directTile[4]}/${directTile[5]}.glb`;
+    return url.toString();
+  }
+
+  return `${url.origin}/tiles/${source}/16/${url.searchParams.get('x') || ''}/${url.searchParams.get('y') || ''}.glb`;
 }
 
-export type LoadedShadowSource = {
-  source: ShadowSource;
-  geometries: BufferGeometry[];
-};
+export function sourceOpacity(source: ShadowSource, weights?: Partial<ShadowLayerWeights>) {
+  const weight = weights?.[source] ?? SHADOW_SOURCE_WEIGHTS[source];
+  return Number.isFinite(weight) ? Math.max(0, Math.min(1, weight)) : SHADOW_SOURCE_WEIGHTS[source];
+}

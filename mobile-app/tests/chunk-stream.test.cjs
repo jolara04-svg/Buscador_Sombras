@@ -32,7 +32,7 @@ test('ChunkStream loads neighbours, deduplicates, evicts and aborts', async () =
   };
   global.fetch = async (url, options) => {
     requests.push(url);
-    if (url.endsWith('/manifest')) return { ok: false };
+    if (url.includes('/manifest/')) return { ok: false };
     if (!initialized) {
       initialized = true;
       return { ok: true, arrayBuffer: async () => new ArrayBuffer(0) };
@@ -76,6 +76,36 @@ test('ChunkStream loads neighbours, deduplicates, evicts and aborts', async () =
     await drain();
     assert.equal(stream.root.children.length, 0);
     assert.ok(changes >= 8);
+  } finally {
+    stream.dispose();
+    global.fetch = originalFetch;
+    GLTFLoader.prototype.parse = originalParse;
+  }
+});
+
+test('ChunkStream obtiene árboles por la capa separada y permite ocultarla', async () => {
+  const originalFetch = global.fetch;
+  const originalParse = GLTFLoader.prototype.parse;
+  const requests = [];
+  GLTFLoader.prototype.parse = function (_data, _url, resolve) {
+    const scene = new THREE.Group();
+    scene.add(new THREE.Mesh(new THREE.BoxGeometry(10, 10, 10), new THREE.MeshBasicMaterial()));
+    resolve({ scene });
+  };
+  global.fetch = async (url) => {
+    requests.push(String(url));
+    if (String(url).includes('/manifest/')) return { ok: false };
+    return { ok: true, arrayBuffer: async () => new ArrayBuffer(0) };
+  };
+  const stream = new ChunkStream('http://localhost:3000/chunk?lat=40.4168&lon=-3.7038', () => {}, { layers: ['buildings', 'trees'] });
+  try {
+    await stream.initialize();
+    assert.ok(requests.some(url => url.includes('/tiles/buildings/16/')));
+    assert.ok(requests.some(url => url.includes('/tiles/trees/16/')));
+    assert.equal(stream.isLayerEnabled('trees'), true);
+    stream.setLayerEnabled('trees', false);
+    assert.equal(stream.isLayerEnabled('trees'), false);
+    assert.equal(stream.roots.trees.parent, null);
   } finally {
     stream.dispose();
     global.fetch = originalFetch;

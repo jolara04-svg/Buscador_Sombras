@@ -1,5 +1,7 @@
 import { Platform } from 'react-native';
 
+import type { ShadowLayer } from '@/components/shadow-settings';
+
 const configuredBackendUrl = process.env.EXPO_PUBLIC_BACKEND_URL?.trim();
 
 // Android emulators use 10.0.2.2 to reach the host machine. Physical devices
@@ -9,9 +11,9 @@ export const BACKEND_URL = (
   (Platform.OS === 'android' ? 'http://10.0.2.2:3000' : 'http://localhost:3000')
 ).replace(/\/$/, '');
 
-export function getChunkUrl(latitude: number, longitude: number) {
+export function getChunkUrl(latitude: number, longitude: number, layer: ShadowLayer = 'buildings') {
   const lat = encodeURIComponent(String(latitude));
   const lon = encodeURIComponent(String(longitude));
 
-  return `${BACKEND_URL}/chunk?lat=${lat}&lon=${lon}`;
+  return `${BACKEND_URL}/chunk?lat=${lat}&lon=${lon}&layer=${layer}`;
 }

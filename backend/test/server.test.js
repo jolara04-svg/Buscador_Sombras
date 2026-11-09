@@ -6,6 +6,7 @@ const { after, before, describe, it } = require('node:test');
 
 const backendDir = path.resolve(__dirname, '..');
 const manifest = require(path.join(backendDir, 'madrid_chunks', 'manifest.json'));
+const treesManifest = require(path.join(backendDir, 'madrid_trees', 'manifest.json'));
 const places = require(path.join(backendDir, 'places.json'));
 const port = 31000 + (process.pid % 1000);
 const baseUrl = `http://127.0.0.1:${port}`;
@@ -26,6 +27,16 @@ function firstRealChunk() {
     }
   }
   throw new Error('No se encontró un chunk .glb listado en manifest.json');
+}
+
+function firstRealTreeChunk() {
+  for (const [x, ys] of Object.entries(treesManifest)) {
+    for (const y of ys) {
+      const file = path.join(backendDir, 'madrid_trees', '16', x, `${y}.glb`);
+      if (fs.existsSync(file)) return { x, y, file };
+    }
+  }
+  throw new Error('No se encontró un chunk de árboles listado en manifest.json');
 }
 
 async function waitForServer() {
@@ -70,6 +81,21 @@ describe('API backend', () => {
     assert.deepEqual(await response.json(), manifest);
   });
 
+  it('publica el manifest de árboles por capa', async () => {
+    const response = await request('/manifest/trees');
+    assert.equal(response.status, 200);
+    assert.deepEqual(await response.json(), treesManifest);
+  });
+
+  it('rechaza capas desconocidas', async () => {
+    const manifestResponse = await request('/manifest/roads');
+    assert.equal(manifestResponse.status, 400);
+    assert.match((await manifestResponse.json()).error, /buildings.*trees/i);
+
+    const tileResponse = await request('/tiles/roads/16/32069/24696.glb');
+    assert.equal(tileResponse.status, 400);
+  });
+
   it('valida latitud y longitud en /chunk', async () => {
     const response = await request('/chunk?lat=no&lon=-3.7');
     assert.equal(response.status, 400);
@@ -106,6 +132,19 @@ describe('API backend', () => {
     assert.ok((await response.arrayBuffer()).byteLength > 0);
   });
 
+  it('sirve un tile válido de árboles por capa', async () => {
+    const chunk = firstRealTreeChunk();
+    const response = await request(`/tiles/trees/16/${chunk.x}/${chunk.y}.glb`);
+    assert.equal(response.status, 200);
+    assert.equal(response.headers.get('content-type'), 'model/gltf-binary');
+    assert.ok((await response.arrayBuffer()).byteLength > 0);
+  });
+
+  it('no permite traversal en rutas de tiles', async () => {
+    const response = await request('/tiles/trees/16/../package.json.glb');
+    assert.notEqual(response.status, 200);
+  });
+
   it('devuelve 404 para un tile inexistente', async () => {
     const response = await request('/tiles/15/0/0.glb');
     assert.equal(response.status, 404);
@@ -118,5 +157,31 @@ describe('API backend', () => {
     assert.equal(response.status, 200);
     assert.equal(response.headers.get('content-type'), 'model/gltf-binary');
     assert.ok((await response.arrayBuffer()).byteLength > 0);
+  });
+  it('sirve un /chunk válido de árboles a partir de un tile real del manifest', async () => {
+    const chunk = firstRealTreeChunk();
+    const { lat, lon } = tileToLatLon(Number(chunk.x), Number(chunk.y));
+    const response = await request(`/chunk?layer=trees&lat=${lat}&lon=${lon}`);
+    assert.equal(response.status, 200);
+    assert.equal(response.headers.get('content-type'), 'model/gltf-binary');
+    assert.ok((await response.arrayBuffer()).byteLength > 0);
+  });
+
+  it('sirve el endpoint directo de tiles de árboles', async () => {
+    const chunk = firstRealTreeChunk();
+    const response = await request(`/tiles/trees/16/${chunk.x}/${chunk.y}.glb`);
+    assert.equal(response.status, 200);
+    assert.equal(response.headers.get('content-type'), 'model/gltf-binary');
+  });
+
+  it('mantiene manifiestos de edificios y árboles con coordenadas válidas', async () => {
+    for (const [name, value] of [['buildings', manifest], ['trees', treesManifest]]) {
+      assert.ok(Object.keys(value).length > 0, `${name} debe tener cobertura`);
+      for (const [x, ys] of Object.entries(value)) {
+        assert.match(x, /^\d+$/);
+        assert.ok(Array.isArray(ys) && ys.length > 0);
+        ys.forEach(y => assert.match(y, /^\d+$/));
+      }
+    }
   });
 });
