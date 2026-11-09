@@ -1,0 +1,12 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><title>SombrApp · escala y rutas entre zonas</title>
+<style>body{font:16px system-ui;margin:24px;background:#101c29;color:#eaf1f8}h1{font-size:25px}canvas{width:850px;height:850px;max-width:95vw;border:1px solid #7b8b9c}pre{white-space:pre-wrap;max-width:1100px}a{color:#95caff}table{border-collapse:collapse}td,th{padding:8px;border:1px solid #52677c;text-align:right}button{padding:8px;margin:5px}</style>
+<script type="importmap">{"imports":{"three":"/three/build/three.module.js","three/addons/":"/three/examples/jsm/"}}</script>
+</head><body><h1>SombrApp · prueba de escala y rutas entre zonas</h1>
+<p>1, 4 y 9 zonas de 512 m. Blanco: sombra. Caminos por intervalos: verde en sombra y naranja al sol. Cuadrícula azul: límites de las máscaras.</p>
+<p>Ruta de menor distancia: azul. Ruta que penaliza el sol: rosa. Son rutas experimentales, sin validación de accesos. Sol fijo 180°/35°, sin árboles y con suelo plano.</p>
+<p><a href="/">Prueba inicial</a> · <a href="/output/scale-report.json">Último informe guardado por el ejecutor</a></p>
+<p id="progress">Preparando…</p><div id="table"></div><div id="routes"></div>
+<canvas id="preview" width="1536" height="1536"></canvas><pre id="status"></pre>
+<p>Edificios: Ayuntamiento de Madrid. Caminos: <a href="https://www.openstreetmap.org/copyright">© OpenStreetMap contributors · ODbL</a>.</p>
+<script type="module" src="./scale.mjs"></script></body></html>

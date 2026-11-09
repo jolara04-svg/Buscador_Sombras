@@ -1,0 +1,10 @@
+{
+  "name": "Entorno de la Facultad de Informatica UCM",
+  "center": { "lat": 40.4526, "lon": -3.7334 },
+  "sizeM": 512,
+  "resolution": 1024,
+  "sampleStepM": 2,
+  "azimuthDeg": 180,
+  "elevationDeg": 35,
+  "sunPenalty": 4
+}
