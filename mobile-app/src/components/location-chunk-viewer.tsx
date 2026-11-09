@@ -2,7 +2,7 @@ import { GLView, type ExpoWebGLRenderingContext } from 'expo-gl';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, PanResponder, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import * as THREE from 'three';
-import { ChunkStream, type ChunkLayer } from './chunk-stream';
+import { ChunkStream, getChunkMarkerKey, type ChunkLayer } from './chunk-stream';
 import { getMapGesture, type MapTouch } from './map-gesture';
 import { ShadowLayerControls } from './ShadowLayerControls';
 import type { ShadowLayerSelection, ShadowLayerWeights } from './shadow-settings';
@@ -278,7 +278,7 @@ function ChunkViewerSession({ chunkUrl, layers = ['buildings', 'trees'], selecti
     setMarkers((streamRef.current?.markers ?? []).flatMap((marker) => {
       const projected = marker.position.clone().project(renderContext.camera);
       if (projected.z < -1 || projected.z > 1 || Math.abs(projected.x) > 1 || Math.abs(projected.y) > 1) return [];
-      return [{ key: marker.key, x: (projected.x + 1) * frameSize.current.width / 2,
+      return [{ key: getChunkMarkerKey(marker), x: (projected.x + 1) * frameSize.current.width / 2,
         y: (1 - projected.y) * frameSize.current.height / 2, failed: marker.failed }];
     }));
   }, []);

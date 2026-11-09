@@ -5,6 +5,10 @@ const TILE_COUNT = 2 ** 16;
 export type ChunkLayer = 'buildings' | 'trees';
 export type ChunkMarker = { key: string; position: THREE.Vector3; failed: boolean; layer?: ChunkLayer };
 
+export function getChunkMarkerKey(marker: Pick<ChunkMarker, 'key' | 'layer'>) {
+  return `${marker.layer ?? 'buildings'}:${marker.key}`;
+}
+
 type Entry = { model?: THREE.Object3D; marker?: ChunkMarker; controller: AbortController };
 
 export function disposeChunk(model: THREE.Object3D) {

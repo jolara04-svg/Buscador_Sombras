@@ -17,7 +17,15 @@ compiled.paths = module.paths;
 compiled._compile(ts.transpileModule(fs.readFileSync(filename, 'utf8'), {
   compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
 }).outputText, filename);
-const { ChunkStream } = compiled.exports;
+const { ChunkStream, getChunkMarkerKey } = compiled.exports;
+
+test('ChunkStream genera claves de marcador únicas entre capas', () => {
+  assert.notEqual(
+    getChunkMarkerKey({ key: '32096/24711', layer: 'buildings' }),
+    getChunkMarkerKey({ key: '32096/24711', layer: 'trees' }),
+  );
+  assert.equal(getChunkMarkerKey({ key: '32096/24711' }), 'buildings:32096/24711');
+});
 
 test('ChunkStream loads neighbours, deduplicates, evicts and aborts', async () => {
   const originalFetch = global.fetch;
