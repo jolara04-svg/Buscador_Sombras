@@ -114,6 +114,9 @@ test('ChunkStream obtiene árboles por la capa separada y permite ocultarla', as
     stream.setLayerEnabled('trees', false);
     assert.equal(stream.isLayerEnabled('trees'), false);
     assert.equal(stream.roots.trees.parent, null);
+    assert.doesNotThrow(() => stream.setLayerEnabled('buildings', false));
+    assert.doesNotThrow(() => stream.setLayerEnabled('buildings', true));
+    assert.equal(stream.roots.buildings, stream.root);
   } finally {
     stream.dispose();
     global.fetch = originalFetch;

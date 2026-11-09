@@ -60,7 +60,7 @@ export class ChunkStream {
     this.enabled.set(layer, enabled);
     const root = this.roots[layer];
     root.visible = enabled;
-    if (enabled && root.parent !== this.root) this.root.add(root);
+    if (enabled && layer === 'trees' && root.parent !== this.root) this.root.add(root);
     if (!enabled) {
       const entries = this.entries.get(layer)!;
       for (const entry of entries.values()) {
