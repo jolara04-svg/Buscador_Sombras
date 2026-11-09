@@ -17,6 +17,7 @@ type LocationChunkViewerProps = {
 };
 
 type ViewerStatus = 'loading' | 'ready' | 'error';
+type ProjectedMarker = { key: string; x: number; y: number; failed: boolean };
 
 type OrbitState = {
   azimuth: number;
@@ -218,7 +219,10 @@ function ChunkViewerSession({ chunkUrl, layers = ['buildings', 'trees'], selecti
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
   const sceneRef = useRef<THREE.Scene | null>(null);
   const streamRef = useRef<ChunkStream | null>(null);
-  const [markers, setMarkers] = useState<{ key: string; x: number; y: number; failed: boolean }[]>([]);
+  const [markers, setMarkers] = useState<ProjectedMarker[]>([]);
+  const pendingMarkersRef = useRef<ProjectedMarker[]>([]);
+  const markerUpdateFrameRef = useRef<number | null>(null);
+  const markerSignatureRef = useRef('');
   const [mode, setMode] = useState<'move' | 'rotate'>('move');
   const modeRef = useRef(mode);
   useEffect(() => { modeRef.current = mode; }, [mode]);
@@ -238,6 +242,13 @@ function ChunkViewerSession({ chunkUrl, layers = ['buildings', 'trees'], selecti
 
   const cleanup = useCallback(() => {
     loadIdRef.current += 1;
+
+    if (markerUpdateFrameRef.current !== null) {
+      cancelAnimationFrame(markerUpdateFrameRef.current);
+      markerUpdateFrameRef.current = null;
+    }
+    pendingMarkersRef.current = [];
+    markerSignatureRef.current = '';
 
     streamRef.current?.dispose();
     streamRef.current = null;
@@ -275,12 +286,22 @@ function ChunkViewerSession({ chunkUrl, layers = ['buildings', 'trees'], selecti
     streamRef.current?.update(orbitRef.current.target, orbitRef.current.distance / 0.45, aspect);
     renderContext.renderer.render(renderContext.scene, renderContext.camera);
     renderContext.gl.endFrameEXP();
-    setMarkers((streamRef.current?.markers ?? []).flatMap((marker) => {
+    const nextMarkers = (streamRef.current?.markers ?? []).flatMap((marker) => {
       const projected = marker.position.clone().project(renderContext.camera);
       if (projected.z < -1 || projected.z > 1 || Math.abs(projected.x) > 1 || Math.abs(projected.y) > 1) return [];
       return [{ key: getChunkMarkerKey(marker), x: (projected.x + 1) * frameSize.current.width / 2,
         y: (1 - projected.y) * frameSize.current.height / 2, failed: marker.failed }];
-    }));
+    });
+    const signature = nextMarkers.map((marker) => `${marker.key}:${marker.x.toFixed(2)}:${marker.y.toFixed(2)}:${marker.failed}`).join('|');
+    if (signature === markerSignatureRef.current) return;
+    markerSignatureRef.current = signature;
+    pendingMarkersRef.current = nextMarkers;
+    if (markerUpdateFrameRef.current === null) {
+      markerUpdateFrameRef.current = requestAnimationFrame(() => {
+        markerUpdateFrameRef.current = null;
+        setMarkers(pendingMarkersRef.current);
+      });
+    }
   }, []);
 
   const moveCamera = useCallback((right: number, forward: number) => {
