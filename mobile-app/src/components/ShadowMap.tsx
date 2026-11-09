@@ -5,7 +5,10 @@ import * as THREE from "three";
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { shadowShaderMaterialDefault, buildingShaderMaterial, transparentShaderMaterial } from "@/components/shadersSombras";
 import { Mapa2D } from "@/components/Mapa2D";
-import { SHADOW_SOURCE_WEIGHTS, sourceEnabled, sourceUrl, type ShadowSourceSelection } from "@/components/shadow-map-sources";
+import { sourceEnabled, sourceOpacity, sourceUrl, type ShadowSourceSelection } from "@/components/shadow-map-sources";
+import type { ShadowLayerWeights } from "@/components/shadow-settings";
+import type { ShadowLayerSelection } from "@/components/shadow-settings";
+import { ShadowLayerControls } from "@/components/ShadowLayerControls";
 
 type ShadowMapProps = {
   //Foreground shadow overlay properties.
@@ -27,8 +30,9 @@ type ShadowMapProps = {
   modoBusqueda:"lugar"|"ruta";
   onSeleccionarCoordenada:(lat:number, lon:number)=>void;
   sources?:ShadowSourceSelection;
-  buildingURL?:string;
-  vegetationURL?:string;
+  weights?:ShadowLayerWeights;
+  onSelectionChange?:(selection:ShadowLayerSelection)=>void;
+  onWeightChange?:(layer:"buildings"|"trees", value:number)=>void;
 };//Sí, se que estoy rompiendo la encapsulación. Ya luego si eso.
 
 const STYLES=StyleSheet.create({
@@ -49,7 +53,7 @@ const STYLES=StyleSheet.create({
 
 const CAMERA_SIZE:number=500;
 
-export function ShadowMap({ chunkURL, azimuth, elevation, initialLat, initialLon, origen, destino, modoSeleccion, modoBusqueda, onSeleccionarCoordenada, sources, buildingURL, vegetationURL }:ShadowMapProps){
+export function ShadowMap({ chunkURL, azimuth, elevation, initialLat, initialLon, origen, destino, modoSeleccion, modoBusqueda, onSeleccionarCoordenada, sources, weights, onSelectionChange, onWeightChange }:ShadowMapProps){
     const [camera,setCamera]=useState<THREE.OrthographicCamera>(new THREE.OrthographicCamera(-CAMERA_SIZE,CAMERA_SIZE,CAMERA_SIZE,-CAMERA_SIZE));
     const [scene,setScene]=useState<THREE.Scene>(new THREE.Scene());
     const [_renderer,setRenderer]=useState<THREE.WebGLRenderer|null>(null);
@@ -94,19 +98,22 @@ export function ShadowMap({ chunkURL, azimuth, elevation, initialLat, initialLon
         const x=gl.drawingBufferHeight/gl.drawingBufferWidth
         const shadowMaterial=shadowShaderMaterialDefault(azimuth, elevation,x);
         const buildingMaterial=buildingShaderMaterial(x);
-        const vegetationMaterial=shadowShaderMaterialDefault(azimuth, elevation,x);
-        vegetationMaterial.uniforms.shadowColor.value.w = 0.5 * SHADOW_SOURCE_WEIGHTS.vegetation;
-        const selection = { ...sources, ...(buildingURL ? { buildings: buildingURL } : {}), ...(vegetationURL ? { vegetation: vegetationURL } : {}) };
-        for (const source of ["buildings", "vegetation"] as const) {
+        const treesMaterial=shadowShaderMaterialDefault(azimuth, elevation,x);
+        treesMaterial.uniforms.shadowColor.value.w = 0.5 * sourceOpacity('trees', weights);
+        const selection = sources;
+        for (const source of ["buildings", "trees"] as const) {
             if (!sourceEnabled(selection, source)) continue;
             try {
-                const gltf=await loader.loadAsync(sourceUrl(chunkURL, source, selection));
+                const url = sourceUrl(chunkURL, source, selection);
+                if (!url) continue;
+                const gltf=await loader.loadAsync(url);
                 const meshes:THREE.BufferGeometry[]=[];
                 extractMeshes(gltf.scene,meshes);
-                const material = source === "vegetation" ? vegetationMaterial : shadowMaterial;
+                const material = source === "trees" ? treesMaterial : shadowMaterial;
                 meshes.forEach((mesh)=>{
                     const cast = new THREE.Mesh(mesh, material);
                     cast.userData.shadowSource = source;
+                    cast.userData.shadowCaster = true;
                     scene.add(cast);
                     if (source === "buildings") {
                         const facade = new THREE.Mesh(mesh, buildingMaterial);
@@ -124,18 +131,21 @@ export function ShadowMap({ chunkURL, azimuth, elevation, initialLat, initialLon
         renderer.render(scene,camera);//Creo que los edificios están flotando
     }
     useEffect(() => {
-        const selection = { ...sources, ...(buildingURL ? { buildings: buildingURL } : {}), ...(vegetationURL ? { vegetation: vegetationURL } : {}) };
+        const selection = sources;
         scene.traverse((object) => {
-            const source = object.userData.shadowSource as "buildings" | "vegetation" | undefined;
+            const source = object.userData.shadowSource as "buildings" | "trees" | undefined;
             if (source) object.visible = sourceEnabled(selection, source);
+            if (source && object.userData.shadowCaster && object instanceof THREE.Mesh && object.material instanceof THREE.ShaderMaterial) {
+                object.material.uniforms.shadowColor.value.w = 0.5 * sourceOpacity(source, weights);
+            }
         });
-    }, [scene, sources, buildingURL, vegetationURL]);
+    }, [scene, sources, weights]);
     scene.add(camera);
     camera.position.set(0,0,100);
     camera.lookAt(new THREE.Vector3(0,0,0));
     console.log("ShadowMap");
     return (<div>
-                <div style={STYLES.alignment_div}>
+                <div style={{ ...STYLES.alignment_div, position:"relative" }}>
                     <div style={STYLES.overflowing_div}>
                         <Mapa2D
                             initialLat={initialLat}
@@ -147,7 +157,8 @@ export function ShadowMap({ chunkURL, azimuth, elevation, initialLat, initialLon
                             onSeleccionarCoordenada={onSeleccionarCoordenada}
                         />
                     </div>
-                </div>    
+                </div>
+                {sources && weights && onSelectionChange && onWeightChange && <ShadowLayerControls selection={sources} weights={weights} onSelectionChange={onSelectionChange} onWeightChange={onWeightChange} />}
                 <div style={STYLES.alignment_div}>
                     <div style={STYLES.overflowing_div}>
                         <GLView

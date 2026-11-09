@@ -2,11 +2,18 @@ import { GLView, type ExpoWebGLRenderingContext } from 'expo-gl';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, PanResponder, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import * as THREE from 'three';
-import { ChunkStream } from './chunk-stream';
+import { ChunkStream, type ChunkLayer } from './chunk-stream';
 import { getMapGesture, type MapTouch } from './map-gesture';
+import { ShadowLayerControls } from './ShadowLayerControls';
+import type { ShadowLayerSelection, ShadowLayerWeights } from './shadow-settings';
 
 type LocationChunkViewerProps = {
   chunkUrl: string;
+  layers?: ChunkLayer[];
+  selection?: ShadowLayerSelection;
+  weights?: ShadowLayerWeights;
+  onSelectionChange?: (selection: ShadowLayerSelection) => void;
+  onWeightChange?: (layer: 'buildings' | 'trees', value: number) => void;
 };
 
 type ViewerStatus = 'loading' | 'ready' | 'error';
@@ -205,7 +212,7 @@ export function LocationChunkViewer(props: LocationChunkViewerProps) {
   return <ChunkViewerSession key={props.chunkUrl} {...props} />;
 }
 
-function ChunkViewerSession({ chunkUrl }: LocationChunkViewerProps) {
+function ChunkViewerSession({ chunkUrl, layers = ['buildings', 'trees'], selection, weights, onSelectionChange, onWeightChange }: LocationChunkViewerProps) {
   const [status, setStatus] = useState<ViewerStatus>('loading');
   const [errorMessage, setErrorMessage] = useState('');
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
@@ -492,7 +499,7 @@ function ChunkViewerSession({ chunkUrl }: LocationChunkViewerProps) {
       const loadChunk = async () => {
         try {
           ensureThreeRuntimeGlobals();
-          const stream = new ChunkStream(chunkUrl, renderCurrentFrame);
+          const stream = new ChunkStream(chunkUrl, renderCurrentFrame, { layers });
           streamRef.current = stream;
           const size = await stream.initialize();
           if (loadId !== loadIdRef.current || !size) return;
@@ -592,6 +599,17 @@ function ChunkViewerSession({ chunkUrl }: LocationChunkViewerProps) {
               <Text style={styles.zoomButtonText}>−</Text>
             </Pressable>
           </View>
+        )}
+        {selection && weights && onSelectionChange && onWeightChange && (
+          <ShadowLayerControls selection={selection} weights={weights} onSelectionChange={(next) => {
+            onSelectionChange(next);
+            const stream = streamRef.current;
+            if (stream) {
+              stream.setLayerEnabled('buildings', next.buildings);
+              stream.setLayerEnabled('trees', next.trees);
+              renderCurrentFrame();
+            }
+          }} onWeightChange={onWeightChange} />
         )}
 
         {status === 'loading' && (

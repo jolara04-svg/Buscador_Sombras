@@ -6,6 +6,7 @@ import { getChunkUrl, BACKEND_URL } from '@/constants/backend';
 import { LocationChunkViewer } from '@/components/location-chunk-viewer';
 import { Mapa2D } from '@/components/Mapa2D';
 import { ShadowMap } from "@/components/ShadowMap";
+import { DEFAULT_SHADOW_LAYER_SELECTION, useShadowLayerWeights, type ShadowLayerSelection } from '@/components/shadow-settings';
 
 type SolarPosition = {
   elevation: number;
@@ -108,6 +109,8 @@ export default function SolarCalculatorScreen() {
   const [calculating, setCalculating] = useState(false);
   // Estado para controlar la vista activa del mapa: '2d', '3d' o '2d-sombras'
   const [vistaActiva, setVistaActiva] = useState<'2d' | '3d' | '2d-sombras'>('2d');
+  const [shadowLayers, setShadowLayers] = useState<ShadowLayerSelection>(DEFAULT_SHADOW_LAYER_SELECTION);
+  const { weights: shadowWeights, setWeight: setShadowWeight } = useShadowLayerWeights();
   
   // Estados para la barra superior y modos de búsqueda
   const [busqueda, setBusqueda] = useState('');
@@ -609,6 +612,10 @@ export default function SolarCalculatorScreen() {
               )}
               azimuth={result?result.azimuth:0}
               elevation={result?result.elevation:90}
+              sources={shadowLayers}
+              weights={shadowWeights}
+              onSelectionChange={setShadowLayers}
+              onWeightChange={setShadowWeight}
 
               //Background map properties. Copied them.
               initialLat={parseFloat(latitude) || MADRID_LAT}
@@ -646,10 +653,16 @@ export default function SolarCalculatorScreen() {
         {/* Renderizado condicional: Vista 3D con visor de fragmentos de modelo */}
         {vistaActiva === '3d' && (
           <LocationChunkViewer
+            key={`${latitude}-${longitude}-${shadowLayers.buildings}-${shadowLayers.trees}`}
             chunkUrl={getChunkUrl(
               isNaN(parseFloat(latitude)) ? 40.4168 : parseFloat(latitude),
               isNaN(parseFloat(longitude)) ? -3.7038 : parseFloat(longitude)
             )}
+            layers={(['buildings', 'trees'] as const).filter((layer) => shadowLayers[layer])}
+            weights={shadowWeights}
+            selection={shadowLayers}
+            onSelectionChange={setShadowLayers}
+            onWeightChange={setShadowWeight}
           />
         )}
 

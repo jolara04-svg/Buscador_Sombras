@@ -5,9 +5,11 @@ import { Mapa2D, type Mapa2DProps, type MapViewport } from './Mapa2D.web';
 import { buildingShaderMaterial, shadowShaderMaterialDefault, getShadowCastMatrix } from './shadersSombras';
 import { chunkReference, mercator, metersPerPixel } from './shadow-map-projection';
 import { disposeChunk } from './chunk-stream';
-import { SHADOW_SOURCE_WEIGHTS, sourceEnabled, sourceUrl, type ShadowSourceSelection } from './shadow-map-sources';
+import { sourceEnabled, sourceOpacity, sourceUrl, type ShadowSourceSelection } from './shadow-map-sources';
+import type { ShadowLayerSelection, ShadowLayerWeights } from './shadow-settings';
+import { ShadowLayerControls } from './ShadowLayerControls';
 
-type Props = Mapa2DProps & { chunkURL: string; azimuth: number; elevation: number; sources?: ShadowSourceSelection; buildingURL?: string; vegetationURL?: string };
+type Props = Mapa2DProps & { chunkURL: string; azimuth: number; elevation: number; sources?: ShadowSourceSelection; weights?: ShadowLayerWeights; onSelectionChange?: (selection: ShadowLayerSelection) => void; onWeightChange?: (layer: 'buildings' | 'trees', value: number) => void };
 type Overlay = {
   renderer: THREE.WebGLRenderer;
   scene: THREE.Scene;
@@ -33,18 +35,18 @@ function draw(overlay: Overlay, viewport: MapViewport) {
   renderer.render(scene, camera);
 }
 
-export function ShadowMap({ chunkURL, azimuth, elevation, sources, buildingURL, vegetationURL, ...mapProps }: Props) {
+export function ShadowMap({ chunkURL, azimuth, elevation, sources, weights, onSelectionChange, onWeightChange, ...mapProps }: Props) {
   const canvas = useRef<HTMLCanvasElement>(null);
   const overlay = useRef<Overlay | null>(null);
   const [viewport, setViewport] = useState<MapViewport | null>(null);
-  const latest = useRef({ azimuth, elevation, viewport });
+  const latest = useRef({ azimuth, elevation, viewport, weights });
   const [error, setError] = useState<string | null>(null);
 
-  const sourceSelectionKey = JSON.stringify({ sources, buildingURL, vegetationURL });
+  const sourceSelectionKey = JSON.stringify({ sources, weights });
 
   useEffect(() => {
-    latest.current = { azimuth, elevation, viewport };
-  }, [azimuth, elevation, viewport]);
+    latest.current = { azimuth, elevation, viewport, weights };
+  }, [azimuth, elevation, viewport, weights]);
 
   useEffect(() => {
     if (!canvas.current) return;
@@ -57,16 +59,18 @@ export function ShadowMap({ chunkURL, azimuth, elevation, sources, buildingURL, 
     const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 2000);
     const shadow = shadowShaderMaterialDefault(latest.current.azimuth, latest.current.elevation, 1);
     const buildings = buildingShaderMaterial(1);
-    const vegetation = shadowShaderMaterialDefault(latest.current.azimuth, latest.current.elevation, 1);
-    vegetation.uniforms.shadowColor.value.w = 0.5 * SHADOW_SOURCE_WEIGHTS.vegetation;
-    const selection = { ...sources, ...(buildingURL ? { buildings: buildingURL } : {}), ...(vegetationURL ? { vegetation: vegetationURL } : {}) };
-    const state = { renderer, scene, camera, shadow, buildings, vegetation, reference: chunkReference(chunkURL) };
+    const trees = shadowShaderMaterialDefault(latest.current.azimuth, latest.current.elevation, 1);
+    trees.uniforms.shadowColor.value.w = 0.5 * sourceOpacity('trees', latest.current.weights);
+    const selection = sources;
+    const state = { renderer, scene, camera, shadow, buildings, vegetation: trees, reference: chunkReference(chunkURL) };
     overlay.current = state;
     if (latest.current.viewport) draw(state, latest.current.viewport);
 
-    const loadSource = async (source: 'buildings' | 'vegetation') => {
+    const loadSource = async (source: 'buildings' | 'trees') => {
       if (!sourceEnabled(selection, source)) return;
-      const gltf = await new GLTFLoader().loadAsync(sourceUrl(chunkURL, source, selection));
+      const url = sourceUrl(chunkURL, source, selection);
+      if (!url) return;
+      const gltf = await new GLTFLoader().loadAsync(url);
       if (!active) { disposeChunk(gltf.scene); return; }
       gltf.scene.updateMatrixWorld(true);
       const geometries: THREE.BufferGeometry[] = [];
@@ -76,7 +80,7 @@ export function ShadowMap({ chunkURL, azimuth, elevation, sources, buildingURL, 
       geometries.forEach(geometry => { geometry.computeBoundingBox(); bounds.union(geometry.boundingBox!); });
       geometries.forEach(geometry => {
         geometry.translate(0, 0, -bounds.min.z);
-        const material = source === 'vegetation' ? vegetation : shadow;
+        const material = source === 'trees' ? trees : shadow;
         const cast = new THREE.Mesh(geometry, material);
         // The shader moves vertices outside the original geometry bounds.
         cast.frustumCulled = false;
@@ -90,8 +94,8 @@ export function ShadowMap({ chunkURL, azimuth, elevation, sources, buildingURL, 
       materialFor(source).uniforms.shadowCastMatrix.value.copy(getShadowCastMatrix(latest.current.azimuth, latest.current.elevation, 1));
       if (latest.current.viewport) draw(state, latest.current.viewport);
     };
-    const materialFor = (source: 'buildings' | 'vegetation') => source === 'vegetation' ? vegetation : shadow;
-    void Promise.all((['buildings', 'vegetation'] as const).map(source => loadSource(source))).catch(() => { if (active) setError('No se pudieron cargar las capas 3D de esta zona.'); });
+    const materialFor = (source: 'buildings' | 'trees') => source === 'trees' ? trees : shadow;
+    void Promise.all((['buildings', 'trees'] as const).map(source => loadSource(source))).catch(() => { if (active) setError('No se pudieron cargar las capas 3D de esta zona.'); });
 
     return () => {
       active = false;
@@ -101,7 +105,7 @@ export function ShadowMap({ chunkURL, azimuth, elevation, sources, buildingURL, 
       geometries.forEach(geometry => geometry.dispose());
       shadow.dispose();
       buildings.dispose();
-      vegetation.dispose();
+      state.vegetation.dispose();
       renderer.dispose();
     };
   }, [chunkURL, sourceSelectionKey]);
@@ -110,17 +114,18 @@ export function ShadowMap({ chunkURL, azimuth, elevation, sources, buildingURL, 
     const state = overlay.current;
     if (!state || !viewport) return;
     state.shadow.uniforms.shadowCastMatrix.value.copy(getShadowCastMatrix(azimuth, elevation, 1));
-    state.shadow.uniforms.shadowColor.value.w = elevation > 0 ? 0.5 : 0;
+    state.shadow.uniforms.shadowColor.value.w = elevation > 0 ? 0.5 * sourceOpacity('buildings', weights) : 0;
     state.vegetation.uniforms.shadowCastMatrix.value.copy(getShadowCastMatrix(azimuth, elevation, 1));
-    state.vegetation.uniforms.shadowColor.value.w = elevation > 0 ? 0.5 * SHADOW_SOURCE_WEIGHTS.vegetation : 0;
+    state.vegetation.uniforms.shadowColor.value.w = elevation > 0 ? 0.5 * sourceOpacity('trees', weights) : 0;
     draw(state, viewport);
-  }, [azimuth, elevation, viewport]);
+  }, [azimuth, elevation, viewport, weights]);
 
   return (
     <div style={{ position: 'relative', width: '100%', height: '100%', flex: 1, overflow: 'hidden' }}>
       <Mapa2D {...mapProps} onViewportChange={setViewport} />
       <canvas ref={canvas} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none' }} />
       {error && <div role="status" style={{ position: 'absolute', bottom: 28, left: 12, background: 'white', padding: 8 }}>{error}</div>}
+      {sources && weights && onSelectionChange && onWeightChange && <ShadowLayerControls selection={sources} weights={weights} onSelectionChange={onSelectionChange} onWeightChange={onWeightChange} />}
     </div>
   );
 }
