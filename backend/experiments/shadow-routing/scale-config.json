@@ -1,0 +1,13 @@
+{
+  "name": "Campus UCM: prueba de escala de 1, 4 y 9 zonas",
+  "center": { "lat": 40.4526, "lon": -3.7334 },
+  "sizeM": 1536,
+  "zoneSizeM": 512,
+  "resolution": 1024,
+  "casterMarginM": 512,
+  "sampleStepM": 2,
+  "azimuthDeg": 180,
+  "elevationDeg": 35,
+  "sunPenalty": 4,
+  "repetitions": 3
+}

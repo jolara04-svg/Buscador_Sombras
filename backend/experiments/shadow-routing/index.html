@@ -1,0 +1,11 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><title>SombrApp · prueba de grafo y máscara</title>
+<style>body{font:16px system-ui;margin:24px;background:#101c29;color:#eaf1f8}h1{font-size:24px}p{max-width:1000px}canvas{width:640px;height:640px;max-width:90vw;border:1px solid #7b8b9c}pre{white-space:pre-wrap}a{color:#95caff}</style>
+<script type="importmap">{"imports":{"three":"/three/build/three.module.js","three/addons/":"/three/examples/jsm/"}}</script>
+</head><body><h1>SombrApp · caminos y máscara de sombra</h1>
+<p>Prueba de 512 × 512 m junto a Informática UCM. Blanco: sombra; fondo oscuro: sol según el modelo. Caminos: naranja al sol → verde en sombra. Norte arriba.</p>
+<p>Sol de prueba: azimut 180°, elevación 35°; no representa una fecha concreta. Suelo plano y altura relativa normalizada por chunk, igual que la vista actual. No incluye árboles. No es un navegador peatonal validado.</p>
+<p><a href="/scale.html">Abrir prueba ampliada: nueve zonas y rutas</a></p>
+<canvas id="preview" width="1024" height="1024"></canvas><pre id="status">Cargando datos y edificios…</pre>
+<p>Edificios: Ayuntamiento de Madrid. Caminos: <a href="https://www.openstreetmap.org/copyright">© OpenStreetMap contributors · ODbL</a>.</p>
+<script type="module" src="./demo.mjs"></script></body></html>
