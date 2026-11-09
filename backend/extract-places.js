@@ -42,7 +42,11 @@ area["name"="Madrid"]["admin_level"="8"]->.searchArea;
 out center;
 `;
 
-// Función para determinar un tipo amigable en español basado en las etiquetas OSM
+/**
+ * Determina un tipo amigable en español basado en las etiquetas crudas de OpenStreetMap (OSM).
+ * @param {Object} tags - Objeto con las etiquetas del elemento OSM.
+ * @returns {string} Tipo de lugar clasificado (ej. 'Calle', 'Plaza', 'Parque', etc.).
+ */
 function determinarTipo(tags) {
   if (!tags) return 'Lugar';
   if (tags.highway) return 'Calle';

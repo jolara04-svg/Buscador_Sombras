@@ -13,6 +13,9 @@ export function disposeChunk(model: THREE.Object3D) {
   });
 }
 
+/**
+ * Clase encargada de gestionar el streaming y la carga progresiva de chunks 3D de edificios adyacentes.
+ */
 // Dataset coordinates are local ENU around each Slippy tile's centre, in metres.
 export class ChunkStream {
   readonly root = new THREE.Group();
@@ -27,6 +30,11 @@ export class ChunkStream {
   private running = 0;
   private ground = 0;
 
+  /**
+   * Crea una instancia de ChunkStream para la ubicación dada.
+   * @param {string} url - URL de la petición del chunk inicial.
+   * @param {() => void} changed - Callback de notificación de cambios para re-renderizado.
+   */
   constructor(url: string, private changed: () => void) {
     const parsed = new URL(url);
     const lat = Number(parsed.searchParams.get('lat'));

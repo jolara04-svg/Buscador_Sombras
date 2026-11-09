@@ -4,6 +4,9 @@ import { useColorScheme as useRNColorScheme } from 'react-native';
 /**
  * To support static rendering, this value needs to be re-calculated on the client side for web
  */
+/**
+ * Hook para obtener el esquema de color actual en la web, gestionando la hidratación inicial para evitar desajustes SSR.
+ */
 export function useColorScheme() {
   const [hasHydrated, setHasHydrated] = useState(false);
 

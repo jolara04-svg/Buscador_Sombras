@@ -7,6 +7,9 @@ import '@/global.css';
 
 import { Platform } from 'react-native';
 
+/**
+ * Paleta de colores globales de la aplicación para los modos claro y oscuro.
+ */
 export const Colors = {
   light: {
     text: '#000000',

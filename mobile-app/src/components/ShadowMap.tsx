@@ -45,6 +45,11 @@ const STYLES=StyleSheet.create({
 
 const CAMERA_SIZE:number=500;
 
+/**
+ * Componente que renderiza un mapa 2D con superposición de proyección de sombras solares sobre edificios 3D.
+ * @param {ShadowMapProps} props - Propiedades de configuración del mapa de sombras y ubicación.
+ * @returns {JSX.Element} Elemento React renderizado.
+ */
 export function ShadowMap({ chunkURL, azimuth, elevation, initialLat, initialLon, origen, destino, modoSeleccion, modoBusqueda, onSeleccionarCoordenada }:ShadowMapProps){
     const [camera,setCamera]=useState<THREE.OrthographicCamera>(new THREE.OrthographicCamera(-CAMERA_SIZE,CAMERA_SIZE,CAMERA_SIZE,-CAMERA_SIZE));
     const [scene,setScene]=useState<THREE.Scene>(new THREE.Scene());

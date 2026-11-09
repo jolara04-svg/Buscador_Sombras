@@ -15,6 +15,11 @@ type SolarPosition = {
 const MADRID_LAT = 40.4168;
 const MADRID_LON = -3.7038;
 
+/**
+ * Trunca un número o string numérico a un máximo de 6 decimales para la visualización en los inputs.
+ * @param {string|number} valor - Valor a truncar.
+ * @returns {string} Valor truncado a 6 decimales.
+ */
 function truncarA6Decimales(valor: string | number) {
   const str = String(valor);
   if (!str.includes('.')) return str;
@@ -22,7 +27,13 @@ function truncarA6Decimales(valor: string | number) {
   return `${entero}.${decimales.slice(0, 6)}`;
 }
 
-// Simplified solar position calculation
+/**
+ * Calcula la posición solar simplificada (elevación y acimut) para una fecha y ubicación dadas.
+ * @param {Date} date - Fecha y hora del cálculo.
+ * @param {number} latitude - Latitud geográfica.
+ * @param {number} longitude - Longitud geográfica.
+ * @returns {{elevation: number, azimuth: number}} Objeto con la elevación y acimut solar en grados.
+ */
 function calculateSunPosition(date: Date, latitude: number, longitude: number) {
   // Convert to radians
   const toRad = (deg: number) => (deg * Math.PI) / 180;

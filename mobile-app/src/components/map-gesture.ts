@@ -1,5 +1,11 @@
 export type MapTouch = { id: number | string; x: number; y: number };
 
+/**
+ * Calcula el desplazamiento, factor de zoom y número de dedos a partir de los eventos táctiles y de movimiento.
+ * @param {readonly MapTouch[]} previous - Puntos táctiles anteriores.
+ * @param {readonly MapTouch[]} current - Puntos táctiles actuales.
+ * @returns {({ dx: number, dy: number, zoom: number, twoFingers: boolean } | null)} Objeto con los deltas de gesto o null si no es válido.
+ */
 // Rebase whenever a finger is added/lifted: changing contacts must never move the camera.
 export function getMapGesture(previous: readonly MapTouch[], current: readonly MapTouch[]) {
   const before = [...previous].sort((a, b) => String(a.id).localeCompare(String(b.id))).slice(0, 2);

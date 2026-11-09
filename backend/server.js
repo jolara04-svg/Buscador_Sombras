@@ -44,6 +44,10 @@ const fuse = new Fuse(placesData, fuseOptions);
 /**
  * Convierte Latitud y Longitud a coordenadas de tesela (X, Y) para Web Mercator.
  * zoom 16 divide la tierra en un tablero de 2^16 x 2^16 chunks.
+ * @param {number} lat - Latitud en grados decimales.
+ * @param {number} lon - Longitud en grados decimales.
+ * @param {number} [zoom=16] - Nivel de zoom de la tesela.
+ * @returns {{x: number, y: number, z: number}} Coordenadas de tesela y zoom.
  */
 function latLonToTile(lat, lon, zoom = 16) {
   const n = Math.pow(2, zoom);
@@ -57,7 +61,12 @@ function latLonToTile(lat, lon, zoom = 16) {
   return { x, y, z: zoom };
 }
 
-// Comprueba si tenemos ese chunk en coordenadas Mercator.
+/**
+ * Comprueba si tenemos ese chunk en coordenadas Mercator basándose en el manifest.
+ * @param {number|string} x - Coordenada X de la tesela.
+ * @param {number|string} y - Coordenada Y de la tesela.
+ * @returns {boolean} True si el chunk existe, false en caso contrario.
+ */
 function chunkExiste(x, y) {
   const ys = manifest[String(x)];
   return ys ? ys.includes(String(y)) : false;
