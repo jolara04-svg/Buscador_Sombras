@@ -5,6 +5,7 @@ import * as THREE from "three";
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { shadowShaderMaterialDefault, buildingShaderMaterial, transparentShaderMaterial } from "@/components/shadersSombras";
 import { Mapa2D } from "@/components/Mapa2D";
+import { SHADOW_SOURCE_WEIGHTS, sourceEnabled, sourceUrl, type ShadowSourceSelection } from "@/components/shadow-map-sources";
 
 type ShadowMapProps = {
   //Foreground shadow overlay properties.
@@ -25,6 +26,9 @@ type ShadowMapProps = {
   modoSeleccion:"origen"|"destino"|"solar";
   modoBusqueda:"lugar"|"ruta";
   onSeleccionarCoordenada:(lat:number, lon:number)=>void;
+  sources?:ShadowSourceSelection;
+  buildingURL?:string;
+  vegetationURL?:string;
 };//Sí, se que estoy rompiendo la encapsulación. Ya luego si eso.
 
 const STYLES=StyleSheet.create({
@@ -45,7 +49,7 @@ const STYLES=StyleSheet.create({
 
 const CAMERA_SIZE:number=500;
 
-export function ShadowMap({ chunkURL, azimuth, elevation, initialLat, initialLon, origen, destino, modoSeleccion, modoBusqueda, onSeleccionarCoordenada }:ShadowMapProps){
+export function ShadowMap({ chunkURL, azimuth, elevation, initialLat, initialLon, origen, destino, modoSeleccion, modoBusqueda, onSeleccionarCoordenada, sources, buildingURL, vegetationURL }:ShadowMapProps){
     const [camera,setCamera]=useState<THREE.OrthographicCamera>(new THREE.OrthographicCamera(-CAMERA_SIZE,CAMERA_SIZE,CAMERA_SIZE,-CAMERA_SIZE));
     const [scene,setScene]=useState<THREE.Scene>(new THREE.Scene());
     const [_renderer,setRenderer]=useState<THREE.WebGLRenderer|null>(null);
@@ -87,22 +91,31 @@ export function ShadowMap({ chunkURL, azimuth, elevation, initialLat, initialLon
             return;
         }
         const loader=new GLTFLoader();
-        let gltf;
-        try{
-            gltf=await loader.loadAsync(chunkURL);
-        }
-        catch{
-            console.log("Failed to obtain chunk");
-        }
-        const meshes:THREE.BufferGeometry[]=[];
-        if(gltf!==undefined)
-            extractMeshes(gltf.scene,meshes);
-        else 
-            meshes.push(new THREE.BoxGeometry(100,100,100));//A cube, mainly for testing.
         const x=gl.drawingBufferHeight/gl.drawingBufferWidth
         const shadowMaterial=shadowShaderMaterialDefault(azimuth, elevation,x);
         const buildingMaterial=buildingShaderMaterial(x);
-        meshes.forEach((mesh)=>{addToScene(scene,mesh,shadowMaterial,buildingMaterial)});
+        const vegetationMaterial=shadowShaderMaterialDefault(azimuth, elevation,x);
+        vegetationMaterial.uniforms.shadowColor.value.w = 0.5 * SHADOW_SOURCE_WEIGHTS.vegetation;
+        const selection = { ...sources, ...(buildingURL ? { buildings: buildingURL } : {}), ...(vegetationURL ? { vegetation: vegetationURL } : {}) };
+        for (const source of ["buildings", "vegetation"] as const) {
+            if (!sourceEnabled(selection, source)) continue;
+            try {
+                const gltf=await loader.loadAsync(sourceUrl(chunkURL, source, selection));
+                const meshes:THREE.BufferGeometry[]=[];
+                extractMeshes(gltf.scene,meshes);
+                const material = source === "vegetation" ? vegetationMaterial : shadowMaterial;
+                meshes.forEach((mesh)=>{
+                    const cast = new THREE.Mesh(mesh, material);
+                    cast.userData.shadowSource = source;
+                    scene.add(cast);
+                    if (source === "buildings") {
+                        const facade = new THREE.Mesh(mesh, buildingMaterial);
+                        facade.userData.shadowSource = source;
+                        scene.add(facade);
+                    }
+                });
+            } catch { console.warn(`Failed to obtain ${source} source`); }
+        }
         addToScene(scene,new THREE.PlaneGeometry(CAMERA_SIZE,CAMERA_SIZE),transparentShaderMaterial(x));
         const aspectRatio=gl.drawingBufferWidth/gl.drawingBufferHeight;
         camera.left=-CAMERA_SIZE*aspectRatio;
@@ -110,6 +123,13 @@ export function ShadowMap({ chunkURL, azimuth, elevation, initialLat, initialLon
         setCamera(camera); 
         renderer.render(scene,camera);//Creo que los edificios están flotando
     }
+    useEffect(() => {
+        const selection = { ...sources, ...(buildingURL ? { buildings: buildingURL } : {}), ...(vegetationURL ? { vegetation: vegetationURL } : {}) };
+        scene.traverse((object) => {
+            const source = object.userData.shadowSource as "buildings" | "vegetation" | undefined;
+            if (source) object.visible = sourceEnabled(selection, source);
+        });
+    }, [scene, sources, buildingURL, vegetationURL]);
     scene.add(camera);
     camera.position.set(0,0,100);
     camera.lookAt(new THREE.Vector3(0,0,0));

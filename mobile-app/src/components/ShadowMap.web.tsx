@@ -5,14 +5,16 @@ import { Mapa2D, type Mapa2DProps, type MapViewport } from './Mapa2D.web';
 import { buildingShaderMaterial, shadowShaderMaterialDefault, getShadowCastMatrix } from './shadersSombras';
 import { chunkReference, mercator, metersPerPixel } from './shadow-map-projection';
 import { disposeChunk } from './chunk-stream';
+import { SHADOW_SOURCE_WEIGHTS, sourceEnabled, sourceUrl, type ShadowSourceSelection } from './shadow-map-sources';
 
-type Props = Mapa2DProps & { chunkURL: string; azimuth: number; elevation: number };
+type Props = Mapa2DProps & { chunkURL: string; azimuth: number; elevation: number; sources?: ShadowSourceSelection; buildingURL?: string; vegetationURL?: string };
 type Overlay = {
   renderer: THREE.WebGLRenderer;
   scene: THREE.Scene;
   camera: THREE.OrthographicCamera;
   shadow: THREE.ShaderMaterial;
   buildings: THREE.ShaderMaterial;
+  vegetation: THREE.ShaderMaterial;
   reference: ReturnType<typeof chunkReference>;
 };
 
@@ -31,12 +33,14 @@ function draw(overlay: Overlay, viewport: MapViewport) {
   renderer.render(scene, camera);
 }
 
-export function ShadowMap({ chunkURL, azimuth, elevation, ...mapProps }: Props) {
+export function ShadowMap({ chunkURL, azimuth, elevation, sources, buildingURL, vegetationURL, ...mapProps }: Props) {
   const canvas = useRef<HTMLCanvasElement>(null);
   const overlay = useRef<Overlay | null>(null);
   const [viewport, setViewport] = useState<MapViewport | null>(null);
   const latest = useRef({ azimuth, elevation, viewport });
   const [error, setError] = useState<string | null>(null);
+
+  const sourceSelectionKey = JSON.stringify({ sources, buildingURL, vegetationURL });
 
   useEffect(() => {
     latest.current = { azimuth, elevation, viewport };
@@ -53,33 +57,41 @@ export function ShadowMap({ chunkURL, azimuth, elevation, ...mapProps }: Props) 
     const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 2000);
     const shadow = shadowShaderMaterialDefault(latest.current.azimuth, latest.current.elevation, 1);
     const buildings = buildingShaderMaterial(1);
-    const state = { renderer, scene, camera, shadow, buildings, reference: chunkReference(chunkURL) };
+    const vegetation = shadowShaderMaterialDefault(latest.current.azimuth, latest.current.elevation, 1);
+    vegetation.uniforms.shadowColor.value.w = 0.5 * SHADOW_SOURCE_WEIGHTS.vegetation;
+    const selection = { ...sources, ...(buildingURL ? { buildings: buildingURL } : {}), ...(vegetationURL ? { vegetation: vegetationURL } : {}) };
+    const state = { renderer, scene, camera, shadow, buildings, vegetation, reference: chunkReference(chunkURL) };
     overlay.current = state;
     if (latest.current.viewport) draw(state, latest.current.viewport);
 
-    void new GLTFLoader().loadAsync(chunkURL).then(gltf => {
+    const loadSource = async (source: 'buildings' | 'vegetation') => {
+      if (!sourceEnabled(selection, source)) return;
+      const gltf = await new GLTFLoader().loadAsync(sourceUrl(chunkURL, source, selection));
       if (!active) { disposeChunk(gltf.scene); return; }
       gltf.scene.updateMatrixWorld(true);
       const geometries: THREE.BufferGeometry[] = [];
-      gltf.scene.traverse(object => {
-        if (object instanceof THREE.Mesh) geometries.push(object.geometry.clone().applyMatrix4(object.matrixWorld));
-      });
+      gltf.scene.traverse(object => { if (object instanceof THREE.Mesh) geometries.push(object.geometry.clone().applyMatrix4(object.matrixWorld)); });
       disposeChunk(gltf.scene);
       const bounds = new THREE.Box3();
       geometries.forEach(geometry => { geometry.computeBoundingBox(); bounds.union(geometry.boundingBox!); });
       geometries.forEach(geometry => {
         geometry.translate(0, 0, -bounds.min.z);
-        const cast = new THREE.Mesh(geometry, shadow);
+        const material = source === 'vegetation' ? vegetation : shadow;
+        const cast = new THREE.Mesh(geometry, material);
         // The shader moves vertices outside the original geometry bounds.
         cast.frustumCulled = false;
-        const building = new THREE.Mesh(geometry, buildings);
-        building.frustumCulled = false;
-        scene.add(cast, building);
+        scene.add(cast);
+        if (source === 'buildings') {
+          const building = new THREE.Mesh(geometry, buildings);
+          building.frustumCulled = false;
+          scene.add(building);
+        }
       });
-      shadow.uniforms.shadowCastMatrix.value.copy(getShadowCastMatrix(latest.current.azimuth, latest.current.elevation, 1));
-      shadow.uniforms.shadowColor.value.w = latest.current.elevation > 0 ? 0.5 : 0;
+      materialFor(source).uniforms.shadowCastMatrix.value.copy(getShadowCastMatrix(latest.current.azimuth, latest.current.elevation, 1));
       if (latest.current.viewport) draw(state, latest.current.viewport);
-    }).catch(() => { if (active) setError('No se pudieron cargar los edificios de esta zona.'); });
+    };
+    const materialFor = (source: 'buildings' | 'vegetation') => source === 'vegetation' ? vegetation : shadow;
+    void Promise.all((['buildings', 'vegetation'] as const).map(source => loadSource(source))).catch(() => { if (active) setError('No se pudieron cargar las capas 3D de esta zona.'); });
 
     return () => {
       active = false;
@@ -89,15 +101,18 @@ export function ShadowMap({ chunkURL, azimuth, elevation, ...mapProps }: Props) 
       geometries.forEach(geometry => geometry.dispose());
       shadow.dispose();
       buildings.dispose();
+      vegetation.dispose();
       renderer.dispose();
     };
-  }, [chunkURL]);
+  }, [chunkURL, sourceSelectionKey]);
 
   useEffect(() => {
     const state = overlay.current;
     if (!state || !viewport) return;
     state.shadow.uniforms.shadowCastMatrix.value.copy(getShadowCastMatrix(azimuth, elevation, 1));
     state.shadow.uniforms.shadowColor.value.w = elevation > 0 ? 0.5 : 0;
+    state.vegetation.uniforms.shadowCastMatrix.value.copy(getShadowCastMatrix(azimuth, elevation, 1));
+    state.vegetation.uniforms.shadowColor.value.w = elevation > 0 ? 0.5 * SHADOW_SOURCE_WEIGHTS.vegetation : 0;
     draw(state, viewport);
   }, [azimuth, elevation, viewport]);
 
