@@ -4,6 +4,9 @@ import { BufferGeometry, Matrix3, Matrix4, Mesh, Object3D, ShaderMaterial,  Vect
  Struct for a surface were shadows can be casted.
  Can be interpreted both as a triangle and a paralelogram.
  */
+/**
+ * Estructura geométrica para una superficie donde se pueden proyectar sombras (triángulo o paralelogramo).
+ */
 type Sheet={
     b:Vector3;
     u:Vector3;
@@ -181,6 +184,17 @@ function applyMaterial(geometries:BufferGeometry[], sheet:Sheet, light:Vector3, 
     geometries.forEach((geometry)=>meshes.push(new Mesh(geometry, material)));
 }
 
+/**
+ * Aplica materiales de shader avanzados con sombras proyectadas sobre una lista de objetos 3D.
+ * @param {Object3D[]} objs - Array de objetos 3D sobre los que aplicar los materiales.
+ * @param {Sheet[]} triangles - Superficies triangulares de sombra.
+ * @param {Sheet[]} paralelograms - Superficies paralelográmicas de sombra.
+ * @param {number} azimuth - Acimut solar en grados.
+ * @param {number} elevation - Elevación solar en grados.
+ * @param {Vector4} color - Vector de color RGBA para el shader.
+ * @param {number} layer - Nivel de capa de renderizado.
+ * @returns {Mesh[]} Array de mallas 3D generadas con los materiales de sombra.
+ */
 function applyMaterials(objs:Object3D[], triangles:Sheet[], paralelograms:Sheet[], azimuth:number, elevation:number, color:Vector4, layer:number):Mesh[]{
     const light:Vector3=vecFromPolar(pi180*azimuth, pi180*elevation);
     const geometries:BufferGeometry[]=extractGeometries(objs);
@@ -190,6 +204,16 @@ function applyMaterials(objs:Object3D[], triangles:Sheet[], paralelograms:Sheet[
     return meshes;
 }
 
+
+/**
+ * Aplica un material base (sin sombras específicas) sobre un objeto 3D.
+ * @param {Object3D} objs - Objeto u objetos 3D a procesar.
+ * @param {number} azimuth - Acimut solar en grados.
+ * @param {number} elevation - Elevación solar en grados.
+ * @param {Vector4} color - Vector de color RGBA para el shader.
+ * @param {number} layer - Nivel de capa de renderizado.
+ * @returns {Mesh[]} Array de mallas 3D generadas.
+ */
 function applyMaterialsNone(objs:Object3D[], azimuth:number, elevation:number, color:Vector4, layer:number):Mesh[]{
     const light:Vector3=vecFromPolar(pi180*azimuth, pi180*elevation);
     const geometries:BufferGeometry[]=extractGeometries(objs);
