@@ -79,18 +79,20 @@ export class ChunkStream {
       const controller = new AbortController(); const key = `${this.origin.x}/${this.origin.y}`;
       const entry: Entry = { controller }; this.entries.get(layer)!.set(key, entry);
       try {
+        await this.fetchManifest(layer, controller.signal);
+        const manifest = this.manifests.get(layer);
+        if (!manifest?.[String(this.origin.x)]?.includes(String(this.origin.y))) return null;
         const model = await this.fetchModel(layer, this.origin.x, this.origin.y, controller.signal);
         if (!this.active || !this.isLayerEnabled(layer)) { disposeChunk(model); return null; }
         const bounds = new THREE.Box3().setFromObject(model); if (bounds.isEmpty()) { disposeChunk(model); return null; }
         this.ground.set(layer, bounds.min.y); model.position.y = -bounds.min.y; entry.model = model; this.roots[layer].add(model);
-        void this.fetchManifest(layer, controller.signal);
         return bounds.getSize(new THREE.Vector3());
       } catch (error) {
         if (!this.active || !this.isLayerEnabled(layer) || controller.signal.aborted) return null;
         throw error;
       }
     }))).filter((size): size is THREE.Vector3 => size !== null);
-    return sizes.length ? sizes.reduce((combined, size) => combined.max(size), new THREE.Vector3()) : null;
+    return sizes.length ? sizes.reduce((combined, size) => combined.max(size), new THREE.Vector3()) : new THREE.Vector3(this.tileSize, 0, this.tileSize);
   }
 
   update(target: THREE.Vector3, distance: number, aspect: number) {
@@ -104,15 +106,26 @@ export class ChunkStream {
       this.desired.add(key);
       for (const layer of ['buildings', 'trees'] as ChunkLayer[]) {
         const manifest = this.manifests.get(layer);
-        if (this.isLayerEnabled(layer) && !this.entries.get(layer)!.has(key) && (!manifest || manifest[String(x)]?.includes(String(y)))) this.queue.push({ layer, x, y });
+        if (this.isLayerEnabled(layer) && !this.entries.get(layer)!.has(key) && manifest?.[String(x)]?.includes(String(y))) this.queue.push({ layer, x, y });
       }
     }
     for (const [layer, entries] of this.entries) for (const [key, entry] of entries) if (!this.desired.has(key) || !this.isLayerEnabled(layer)) { entry.controller.abort(); if (entry.model) { this.roots[layer].remove(entry.model); disposeChunk(entry.model); } entries.delete(key); }
     this.pump();
   }
 
-  private async fetchManifest(layer: ChunkLayer, signal: AbortSignal) { try { const response = await fetch(`${this.base}/manifest/${layer}`, { signal }); if (response.ok) this.manifests.set(layer, await response.json()); } catch {} }
-  private pump() { while (this.active && this.running < 3 && this.queue.length) { const { layer, x, y } = this.queue.shift()!; const key = `${x}/${y}`, controller = new AbortController(); const marker = { key, position: new THREE.Vector3((x - this.origin.x) * this.tileSize, 0, (y - this.origin.y) * this.tileSize), failed: false, layer }; const entry: Entry = { controller, marker }; this.entries.get(layer)!.set(key, entry); this.running++; void this.fetchModel(layer, x, y, controller.signal).then((model) => { if (!this.active || this.entries.get(layer)!.get(key) !== entry || !this.isLayerEnabled(layer)) { disposeChunk(model); return; } model.position.set(marker.position.x, -(this.ground.get(layer) ?? 0), marker.position.z); entry.model = model; entry.marker = undefined; this.roots[layer].add(model); }).catch((error) => { if (!controller.signal.aborted && error instanceof Error && error.message !== 'HTTP 404') marker.failed = true; }).finally(() => { this.running--; if (this.active) { this.pump(); this.changed(); } }); } }
+  private async fetchManifest(layer: ChunkLayer, signal: AbortSignal) {
+    try {
+      const response = await fetch(`${this.base}/manifest/${layer}`, { signal });
+      if (response.ok) {
+        this.manifests.set(layer, await response.json());
+      } else if (!signal.aborted) {
+        this.manifests.set(layer, {});
+      }
+    } catch {
+      if (!signal.aborted) this.manifests.set(layer, {});
+    }
+  }
+  private pump() { while (this.active && this.running < 3 && this.queue.length) { const { layer, x, y } = this.queue.shift()!; const key = `${x}/${y}`, controller = new AbortController(); const marker = { key, position: new THREE.Vector3((x - this.origin.x) * this.tileSize, 0, (y - this.origin.y) * this.tileSize), failed: false, layer }; const entry: Entry = { controller, marker }; this.entries.get(layer)!.set(key, entry); this.running++; void this.fetchModel(layer, x, y, controller.signal).then((model) => { if (!this.active || this.entries.get(layer)!.get(key) !== entry || !this.isLayerEnabled(layer)) { disposeChunk(model); return; } model.position.set(marker.position.x, -(this.ground.get(layer) ?? 0), marker.position.z); entry.model = model; entry.marker = undefined; this.roots[layer].add(model); }).catch((error) => { if (controller.signal.aborted) return; if (error instanceof Error && error.message === 'HTTP 404') { this.entries.get(layer)!.delete(key); const manifest = this.manifests.get(layer); const ys = manifest?.[String(x)]; if (ys) manifest[String(x)] = ys.filter((value) => value !== String(y)); return; } marker.failed = true; }).finally(() => { this.running--; if (this.active) { this.pump(); this.changed(); } }); } }
   private async fetchModel(layer: ChunkLayer, x: number, y: number, signal: AbortSignal) { const response = await fetch(`${this.base}/tiles/${layer}/16/${x}/${y}.glb`, { signal }); if (!response.ok) throw new Error(`HTTP ${response.status}`); const data = await response.arrayBuffer(); const gltf = await new Promise<GLTF>((resolve, reject) => new GLTFLoader().parse(data, `${this.base}/tiles/${layer}/16/${x}/`, resolve, reject)); gltf.scene.rotation.x = -Math.PI / 2; gltf.scene.updateMatrixWorld(true); return gltf.scene; }
   dispose() { this.active = false; this.queue = []; for (const entries of this.entries.values()) for (const entry of entries.values()) entry.controller.abort(); disposeChunk(this.root); this.entries.forEach((entries) => entries.clear()); this.root.clear(); }
 }

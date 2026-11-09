@@ -33,6 +33,7 @@ test('ChunkStream loads neighbours, deduplicates, evicts and aborts', async () =
   const requests = [];
   let pending = [];
   let initialized = false;
+  let stream;
   GLTFLoader.prototype.parse = function (_data, _url, resolve) {
     const scene = new THREE.Group();
     scene.add(new THREE.Mesh(new THREE.BoxGeometry(400, 400, 30), new THREE.MeshBasicMaterial()));
@@ -40,7 +41,14 @@ test('ChunkStream loads neighbours, deduplicates, evicts and aborts', async () =
   };
   global.fetch = async (url, options) => {
     requests.push(url);
-    if (url.includes('/manifest/')) return { ok: false };
+    if (url.includes('/manifest/')) {
+      const manifest = {};
+      for (let x = stream.origin.x - 2; x <= stream.origin.x + 2; x += 1) {
+        manifest[x] = [];
+        for (let y = stream.origin.y - 2; y <= stream.origin.y + 2; y += 1) manifest[x].push(String(y));
+      }
+      return { ok: true, json: async () => manifest };
+    }
     if (!initialized) {
       initialized = true;
       return { ok: true, arrayBuffer: async () => new ArrayBuffer(0) };
@@ -61,7 +69,7 @@ test('ChunkStream loads neighbours, deduplicates, evicts and aborts', async () =
   }
 
   let changes = 0;
-  const stream = new ChunkStream('http://localhost:3000/chunk?lat=40.4168&lon=-3.7038', () => changes += 1);
+  stream = new ChunkStream('http://localhost:3000/chunk?lat=40.4168&lon=-3.7038', () => changes += 1);
   try {
     await stream.initialize();
     assert.ok(stream.tileSize > 450 && stream.tileSize < 480);
@@ -92,10 +100,11 @@ test('ChunkStream loads neighbours, deduplicates, evicts and aborts', async () =
   }
 });
 
-test('ChunkStream obtiene árboles por la capa separada y permite ocultarla', async () => {
+test('ChunkStream no solicita vecinos que no aparecen en el manifest', async () => {
   const originalFetch = global.fetch;
   const originalParse = GLTFLoader.prototype.parse;
   const requests = [];
+  let stream;
   GLTFLoader.prototype.parse = function (_data, _url, resolve) {
     const scene = new THREE.Group();
     scene.add(new THREE.Mesh(new THREE.BoxGeometry(10, 10, 10), new THREE.MeshBasicMaterial()));
@@ -103,10 +112,68 @@ test('ChunkStream obtiene árboles por la capa separada y permite ocultarla', as
   };
   global.fetch = async (url) => {
     requests.push(String(url));
-    if (String(url).includes('/manifest/')) return { ok: false };
+    if (String(url).includes('/manifest/')) {
+      return { ok: true, json: async () => ({ [stream.origin.x]: [String(stream.origin.y)] }) };
+    }
     return { ok: true, arrayBuffer: async () => new ArrayBuffer(0) };
   };
-  const stream = new ChunkStream('http://localhost:3000/chunk?lat=40.4168&lon=-3.7038', () => {}, { layers: ['buildings', 'trees'] });
+  stream = new ChunkStream('http://localhost:3000/chunk?lat=40.4168&lon=-3.7038', () => {});
+  try {
+    await stream.initialize();
+    stream.update(new THREE.Vector3(), 100, 1);
+    assert.equal(requests.filter((url) => url.includes('/tiles/')).length, 1);
+    assert.equal(stream.markers.length, 0);
+  } finally {
+    stream.dispose();
+    global.fetch = originalFetch;
+    GLTFLoader.prototype.parse = originalParse;
+  }
+});
+
+test('ChunkStream permite una vista vacía si no hay chunk central', async () => {
+  const originalFetch = global.fetch;
+  const originalParse = GLTFLoader.prototype.parse;
+  const requests = [];
+  let stream;
+  GLTFLoader.prototype.parse = function () {
+    throw new Error('No debería parsearse un tile ausente');
+  };
+  global.fetch = async (url) => {
+    requests.push(String(url));
+    if (String(url).includes('/manifest/')) return { ok: true, json: async () => ({}) };
+    return { ok: false, status: 404 };
+  };
+  stream = new ChunkStream('http://localhost:3000/chunk?lat=40.4168&lon=-3.7038', () => {});
+  try {
+    const size = await stream.initialize();
+    assert.ok(size);
+    assert.equal(requests.filter((url) => url.includes('/tiles/')).length, 0);
+    assert.equal(stream.markers.length, 0);
+  } finally {
+    stream.dispose();
+    global.fetch = originalFetch;
+    GLTFLoader.prototype.parse = originalParse;
+  }
+});
+
+test('ChunkStream obtiene árboles por la capa separada y permite ocultarla', async () => {
+  const originalFetch = global.fetch;
+  const originalParse = GLTFLoader.prototype.parse;
+  const requests = [];
+  let stream;
+  GLTFLoader.prototype.parse = function (_data, _url, resolve) {
+    const scene = new THREE.Group();
+    scene.add(new THREE.Mesh(new THREE.BoxGeometry(10, 10, 10), new THREE.MeshBasicMaterial()));
+    resolve({ scene });
+  };
+  global.fetch = async (url) => {
+    requests.push(String(url));
+    if (String(url).includes('/manifest/')) {
+      return { ok: true, json: async () => ({ [stream.origin.x]: [String(stream.origin.y)] }) };
+    }
+    return { ok: true, arrayBuffer: async () => new ArrayBuffer(0) };
+  };
+  stream = new ChunkStream('http://localhost:3000/chunk?lat=40.4168&lon=-3.7038', () => {}, { layers: ['buildings', 'trees'] });
   try {
     await stream.initialize();
     assert.ok(requests.some(url => url.includes('/tiles/buildings/16/')));
