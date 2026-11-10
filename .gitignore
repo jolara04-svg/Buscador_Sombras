@@ -1,6 +1,7 @@
 node_modules/
 include/
 *.lib
+__pycache__/
 build/
 GEMINI.md
 QWEN.md
