@@ -53,6 +53,7 @@ initializePython_ExitCode initializePython(void){
             return initializePython_ExitCode_LOCAL_MODULE;
         }
     }
+    Py_INCREF(shaderModule);
     dbg_setup(shaderModule);
     _initialized=1;
     return initializePython_ExitCode_0;

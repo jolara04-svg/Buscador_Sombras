@@ -9,8 +9,11 @@ void setFilePath(PyObject* newFilePath){
 }
 
 static PyObject* getFilePath(PyObject* self, PyObject* args){
-    if(filePath==NULL)
+    if(filePath==NULL){
         PyErr_SetString(PyExc_RuntimeError, "filePath has not been set");
+        return NULL;
+    }
+    Py_INCREF(filePath);
     return filePath;
 }
 
