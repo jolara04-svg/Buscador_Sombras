@@ -22,9 +22,11 @@ Ahora toca colocarlo todo en su sitio
 
 Primero, localiza los ficheros `.h` de Python y NumPy. Copia las carpetas `include` y pégalas en `src`.
 > Alternativamente, puedes poner los directorios donde se encuentran en el archivo `binding.gyp`
+> En ese caso, debes modificar `src/includes.h`, reemplazando `#include "include/Python.h"` por `#include <Python.h>` para Python y `#include "include/numpy/arrayobject.h"` por `#include <arrayobject.h>` para NumPy
 
 Segundo, localiza el archivo `python313.lib` (El número variará según la versión) y pégalo en este directorio. 
 > Alternativamente, puedes proporcionar un camino absoluto al archivo en `binding.gyp`
+> En ese caso, 
 
 Para compilar el addon, abre una terminal en este directorio y ejecuta `npm ci`. Para probarlo, `npm test`.
 
