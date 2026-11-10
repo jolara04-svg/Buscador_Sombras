@@ -1,2 +1,2 @@
-const shadowcalc=require("bindings")("shadowcalc");
+const shadowcalc=require("bindings")("shaders");
 module.exports=shadowcalc;
