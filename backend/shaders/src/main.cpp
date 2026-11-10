@@ -30,7 +30,7 @@ Napi::Value isInitialized(const Napi::CallbackInfo& info){
     Napi::Env env=info.Env();
     if(checkArgCount(env, info, 0, __FUNCTION__))
         return env.Undefined();
-    return Napi::Boolean::New(env, (bool)Py_IsInitialized());
+    return Napi::Boolean::New(env, (bool)(Py_IsInitialized() && isPythonInitialized()));
 }
 
 Napi::Value debug_renderCube(const Napi::CallbackInfo& info){

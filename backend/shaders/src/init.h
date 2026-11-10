@@ -8,6 +8,7 @@ typedef enum{
     initializePython_ExitCode_LOCAL_MODULE
 }initializePython_ExitCode;
 initializePython_ExitCode initializePython(void);
+int isPythonInitialized();
 #ifdef __cplusplus
 }
 #endif
