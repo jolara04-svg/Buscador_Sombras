@@ -33,6 +33,16 @@ Napi::Value isInitialized(const Napi::CallbackInfo& info){
     return Napi::Boolean::New(env, (bool)(Py_IsInitialized() && isPythonInitialized()));
 }
 
+Napi::Value getShadow(const Napi::CallbackInfo& info){
+    Napi::Env env=info.Env();
+    float lon1, lat1, lon2, lat2, elev, azim, res;
+    if(parseGetShadow(env, info, __FUNCTION__, lon1, lat1, lon2, lat2, elev, azim))
+        return env.Undefined();
+    //TODO: calculate the thing (& error checking)
+    res=-1.0f;
+    return Napi::Number::New(env, res);
+}
+
 Napi::Value debug_renderCube(const Napi::CallbackInfo& info){
     Napi::Env env=info.Env();
     if(checkArgCount(env, info, 0, __FUNCTION__))
@@ -49,6 +59,7 @@ Napi::Object init(Napi::Env env, Napi::Object exports){
     exportFunc(initialize);
     exportFunc(isInitialized);
     exportFunc(debug_renderCube);
+    exportFunc(getShadow);
     return exports;
 }
 
