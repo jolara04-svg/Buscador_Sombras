@@ -17,6 +17,7 @@ Primero, hay que instalar en el ordenador todas las dependencias y herramientas 
         > Al igual que con Python, se necesitan las cabeceras de la API de C de NumPy.
         > Deberían estar en `.../python/python313/Lib/site-packages/numpy/_core/include`
         > Instalándolo con `pip` vienen.
+    + Trimesh
 
 Ahora toca colocarlo todo en su sitio
 
@@ -26,7 +27,6 @@ Primero, localiza los ficheros `.h` de Python y NumPy. Copia las carpetas `inclu
 
 Segundo, localiza el archivo `python313.lib` (El número variará según la versión) y pégalo en este directorio. 
 > Alternativamente, puedes proporcionar un camino absoluto al archivo en `binding.gyp`
-> En ese caso, 
 
 Para compilar el addon, abre una terminal en este directorio y ejecuta `npm ci`. Para probarlo, `npm test`.
 
