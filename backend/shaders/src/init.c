@@ -2,6 +2,7 @@
 #include "init.h"
 #include "cmodule.h"
 #include "debug.h"
+#include "shadowCalc.h"
 
 PyObject* shaderModule=NULL;
 PyObject* importPath=NULL;
@@ -45,6 +46,10 @@ initializePython_ExitCode initializePython(void){
         Py_INCREF(importPath);
         setFilePath(importPath);
     }
+    //if(PyArray_ImportNumPyAPI()){
+    //    PyErr_Print();
+    //    return initializePython_ExitCode_MODULE;
+    //}
     if(shaderModule==NULL){
         shaderModule=PyImport_ImportModule("shader");
         if(shaderModule==NULL){
@@ -53,8 +58,21 @@ initializePython_ExitCode initializePython(void){
             return initializePython_ExitCode_LOCAL_MODULE;
         }
     }
+    PyObject* trimesh=PyImport_ImportModule("trimesh");
+    if(trimesh==NULL){
+        PyErr_Print();
+        PyErr_Clear();
+        return initializePython_ExitCode_MODULE;
+    }
     Py_INCREF(shaderModule);
     dbg_setup(shaderModule);
+    setModule(shaderModule);
+    setTrimesh(trimesh);
+    setMadridFilePath();
+    if(initializeNumPy()==NULL){
+        PyErr_Print();
+        return initializePython_ExitCode_MODULE;
+    }
     _initialized=1;
     return initializePython_ExitCode_0;
 }

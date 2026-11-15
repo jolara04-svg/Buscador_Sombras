@@ -2,10 +2,11 @@
 #include "checkArgs.hpp"
 #include "init.h"
 #include "debug.h"
+#include "shadowCalc.h"
 
 Napi::Value initialize(const Napi::CallbackInfo& info){
     Napi::Env env=info.Env();
-    if(checkArgCount(env, info, 1, __FUNCTION__)||checkFunction(env, info[0], __FUNCTION__, "first"))
+    if(checkArgCount(env, info, 0, __FUNCTION__))
         return env.Undefined();
     switch(initializePython()){
     case initializePython_ExitCode_0:
@@ -38,8 +39,11 @@ Napi::Value getShadow(const Napi::CallbackInfo& info){
     float lon1, lat1, lon2, lat2, elev, azim, res;
     if(parseGetShadow(env, info, __FUNCTION__, lon1, lat1, lon2, lat2, elev, azim))
         return env.Undefined();
-    //TODO: calculate the thing (& error checking)
-    res=-1.0f;
+    res=getShade(lon1, lat1, lon2, lat2, elev, azim, 16);
+    if(res<0.0){
+        Napi::Error::New(env, "Something went wrong during the function call\nConsult the Python traceback for more info").ThrowAsJavaScriptException();
+        return env.Undefined();
+    }
     return Napi::Number::New(env, res);
 }
 
@@ -55,7 +59,7 @@ Napi::Value debug_renderCube(const Napi::CallbackInfo& info){
 }
 
 Napi::Object init(Napi::Env env, Napi::Object exports){
-#define exportFunc(func) exports.Set(Napi::String::New(env, #func), Napi::Function::New(env, func));
+#define exportFunc(func) exports.Set(Napi::String::New(env, #func), Napi::Function::New(env, func))
     exportFunc(initialize);
     exportFunc(isInitialized);
     exportFunc(debug_renderCube);

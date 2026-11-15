@@ -1,5 +1,5 @@
 #include "debug.h"
-PyObject* module=NULL;
+static PyObject* module=NULL;
 
 void dbg_setup(PyObject* pythonModule){
     if(module!=NULL)

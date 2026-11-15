@@ -5,7 +5,7 @@ from OpenGL.GL import *
 import ctypes
 import cmodule
 
-screen=pygame.display.set_mode((512,512),pygame.DOUBLEBUF|pygame.OPENGL)
+screen=pygame.display.set_mode((256,256),pygame.DOUBLEBUF|pygame.OPENGL)
 
 with open(cmodule.getFilePath()+"/vertexShader.glsl") as file:
     vertexShaderSource=file.read()
@@ -34,6 +34,35 @@ if not glGetProgramiv(program, GL_LINK_STATUS):
     print(glGetProgramInfoLog(program))
     raise ValueError("shader failed to link")
 
+def castShadows(vertices:np.array, matrix:np.array, length:int)->pygame.Surface:
+    print("castShadows")
+    print(matrix)
+    glClearColor(1.0, 1.0, 1.0, 1.0)
+    glUseProgram(program)
+    #buffer=glGenBuffers(1)
+    position=glGetAttribLocation(program, b"position\0")
+    print("position=%d"%position)
+    #glBindBuffer(GL_ARRAY_BUFFER, buffer)
+    glVertexAttribPointer(position, 3, GL_FLOAT, GL_FALSE, 0, None)
+    glEnableVertexAttribArray(position)
+    glBufferData(GL_ARRAY_BUFFER, vertices, GL_STATIC_DRAW)
+    shadow=glGetUniformLocation(program, b"shadow\0")
+    print("shadow=%d"%shadow)
+    glUniformMatrix4fv(shadow, 1, GL_TRUE, matrix)
+    glDrawArrays(GL_TRIANGLES, 0, length)
+    pygame.display.flip()
+    pygame.time.Clock().tick(60)
+    res=pygame.Surface((256, 256), depth=8)
+    res.blit(screen, (0, 0))
+    return res
+
+def getShadeAt(surface, x, y):
+    color=surface.get_at((x, y))
+    if color.r:
+        return True
+    else:
+        return False
+
 def debug_renderCube():
     _vertices=[-1, -1, -1, -1, -1, 1, -1, 1, -1, -1, -1, -1, -1, -1, 1, -1, 1, 1, -1, -1, -1, -1, -1, 1, 1, -1, -1, -1, -1, -1, -1, -1, 1, 1, -1, 1, -1, -1, -1, -1, 1, -1, -1, 1, 1, -1, -1, -1, -1, 1, -1, 1, -1, -1, -1, -1, -1, -1, 1, -1, 1, 1, -1, -1, -1, -1, 1, -1, -1, 1, -1, 1, -1, -1, -1, 1, -1, -1, 1, 1, -1, -1, -1, 1, -1, 1, -1, -1, 1, 1, -1, -1, 1, -1, 1, 1, 1, -1, 1, -1, -1, 1, -1, 1, 1, 1, 1, 1, -1, -1, 1, 1, -1, -1, 1, -1, 1, -1, -1, 1, 1, -1, 1, 1, 1, 1, -1, 1, -1, -1, 1, 1, 1, 1, -1, -1, 1, -1, -1, 1, 1, 1, 1, 1, -1, 1, -1, 1, -1, -1, 1, 1, -1, -1, 1, -1, 1, 1, -1, 1, 1, 1, -1, 1, 1, 1, -1, 1, 1, 1, 1, -1, 1, 1, 1, 1, -1, 1, 1, 1, 1, -1, -1, 1, -1, 1, 1, 1, -1, 1, -1, -1, 1, -1, 1, 1, 1, 1, 1, -1, -1, 1, 1, -1, 1, 1, 1, 1, -1, 1, 1, 1, -1, 1, 1, 1]
     vertices=np.array(_vertices, np.float32)
@@ -57,4 +86,3 @@ def debug_renderCube():
     glUniformMatrix4fv(shadow, 1, GL_TRUE, matrix)
     glDrawArrays(GL_TRIANGLES, 0, len(_vertices)//3)
     pygame.display.flip()
-    input()
