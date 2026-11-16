@@ -1,6 +1,7 @@
 import { StyleSheet, Text, View, TextInput, Button, ScrollView, Pressable, Platform } from 'react-native';
 import { useState, useRef, useEffect } from 'react';
 import * as Location from 'expo-location';
+import Slider from '@react-native-community/slider';
 
 import { getChunkUrl, BACKEND_URL } from '@/constants/backend';
 import { LocationChunkViewer } from '@/components/location-chunk-viewer';
@@ -29,13 +30,24 @@ function truncarA6Decimales(valor: string | number) {
 }
 
 /**
+ * Convierte minutos del día (0-1440) a formato de hora "HH:MM".
+ * @param {number} minutos - Minutos transcurridos desde las 00:00.
+ * @returns {string} Hora formateada en "HH:MM".
+ */
+function minutosAHora(minutos: number) {
+  const horas = Math.floor(minutos / 60);
+  const mins = Math.floor(minutos % 60);
+  return `${String(horas).padStart(2, '0')}:${String(mins).padStart(2, '0')}`;
+}
+
+/**
  * Calcula la posición solar simplificada (elevación y acimut) para una fecha y ubicación dadas.
  * @param {Date} date - Fecha y hora del cálculo.
  * @param {number} latitude - Latitud geográfica.
  * @param {number} longitude - Longitud geográfica.
  * @returns {{elevation: number, azimuth: number}} Objeto con la elevación y acimut solar en grados.
  */
-function calculateSunPosition(date: Date, latitude: number, longitude: number) {
+export function calculateSunPosition(date: Date, latitude: number, longitude: number) {
   // Convert to radians
   const toRad = (deg: number) => (deg * Math.PI) / 180;
   const toDeg = (rad: number) => (rad * 180) / Math.PI;
@@ -118,6 +130,51 @@ export default function SolarCalculatorScreen() {
   const [result, setResult] = useState<SolarPosition | null>(null);
   const [chunkUrl, setChunkUrl] = useState<string | null>(null);
   const [calculating, setCalculating] = useState(false);
+  
+  // Estados para la Simulación Horaria del Sol (HU-06)
+  const [simulacionActiva, setSimulacionActiva] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [tiempoActualMinutos, setTiempoActualMinutos] = useState(0);
+  const [horaInicio, setHoraInicio] = useState('00:00');
+  const [horaFin, setHoraFin] = useState('23:59');
+  const [resultadoSolarSimulacion, setResultadoSolarSimulacion] = useState<SolarPosition | null>(null);
+  
+  // Estado para el paso de minutos por tick (calculado para que la simulación dure 10 segundos con 10 updates/s)
+  const [pasoPorTick, setPasoPorTick] = useState(14.4);
+
+  /**
+   * Efecto para calcular el incremento de minutos por tick (`pasoPorTick`).
+   * Matemáticas: 
+   * - Duración total de la animación = 10 segundos.
+   * - Frecuencia de actualización = 10 ticks por segundo (cada 100ms).
+   * - Total de ticks = 10 segundos * 10 ticks/s = 100 ticks.
+   * - Rango total en minutos = Diferencia entre horaFin y horaInicio (manejando cruce de medianoche si es necesario).
+   * - pasoPorTick = Rango total de minutos / 100 ticks.
+   */
+  useEffect(() => {
+    // Convertir "HH:MM" a minutos totales desde las 00:00
+    const parseMinutos = (horaStr: string) => {
+      const parts = horaStr.split(':');
+      if (parts.length !== 2) return 0;
+      const h = parseInt(parts[0], 10) || 0;
+      const m = parseInt(parts[1], 10) || 0;
+      return h * 60 + m;
+    };
+
+    const minInicio = parseMinutos(horaInicio);
+    let minFin = parseMinutos(horaFin);
+
+    // Si la hora de fin es menor o igual a la de inicio, asumimos que cruza la medianoche (añadir 24h = 1440 min)
+    if (minFin <= minInicio) {
+      minFin += 1440;
+    }
+
+    const diffMinutos = minFin - minInicio;
+    // Dividir entre 100 ticks (10s a 10 updates/s)
+    const paso = diffMinutos / 100;
+    setPasoPorTick(paso > 0 ? paso : 14.4);
+  }, [horaInicio, horaFin]);
+
   // Estado para controlar la vista activa del mapa: '2d', '3d' o '2d-sombras'
   const [vistaActiva, setVistaActiva] = useState<'2d' | '3d' | '2d-sombras'>('2d');
   const [shadowLayers, setShadowLayers] = useState<ShadowLayerSelection>(DEFAULT_SHADOW_LAYER_SELECTION);
@@ -212,6 +269,68 @@ export default function SolarCalculatorScreen() {
   const [horaOperacion, setHoraOperacion] = useState(
     new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: false })
   );
+
+  /**
+   * Recalcula la posición solar y actualiza el estado (result y resultadoSolarSimulacion) 
+   * en cada tick de la simulación horaria para mover las sombras de forma dinámica.
+   * @param {number} minutos - Minutos transcurridos desde las 00:00.
+   */
+  const actualizarSolPorMinutos = (minutos: number) => {
+    try {
+      const lat = parseFloat(latitude) || MADRID_LAT;
+      const lon = parseFloat(longitude) || MADRID_LON;
+
+      const horas = Math.floor(minutos / 60) % 24;
+      const mins = Math.floor(minutos % 60);
+
+      const horaStr = `${String(horas).padStart(2, '0')}:${String(mins).padStart(2, '0')}`;
+      const fechaHoraString = `${fechaOperacion}T${horaStr}:00`;
+      const date = new Date(fechaHoraString);
+
+      if (!isNaN(date.getTime())) {
+        const solarPos = calculateSunPosition(date, lat, lon);
+        setResult(solarPos);
+        setResultadoSolarSimulacion(solarPos);
+      }
+    } catch (e) {
+      console.warn('Error al calcular posición solar en simulación:', e);
+    }
+  };
+
+  /**
+   * Bucle de tiempo para la animación de simulación horaria (10 segundos totales a 10 updates/s).
+   */
+  useEffect(() => {
+    if (!isPlaying) return;
+
+    const parseMinutos = (horaStr: string) => {
+      const parts = horaStr.split(':');
+      if (parts.length !== 2) return 0;
+      const h = parseInt(parts[0], 10) || 0;
+      const m = parseInt(parts[1], 10) || 0;
+      return h * 60 + m;
+    };
+
+    const minInicioMax = parseMinutos(horaInicio);
+    let minFinMax = parseMinutos(horaFin);
+    if (minFinMax <= minInicioMax) {
+      minFinMax += 1440;
+    }
+
+    const intervalId = setInterval(() => {
+      setTiempoActualMinutos((prev) => {
+        const siguiente = prev + pasoPorTick;
+        if (siguiente >= minFinMax) {
+          setIsPlaying(false);
+          return minInicioMax;
+        }
+        actualizarSolPorMinutos(siguiente);
+        return siguiente;
+      });
+    }, 100);
+
+    return () => clearInterval(intervalId);
+  }, [isPlaying, pasoPorTick, horaInicio, horaFin, fechaOperacion, latitude, longitude]);
 
   
 
@@ -692,7 +811,7 @@ export default function SolarCalculatorScreen() {
           </View>
         )}
 
-        {/* 2. Botón flotante estilo píldora para calcular posición solar en la esquina inferior izquierda */}
+        {/* 2. Botones flotantes estilo píldora para calcular posición solar y simulación solar en la esquina inferior izquierda */}
         <View style={styles.floatingCalculateButtonContainer}>
           <Pressable
             style={styles.floatingCalculateButton}
@@ -703,7 +822,125 @@ export default function SolarCalculatorScreen() {
               {calculating ? 'Calculando...' : 'Calcular Posición Solar'}
             </Text>
           </Pressable>
+          <Pressable
+            style={styles.floatingCalculateButton}
+            onPress={() => {
+              // Inicializar en la hora de inicio configurada
+              const parseMinutos = (horaStr: string) => {
+                const parts = horaStr.split(':');
+                if (parts.length !== 2) return 0;
+                const h = parseInt(parts[0], 10) || 0;
+                const m = parseInt(parts[1], 10) || 0;
+                return h * 60 + m;
+              };
+              const minInicio = parseMinutos(horaInicio);
+              setTiempoActualMinutos(minInicio);
+              actualizarSolPorMinutos(minInicio);
+
+              setSimulacionActiva(true);
+              setVistaActiva('2d-sombras');
+              setIsPlaying(false);
+            }}
+          >
+            <Text style={styles.floatingCalculateButtonText}>
+              Simulación Solar
+            </Text>
+          </Pressable>
         </View>
+
+        {/* Panel flotante compacto de Simulación Horaria del Sol (HU-06) */}
+        {simulacionActiva && (
+          <View style={styles.simulationPanel}>
+            {/* Cabecera del panel con título y botón de cierre 'X' */}
+            <View style={styles.simulationHeader}>
+              <Text style={styles.simulationTitle}>Simulación Solar</Text>
+              <Pressable
+                onPress={() => {
+                  setIsPlaying(false);
+                  setSimulacionActiva(false);
+                  setVistaActiva('2d');
+                }}
+                style={styles.simulationCloseButton}
+              >
+                <Text style={styles.simulationCloseText}>✕</Text>
+              </Pressable>
+            </View>
+
+            {/* Fila de controles compactos: Inputs de hora inicio/fin y Botón Play/Pause con icono */}
+            <View style={styles.simulationControlsRow}>
+              <TextInput
+                style={styles.simulationInput}
+                value={horaInicio}
+                onChangeText={(text) => {
+                  // Validar formato parcial HH:MM durante la escritura
+                  const regex = /^([0-1]?[0-9]|2[0-3])?:?[0-5]?[0-9]?$/;
+                  if (regex.test(text) || text === '') {
+                    setHoraInicio(text);
+                  }
+                }}
+                onBlur={() => {
+                  // Validar formato completo al perder el foco, restaurando por defecto si es inválido
+                  const fullRegex = /^([01]\d|2[0-3]):([0-5]\d)$/;
+                  if (!fullRegex.test(horaInicio)) {
+                    setHoraInicio('00:00');
+                  }
+                }}
+                placeholder="00:00"
+                maxLength={5}
+              />
+              <Pressable
+                style={styles.simulationPlayButton}
+                onPress={() => setIsPlaying(!isPlaying)}
+              >
+                <Text style={styles.simulationPlayText}>
+                  {isPlaying ? '⏸' : '▶'}
+                </Text>
+              </Pressable>
+              <TextInput
+                style={styles.simulationInput}
+                value={horaFin}
+                onChangeText={(text) => {
+                  // Validar formato parcial HH:MM durante la escritura
+                  const regex = /^([0-1]?[0-9]|2[0-3])?:?[0-5]?[0-9]?$/;
+                  if (regex.test(text) || text === '') {
+                    setHoraFin(text);
+                  }
+                }}
+                onBlur={() => {
+                  // Validar formato completo al perder el foco, restaurando por defecto si es inválido
+                  const fullRegex = /^([01]\d|2[0-3]):([0-5]\d)$/;
+                  if (!fullRegex.test(horaFin)) {
+                    setHoraFin('23:59');
+                  }
+                }}
+                placeholder="23:59"
+                maxLength={5}
+              />
+            </View>
+
+            {/* Hora actual simulada y Slider */}
+            <View style={styles.simulationTimeContainer}>
+              <Text style={styles.simulationCurrentTimeText}>
+                {minutosAHora(tiempoActualMinutos)}
+              </Text>
+              <Slider
+                style={styles.simulationSlider}
+                minimumValue={0}
+                maximumValue={1440}
+                step={1}
+                value={tiempoActualMinutos}
+                onValueChange={(val) => {
+                  setIsPlaying(false); // Pausar simulación al arrastrar manualmente
+                  setTiempoActualMinutos(val);
+                  actualizarSolPorMinutos(val);
+                }}
+                minimumTrackTintColor="#0066cc"
+                maximumTrackTintColor="#ccc"
+                thumbTintColor="#0066cc"
+              />
+            </View>
+          </View>
+        )}
 
         {/* 3. Contenedor centrado para el indicador de coordenadas sobre el mapa */}
         <View style={styles.coordsBadgeWrapper} pointerEvents="box-none">
@@ -1050,6 +1287,9 @@ const styles = StyleSheet.create({
     bottom: 10,
     left: 10,
     zIndex: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
   floatingCalculateButton: {
     backgroundColor: '#0066cc',
@@ -1066,6 +1306,85 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontSize: 12,
     fontWeight: 'bold',
+  },
+  simulationPanel: {
+    position: 'absolute',
+    bottom: 60,
+    left: 10,
+    zIndex: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    padding: 8,
+    borderRadius: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 5,
+    minWidth: 160,
+    maxWidth: 200,
+  },
+  simulationHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  simulationTitle: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  simulationCloseButton: {
+    padding: 2,
+  },
+  simulationCloseText: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: '#666',
+  },
+  simulationControlsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 4,
+    gap: 4,
+  },
+  simulationInput: {
+    width: 45,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 4,
+    paddingHorizontal: 4,
+    paddingVertical: 2,
+    fontSize: 11,
+    backgroundColor: '#fff',
+    textAlign: 'center',
+  },
+  simulationPlayButton: {
+    backgroundColor: '#0066cc',
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  simulationPlayText: {
+    color: '#fff',
+    fontSize: 11,
+    fontWeight: 'bold',
+  },
+  simulationTimeContainer: {
+    alignItems: 'center',
+  },
+  simulationCurrentTimeText: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: '#0066cc',
+    marginBottom: 2,
+  },
+  simulationSlider: {
+    width: '100%',
+    height: 25,
   },
   floatingResultsContainer: {
     position: 'absolute',
