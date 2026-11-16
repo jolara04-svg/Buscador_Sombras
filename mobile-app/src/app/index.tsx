@@ -47,7 +47,7 @@ function minutosAHora(minutos: number) {
  * @param {number} longitude - Longitud geográfica.
  * @returns {{elevation: number, azimuth: number}} Objeto con la elevación y acimut solar en grados.
  */
-function calculateSunPosition(date: Date, latitude: number, longitude: number) {
+export function calculateSunPosition(date: Date, latitude: number, longitude: number) {
   // Convert to radians
   const toRad = (deg: number) => (deg * Math.PI) / 180;
   const toDeg = (rad: number) => (rad * 180) / Math.PI;
