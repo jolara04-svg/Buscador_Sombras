@@ -7,11 +7,10 @@ const path = require('node:path');
 const ts = require('typescript');
 
 /**
- * Función auxiliar para compilar y cargar dinámicamente el componente index.tsx
- * extrayendo sus funciones exportadas (como calculateSunPosition).
+ * Función auxiliar para compilar y cargar dinámicamente la utilidad solar pura.
  */
 function loadAppModule() {
-  const filename = path.resolve(__dirname, '..', 'src', 'app', 'index.tsx');
+  const filename = path.resolve(__dirname, '..', 'src', 'components', 'point-shadow-query.ts');
   const source = fs.readFileSync(filename, 'utf8');
   const compiled = ts.transpileModule(source, {
     compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
