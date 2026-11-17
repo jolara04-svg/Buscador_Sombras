@@ -3,7 +3,7 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { Mapa2D, type Mapa2DProps, type MapViewport } from './Mapa2D.web';
 import { buildingShaderMaterial, shadowShaderMaterialDefault, getShadowCastMatrix } from './shadersSombras';
-import { chunkReference, mercator, metersPerPixel, shadowTilesForViewport, tileOffsetFromReference, type TileCoordinate } from './shadow-map-projection';
+import { chunkReference, mercator, metersPerPixel, shadowTilesForViewport, tileKey, tileOffsetFromReference, tilesAvailableInManifest, type ShadowTileManifest, type TileCoordinate } from './shadow-map-projection';
 import { disposeChunk } from './chunk-stream';
 import { sourceEnabled, sourceOpacity, tileSourceUrl, type ShadowSourceSelection } from './shadow-map-sources';
 import type { ShadowLayerSelection, ShadowLayerWeights } from './shadow-settings';
@@ -22,7 +22,7 @@ type Overlay = {
 };
 
 type ShadowSource = 'buildings' | 'trees';
-type Manifest = Record<string, string[]>;
+type Manifest = ShadowTileManifest;
 
 async function runWithConcurrency<T>(items: T[], limit: number, task: (item: T) => Promise<void>) {
   let next = 0;
@@ -98,7 +98,6 @@ export function ShadowMap({ chunkURL, azimuth, elevation, sources, weights, onSe
     let groundZ: number | null = null;
 
     const materialFor = (source: ShadowSource) => source === 'trees' ? trees : shadow;
-    const tileKey = (source: ShadowSource, tile: TileCoordinate) => `${source}:${tile.x}:${tile.y}`;
     const isOrigin = (tile: TileCoordinate) => tile.x === originTile.x && tile.y === originTile.y;
 
     const loadManifest = async (source: ShadowSource) => {
@@ -115,13 +114,10 @@ export function ShadowMap({ chunkURL, azimuth, elevation, sources, weights, onSe
       }
     };
 
-    const hasTile = (manifest: Manifest | null, tile: TileCoordinate) =>
-      manifest?.[String(tile.x)]?.includes(String(tile.y)) === true;
-
     const loadTile = async (source: ShadowSource, tile: TileCoordinate, manifest: Manifest | null) => {
-      const key = tileKey(source, tile);
+      const key = `${source}:${tileKey(tile)}`;
       if (!active || loadedTiles.has(key) || loadingTiles.has(key)) return;
-      if (manifest ? !hasTile(manifest, tile) : !isOrigin(tile)) return;
+      if (manifest ? tilesAvailableInManifest([tile], manifest).length === 0 : !isOrigin(tile)) return;
 
       loadingTiles.add(key);
       try {
@@ -182,7 +178,7 @@ export function ShadowMap({ chunkURL, azimuth, elevation, sources, weights, onSe
         const jobs: { source: ShadowSource; tile: TileCoordinate; manifest: Manifest | null }[] = [];
         for (const source of sourcesToLoad) {
           const manifest = await loadManifest(source);
-          const available = manifest ? tiles.filter(tile => hasTile(manifest, tile)) : tiles.filter(isOrigin);
+          const available = manifest ? tilesAvailableInManifest(tiles, manifest) : tiles.filter(isOrigin);
           available.forEach(tile => jobs.push({ source, tile, manifest }));
         }
         await runWithConcurrency(jobs, 4, ({ source, tile, manifest }) => loadTile(source, tile, manifest));

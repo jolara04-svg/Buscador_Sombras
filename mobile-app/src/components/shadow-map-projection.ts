@@ -3,6 +3,7 @@ const TILE_COUNT = 2 ** 16;
 const WORLD_METERS = 2 * Math.PI * RADIUS;
 
 export type TileCoordinate = { x: number; y: number; z: number };
+export type ShadowTileManifest = Record<string, string[]>;
 export type ShadowViewport = {
   centerLat: number;
   centerLon: number;
@@ -99,6 +100,14 @@ export function tileOffsetFromReference(tile: TileCoordinate, reference: { x: nu
     x: (centre.x - reference.x) / reference.scale,
     y: (centre.y - reference.y) / reference.scale,
   };
+}
+
+export function tileKey(tile: TileCoordinate) {
+  return `${tile.z}/${tile.x}/${tile.y}`;
+}
+
+export function tilesAvailableInManifest(tiles: TileCoordinate[], manifest: ShadowTileManifest) {
+  return tiles.filter((tile) => manifest[String(tile.x)]?.includes(String(tile.y)) === true);
 }
 
 // GLBs use metres east/north of the centre of their z16 tile (not the selected point).
