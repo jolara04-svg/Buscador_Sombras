@@ -18,10 +18,10 @@ function load(relativePath) {
   return exports;
 }
 
-const { mercator, chunkReference, metersPerPixel } = load('shadow-map-projection.ts');
+const { mercator, chunkReference, metersPerPixel, shadowTilesForViewport, tileOffsetFromReference } = load('shadow-map-projection.ts');
 const { getShadowCastMatrix, shadowShaderMaterialDefault } = load('shadersSombras.ts');
 const { DEFAULT_SHADOW_LAYER_SELECTION, DEFAULT_SHADOW_LAYER_WEIGHTS, normalizeShadowLayerWeights } = load('shadow-settings.ts');
-const { sourceUrl, sourceOpacity } = load('shadow-map-sources.ts');
+const { sourceUrl, sourceOpacity, tileSourceUrl } = load('shadow-map-sources.ts');
 const near = (actual, expected, message) => assert.ok(Math.abs(actual - expected) < 1e-6,
   `${message}: ${actual} != ${expected}`);
 
@@ -41,6 +41,24 @@ test('chunk reference returns the centre of the z16 tile and latitude scale', ()
   near(reference.x, sameTile.x, 'tile centre x');
   near(reference.y, sameTile.y, 'tile centre y');
   near(reference.scale, sameTile.scale, 'tile scale');
+});
+
+test('shadow viewport selects several available tile positions around the selected chunk', () => {
+  const base = 'http://localhost:3000/chunk?lat=40.4168&lon=-3.7038';
+  const reference = chunkReference(base);
+  const tiles = shadowTilesForViewport(base, {
+    centerLat: 40.4168,
+    centerLon: -3.7038,
+    zoom: 16,
+    width: 800,
+    height: 450,
+  });
+  const keys = new Set(tiles.map(tile => `${tile.x}/${tile.y}`));
+  assert.ok(tiles.length > 1, 'El viewport debe incluir más de un chunk');
+  assert.ok(tiles.length <= 49, 'La precarga debe tener un límite razonable');
+  assert.ok(keys.has(`${reference.tileX}/${reference.tileY}`), 'Debe mantenerse el chunk seleccionado');
+  assert.ok(tiles.some(tile => tile.x === reference.tileX + 1 && tile.y === reference.tileY));
+  assert.ok(tileOffsetFromReference({ x: reference.tileX + 1, y: reference.tileY, z: 16 }, reference).x > 0);
 });
 
 test('meters per pixel halves for every zoom level', () => {
@@ -77,6 +95,7 @@ test('shadow sources expose both layers and configurable default weights', () =>
   assert.deepEqual(normalizeShadowLayerWeights({ buildings: '2.5', trees: -1 }), { buildings: 2.5, trees: 0.75 });
   const base = 'http://localhost:3000/chunk?lat=40.4168&lon=-3.7038';
   assert.match(sourceUrl(base, 'trees'), /layer=trees/);
+  assert.equal(tileSourceUrl(base, 'trees', 32096, 24711), 'http://localhost:3000/tiles/trees/16/32096/24711.glb');
   assert.equal(sourceUrl(base, 'buildings', { buildings: false, trees: true }), null);
   assert.equal(sourceOpacity('trees', { trees: 0.75 }), 0.75);
 });
