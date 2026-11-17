@@ -119,40 +119,103 @@ function atlasAt(atlas, bounds, cols, zoneSizeM, resolution, x, y) {
   return mask[v * resolution + u];
 }
 
+// CSR + heap indexado: memoria de busqueda O(V), sin entradas duplicadas.
+// La topologia y los buffers se preparan una sola vez; no retiene geometrias.
+function createCompactRouter(edges, exposure) {
+  const ids=[], index=new Map(), valid=[];
+  const node=id=>{if(!index.has(id)){index.set(id,ids.length);ids.push(id);}return index.get(id);};
+  const length=new Float64Array(edges.length), shade=new Float64Array(edges.length), sun=new Float64Array(edges.length);
+  edges.forEach((edge,i)=>{
+    const e=exposure[i];
+    if(!e||e.cost===null||e.unknownM>1e-7)return;
+    if(![e.lengthM,e.shadeM,e.sunM,e.unknownM].every(Number.isFinite)||e.lengthM<0||e.shadeM<0||e.sunM<0||e.unknownM<0||Math.abs(e.lengthM-e.shadeM-e.sunM)>1e-5*Math.max(1,e.lengthM))throw new Error('Exposicion invalida');
+    length[i]=e.lengthM;shade[i]=e.shadeM;sun[i]=e.sunM;
+    if(edge.forward||edge.reverse)valid.push({a:node(edge.source),b:node(edge.target),i,forward:edge.forward,reverse:edge.reverse});
+  });
+  const count=ids.length,offset=new Uint32Array(count+1);
+  for(const e of valid){if(e.forward)offset[e.a+1]++;if(e.reverse)offset[e.b+1]++;}
+  for(let i=1;i<=count;i++)offset[i]+=offset[i-1];
+  const to=new Uint32Array(offset[count]),edgeIndex=new Uint32Array(to.length),cursor=offset.slice();
+  const add=(a,b,i)=>{const p=cursor[a]++;to[p]=b;edgeIndex[p]=i;};
+  for(const e of valid){if(e.forward)add(e.a,e.b,e.i);if(e.reverse)add(e.b,e.a,e.i);}
+  const dist=new Float64Array(count),seen=new Uint32Array(count),closed=new Uint32Array(count),previous=new Uint32Array(count),via=new Uint32Array(count),heap=new Uint32Array(count),position=new Uint32Array(count);
+  let generation=0;
+  const typedArrayBytes=[length,shade,sun,offset,to,edgeIndex,dist,seen,closed,previous,via,heap,position].reduce((n,a)=>n+a.byteLength,0);
+  function search(source,target,{penalty=4,mode='shade',maxVisited=Math.max(1,count)}={}){
+    if(!Number.isFinite(penalty)||penalty<1||!['shade','distance'].includes(mode)||!Number.isInteger(maxVisited)||maxVisited<1)throw new Error('Parametros de busqueda invalidos');
+    if(!index.has(source)||!index.has(target))return null;
+    generation=(generation+1)>>>0;if(generation===0){seen.fill(0);closed.fill(0);generation=1;}
+    const start=index.get(source),goal=index.get(target);let size=0,visited=0,peak=0;
+    function insertOrDecrease(n){
+      let p=position[n];
+      if(p>=size||heap[p]!==n){p=size++;heap[p]=n;}
+      while(p>0){const parent=(p-1)>>1;if(dist[heap[parent]]<=dist[n])break;heap[p]=heap[parent];position[heap[p]]=p;p=parent;}
+      heap[p]=n;position[n]=p;peak=Math.max(peak,size);
+    }
+    function pop(){const first=heap[0],last=heap[--size];position[first]=count;if(size){let p=0;while(2*p+1<size){let child=2*p+1;if(child+1<size&&dist[heap[child+1]]<dist[heap[child]])child++;if(dist[last]<=dist[heap[child]])break;heap[p]=heap[child];position[heap[p]]=p;p=child;}heap[p]=last;position[last]=p;}return first;}
+    seen[start]=generation;dist[start]=0;position[start]=count;insertOrDecrease(start);
+    while(size){
+      if(visited>=maxVisited){const error=new Error('Limite de nodos explorados alcanzado; no se devuelve una ruta parcial.');error.code='SEARCH_LIMIT';throw error;}
+      const current=pop();closed[current]=generation;visited++;
+      if(current===goal){const nodes=[ids[goal]],edgeIndices=[];let n=goal;while(n!==start){edgeIndices.push(via[n]);n=previous[n];nodes.push(ids[n]);}nodes.reverse();edgeIndices.reverse();let lengthM=0,shadeM=0,sunM=0;for(const i of edgeIndices){lengthM+=length[i];shadeM+=shade[i];sunM+=sun[i];}return {cost:dist[goal],weightedCost:shadeM+penalty*sunM,lengthM,shadeM,sunM,shadeFraction:lengthM?shadeM/lengthM:0,nodes,edgeIndices,visited,peakQueue:peak};}
+      for(let p=offset[current];p<offset[current+1];p++){
+        const next=to[p],i=edgeIndex[p];if(closed[next]===generation)continue;
+        const candidate=dist[current]+(mode==='distance'?length[i]:shade[i]+penalty*sun[i]);
+        if(!Number.isFinite(candidate))throw new Error('Coste fuera del rango numerico');
+        if(seen[next]!==generation||candidate<dist[next]){if(seen[next]!==generation){seen[next]=generation;position[next]=count;}dist[next]=candidate;previous[next]=current;via[next]=i;insertOrDecrease(next);}
+      }
+    }
+    return null;
+  }
+  return {search,stats:{nodes:count,arcs:to.length,typedArrayBytes}};
+}
+
 const canvas=document.getElementById('map'),ctx=canvas.getContext('2d'),$=id=>document.getElementById(id);
 const nodeMap=new Map(DATA.graph.nodes.map(n=>[n.id,n]));
 const component=new Set(largestComponent(DATA.graph.edges).nodes);
 const candidates=DATA.graph.nodes.filter(n=>component.has(n.id));
 let source=DATA.example.source,target=DATA.example.target,mode='origin';
+// La busqueda no ocupa el hilo de la interfaz. Una consulta activa y solo la
+// ultima pendiente: mover el slider no acumula trabajos ni respuestas obsoletas.
+const workerCode=`${createCompactRouter.toString()}; let router; onmessage=({data:d})=>{try{if(d.type==='init'){router=createCompactRouter(d.edges,d.exposure);postMessage({type:'ready',stats:router.stats});return;}const t=performance.now();const shortest=router.search(d.source,d.target,{mode:'distance',penalty:d.penalty,maxVisited:d.maxVisited});const shaded=router.search(d.source,d.target,{penalty:d.penalty,maxVisited:d.maxVisited});postMessage({type:'result',id:d.id,source:d.source,target:d.target,shortest,shaded,ms:performance.now()-t,stats:router.stats});}catch(e){postMessage({type:'error',id:d.id,message:e.message});}};`;
+const workerUrl=URL.createObjectURL(new Blob([workerCode],{type:'text/javascript'}));
+const worker=new Worker(workerUrl);URL.revokeObjectURL(workerUrl);
+let ready=false,busy=false,pending=null,requestId=0;
+function dispatch(){if(!ready||busy||!pending)return;busy=true;worker.postMessage(pending);pending=null;}
+worker.onmessage=({data})=>{if(data.type==='ready'){ready=true;dispatch();return;}busy=false;if(data.id===requestId){if(data.type==='error'){$('insight').textContent=data.message;$('status').textContent='Consulta detenida; reduce la zona o prueba otros puntos.';}else render(data);}dispatch();};
+worker.onerror=()=>{busy=false;ready=false;$('insight').textContent='El navegador no pudo ejecutar el worker de rutas. No se ejecuta la busqueda en el hilo de la interfaz.';};
+// Solo topologia y exposicion; las geometrias e imagenes no se copian al worker.
+worker.postMessage({type:'init',edges:DATA.graph.edges.map(({source,target,forward,reverse})=>({source,target,forward,reverse})),exposure:DATA.exposure});
+window.addEventListener('pagehide',()=>worker.terminate(),{once:true});
 const background=new Image();background.src=DATA.image;
 const pixel=([x,y])=>[(x+256)*2,(256-y)*2];
 const fmt=n=>Math.round(n).toLocaleString('es-ES');
-function routeData(){
-  const exposure=DATA.exposure.map(e=>({...e,cost:e.shadeM+Number($('penalty').value)*e.sunM}));
-  const time=performance.now();
-  const shortest=summarizeRoute(dijkstra(makeAdjacency(DATA.graph.edges,exposure,'distance'),source,target),exposure);
-  const shaded=summarizeRoute(dijkstra(makeAdjacency(DATA.graph.edges,exposure),source,target),exposure);
-  return {shortest,shaded,ms:performance.now()-time};
+function requestRoute(){
+  $('factor').textContent='×'+$('penalty').value;
+  requestId++;pending={type:'search',id:requestId,source,target,penalty:Number($('penalty').value),maxVisited:Math.min(250000,DATA.graph.nodes.length)};
+  $('status').textContent='Calculando en segundo plano…';dispatch();
 }
 function drawRoute(route,color,width){
   if(!route)return;ctx.strokeStyle=color;ctx.lineWidth=width;ctx.lineCap='round';ctx.lineJoin='round';
   for(const i of route.edgeIndices){const g=DATA.graph.edges[i].geometry;ctx.beginPath();g.forEach((p,j)=>ctx[j?'lineTo':'moveTo'](...pixel(p)));ctx.stroke();}
 }
-function render(){
-  const {shortest,shaded,ms}=routeData();ctx.fillStyle='#1c2c3c';ctx.fillRect(0,0,1024,1024);if(background.complete&&background.naturalWidth)ctx.drawImage(background,0,0,1024,1024);
+let lastResult=null;
+function render(result){
+  lastResult=result;
+  const {shortest,shaded,ms,stats}=result;ctx.fillStyle='#1c2c3c';ctx.fillRect(0,0,1024,1024);if(background.complete&&background.naturalWidth)ctx.drawImage(background,0,0,1024,1024);
   drawRoute(shortest,'#0b243b',14);drawRoute(shortest,'#49b8ff',10);drawRoute(shaded,'#59203e',7);drawRoute(shaded,'#ff64b4',5);
   for(const [id,text]of [[source,'A'],[target,'B']]){const [x,y]=pixel(nodeMap.get(id).xy);ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(x,y,15,0,Math.PI*2);ctx.fill();ctx.fillStyle='#173d34';ctx.font='bold 18px Segoe UI';ctx.textAlign='center';ctx.fillText(text,x,y+6);}
   ctx.strokeStyle='white';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(45,975);ctx.lineTo(245,975);ctx.stroke();ctx.fillStyle='white';ctx.font='15px Segoe UI';ctx.textAlign='left';ctx.fillText('100 m',45,960);
   $('factor').textContent='×'+$('penalty').value;
   $('cards').innerHTML=[[shortest,'Menor distancia','#2480b5'],[shaded,'Prioridad a la sombra','#b43978']].map(([r,label,color])=>`<article class="card"><h3 style="color:${color}">${label}</h3>${r?`<div class="metrics"><div><strong>${fmt(r.lengthM)}</strong><small>metros totales</small></div><div><strong>${fmt(r.sunM)}</strong><small>metros al sol</small></div><div><strong>${fmt(r.weightedCost)}</strong><small>coste ponderado</small></div></div>`:'Sin conexión dirigida entre estos puntos.'}</article>`).join('');
   $('insight').textContent=!shortest||!shaded?'No existe una ruta para este sentido. Prueba otros puntos.':source===target?'Origen y destino coinciden. Coste cero.':shortest.sunM-shaded.sunM>.01?`${fmt(shortest.sunM-shaded.sunM)} m menos al sol, con ${fmt(shaded.lengthM-shortest.lengthM)} m adicionales.`:'Con estos puntos y esta penalización, ambas rutas tienen la misma exposición al sol.';
-  $('status').textContent=`${DATA.graph.nodes.length} nodos · ${DATA.graph.edges.length} tramos. Componente seleccionable: ${candidates.length} nodos. Dos búsquedas y preparación: ${ms.toFixed(2)} ms. A: ${source}. B: ${target}.`;
+  $('status').textContent=`${DATA.graph.nodes.length} nodos · ${DATA.graph.edges.length} tramos. Componente seleccionable: ${candidates.length} nodos. Dos búsquedas: ${ms.toFixed(2)} ms. Buffers de rutas: ${(stats.typedArrayBytes/1048576).toFixed(2)} MiB (sin IDs ni geometrías). A: ${source}. B: ${target}.`;
   window.sample3Result={source,target,shortest,shaded};
 }
 function selectMode(next){mode=next;$('origin').className=mode==='origin'?'active':'secondary';$('destination').className=mode==='destination'?'active':'secondary';}
 $('origin').onclick=()=>selectMode('origin');$('destination').onclick=()=>selectMode('destination');
-canvas.onclick=event=>{const r=canvas.getBoundingClientRect(),x=(event.clientX-r.left)/r.width*512-256,y=256-(event.clientY-r.top)/r.height*512;let best=null,dist=Infinity;for(const n of candidates){const d=Math.hypot(n.xy[0]-x,n.xy[1]-y);if(d<dist){dist=d;best=n;}}if(mode==='origin'){source=best.id;selectMode('destination');}else{target=best.id;selectMode('origin');}render();};
-$('penalty').oninput=render;$('swap').onclick=()=>{[source,target]=[target,source];render();};$('example').onclick=()=>{source=DATA.example.source;target=DATA.example.target;$('penalty').value=4;selectMode('origin');render();};
-background.onload=render;background.onerror=()=>{$('insight').textContent='No se pudo cargar el plano incrustado.';};render();
+canvas.onclick=event=>{const r=canvas.getBoundingClientRect(),x=(event.clientX-r.left)/r.width*512-256,y=256-(event.clientY-r.top)/r.height*512;let best=null,dist=Infinity;for(const n of candidates){const d=Math.hypot(n.xy[0]-x,n.xy[1]-y);if(d<dist){dist=d;best=n;}}if(mode==='origin'){source=best.id;selectMode('destination');}else{target=best.id;selectMode('origin');}requestRoute();};
+$('penalty').oninput=requestRoute;$('swap').onclick=()=>{[source,target]=[target,source];requestRoute();};$('example').onclick=()=>{source=DATA.example.source;target=DATA.example.target;$('penalty').value=4;selectMode('origin');requestRoute();};
+background.onload=()=>{if(lastResult&&lastResult.source===source&&lastResult.target===target)render(lastResult);};background.onerror=()=>{$('insight').textContent='No se pudo cargar el plano incrustado.';};requestRoute();
 
 </script></body></html>

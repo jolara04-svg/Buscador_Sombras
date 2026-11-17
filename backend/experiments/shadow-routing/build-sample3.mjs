@@ -35,8 +35,9 @@ for(const adjacency of [byShade,byDistance])for(const source of selected.slice(0
 const image=await fs.readFile(new URL('output/mask-and-graph.png',import.meta.url));
 const data={graph,exposure,example:{source:best.source,target:best.target},image:`data:image/png;base64,${image.toString('base64')}`};
 const routing=(await read('routing.mjs')).replaceAll('export function','function');
+const compact=(await read('compact-routing.mjs')).replaceAll('export function','function');
 const ui=await read('sample3-ui.js');
-const script=`const DATA=${JSON.stringify(data)};\n${routing}\n${ui}`;
+const script=`const DATA=${JSON.stringify(data)};\n${routing}\n${compact}\n${ui}`;
 const page=(await read('sample3-template.html')).replace('/* SAMPLE3_SCRIPT */',()=>script.replaceAll('</script','<\\/script'));
 await fs.writeFile(new URL('sample3.html',import.meta.url),page);
 const result={comparisons,reference:'Bellman-Ford',nodes:graph.nodes.length,edges:graph.edges.length,componentNodes:component.length,example:best,limitations:'Pesos y mascara precalculados del laboratorio; no ejecuta el modulo nativo.'};
