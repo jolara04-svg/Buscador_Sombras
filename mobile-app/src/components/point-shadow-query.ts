@@ -53,48 +53,35 @@ function toDeg(radians: number) {
  * Se mantiene como función pura para que la consulta puntual pueda probarse sin montar React Native.
  */
 export function calculateSunPosition(date: Date, latitude: number, longitude: number): SolarPosition {
+  if (Number.isNaN(date.getTime())) {
+    return { elevation: Number.NaN, azimuth: Number.NaN };
+  }
+
   const year = date.getFullYear();
-  const month = date.getMonth() + 1;
-  const day = date.getDate();
-  const hour = date.getHours();
-  const minute = date.getMinutes();
-
-  const julianDate =
-    367 * year
-    - Math.floor((7 * (year + Math.floor((month + 9) / 12))) / 4)
-    + Math.floor((275 * month) / 9)
-    + day
-    + 1721013.5
-    + ((hour + minute / 60) / 24)
-    - 0.5 * Math.sign(100 * year + month - 190002.5)
-    + 0.5;
-
-  const daysSinceJ2000 = julianDate - 2451545.0;
-  const meanLongitude = 280.460 + 0.9856474 * daysSinceJ2000;
-  const normalizedMeanLongitude = meanLongitude % 360;
-  const meanAnomaly = 357.528 + 0.9856003 * daysSinceJ2000;
-  const meanAnomalyRadians = toRad(meanAnomaly % 360);
-  const eclipticLongitude =
-    normalizedMeanLongitude
-    + 1.915 * Math.sin(meanAnomalyRadians)
-    + 0.020 * Math.sin(2 * meanAnomalyRadians);
-  const obliquity = 23.439 - 0.0000004 * daysSinceJ2000;
-  const declination = Math.asin(Math.sin(toRad(obliquity)) * Math.sin(toRad(eclipticLongitude)));
-  const greenwichMeanSiderealTime = 6.697375 + 0.0657098242 * daysSinceJ2000 + hour;
-  const siderealDegrees = (greenwichMeanSiderealTime % 24) * 15;
-  const localHourAngle = (siderealDegrees + longitude - normalizedMeanLongitude) % 360;
-  const localHourAngleRadians = toRad(localHourAngle);
+  const startOfYear = new Date(year, 0, 0);
+  const dayOfYear = Math.floor((date.getTime() - startOfYear.getTime()) / 86400000);
+  const decimalHour = date.getHours() + date.getMinutes() / 60 + date.getSeconds() / 3600;
+  const yearLength = new Date(year, 1, 29).getMonth() === 1 ? 366 : 365;
+  const fractionalYear = (2 * Math.PI / yearLength) * (dayOfYear - 1 + (decimalHour - 12) / 24);
+  const declination =
+    0.006918
+    - 0.399912 * Math.cos(fractionalYear)
+    + 0.070257 * Math.sin(fractionalYear)
+    - 0.006758 * Math.cos(2 * fractionalYear)
+    + 0.000907 * Math.sin(2 * fractionalYear)
+    - 0.002697 * Math.cos(3 * fractionalYear)
+    + 0.00148 * Math.sin(3 * fractionalYear);
   const latitudeRadians = toRad(latitude);
-
+  const hourAngleRadians = toRad((decimalHour - 12) * 15);
   const elevationRadians = Math.asin(
-    Math.sin(declination) * Math.sin(latitudeRadians)
-    + Math.cos(declination) * Math.cos(latitudeRadians) * Math.cos(localHourAngleRadians),
+    Math.sin(latitudeRadians) * Math.sin(declination)
+    + Math.cos(latitudeRadians) * Math.cos(declination) * Math.cos(hourAngleRadians),
   );
-  const cosineAzimuth = (
-    Math.sin(declination) - Math.sin(elevationRadians) * Math.sin(latitudeRadians)
-  ) / (Math.cos(elevationRadians) * Math.cos(latitudeRadians));
-  const azimuthRadians = Math.acos(Math.max(-1, Math.min(1, cosineAzimuth)));
-  const azimuth = localHourAngleRadians > 0 ? toDeg(azimuthRadians) : 360 - toDeg(azimuthRadians);
+  const azimuthRadians = Math.atan2(
+    Math.sin(hourAngleRadians),
+    Math.cos(hourAngleRadians) * Math.sin(latitudeRadians) - Math.tan(declination) * Math.cos(latitudeRadians),
+  );
+  const azimuth = (toDeg(azimuthRadians) + 180 + 360) % 360;
 
   return {
     elevation: toDeg(elevationRadians),

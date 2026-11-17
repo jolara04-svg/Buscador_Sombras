@@ -1,5 +1,5 @@
 import { StyleSheet, Text, View, TextInput, Button, ScrollView, Pressable, Platform } from 'react-native';
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import * as Location from 'expo-location';
 import Slider from '@react-native-community/slider';
 
@@ -7,12 +7,13 @@ import { getChunkUrl, BACKEND_URL } from '@/constants/backend';
 import { LocationChunkViewer } from '@/components/location-chunk-viewer';
 import { Mapa2D } from '@/components/Mapa2D';
 import { ShadowMap } from "@/components/ShadowMap";
+import { PointShadowPanel } from '@/components/PointShadowPanel';
+import { buildShadowTimeline, calculateSunPosition } from '@/components/point-shadow-query';
+import type { SolarPosition } from '@/components/point-shadow-query';
+import type { PointShadowSelection } from '@/components/point-shadow-view-model';
 import { DEFAULT_SHADOW_LAYER_SELECTION, useShadowLayerWeights, type ShadowLayerSelection } from '@/components/shadow-settings';
 
-type SolarPosition = {
-  elevation: number;
-  azimuth: number;
-};
+export { calculateSunPosition };
 
 const MADRID_LAT = 40.4168;
 const MADRID_LON = -3.7038;
@@ -38,88 +39,6 @@ function minutosAHora(minutos: number) {
   const horas = Math.floor(minutos / 60);
   const mins = Math.floor(minutos % 60);
   return `${String(horas).padStart(2, '0')}:${String(mins).padStart(2, '0')}`;
-}
-
-/**
- * Calcula la posición solar simplificada (elevación y acimut) para una fecha y ubicación dadas.
- * @param {Date} date - Fecha y hora del cálculo.
- * @param {number} latitude - Latitud geográfica.
- * @param {number} longitude - Longitud geográfica.
- * @returns {{elevation: number, azimuth: number}} Objeto con la elevación y acimut solar en grados.
- */
-export function calculateSunPosition(date: Date, latitude: number, longitude: number) {
-  // Convert to radians
-  const toRad = (deg: number) => (deg * Math.PI) / 180;
-  const toDeg = (rad: number) => (rad * 180) / Math.PI;
-
-  // Julian date calculation
-  const year = date.getFullYear();
-  const month = date.getMonth() + 1; // 0-11 to 1-12
-  const day = date.getDate();
-  const hour = date.getHours();
-  const minute = date.getMinutes();
-
-  // Calculate Julian Date
-  const JulianDate =
-    367 * year
-    - Math.floor((7 * (year + Math.floor((month + 9) / 12))) / 4)
-    + Math.floor((275 * month) / 9)
-    + day
-    + 1721013.5
-    + ((hour + minute / 60) / 24)
-    - 0.5 * Math.sign(100 * year + month - 190002.5)
-    + 0.5;
-
-  // Days since J2000.0
-  const n = JulianDate - 2451545.0;
-
-  // Mean longitude of the sun
-  const L = 280.460 + 0.9856474 * n;
-  const L_norm = L % 360;
-
-  // Mean anomaly of the sun
-  const g = 357.528 + 0.9856003 * n;
-  const g_rad = toRad(g % 360);
-
-  // Ecliptic longitude of the sun
-  const lambda = L_norm + 1.915 * Math.sin(g_rad) + 0.020 * Math.sin(2 * g_rad);
-
-  // Obliquity of the ecliptic
-  const epsilon = 23.439 - 0.0000004 * n;
-
-  // Right ascension and declination
-  const delta = Math.asin(Math.sin(toRad(epsilon)) * Math.sin(toRad(lambda)));
-
-  // Greenwich mean sidereal time
-  const GMST = 6.697375 + 0.0657098242 * n + hour;
-  const GMST_deg = (GMST % 24) * 15;
-
-  // Local hour angle
-  const LHA = (GMST_deg + longitude - L_norm) % 360;
-  const LHA_rad = toRad(LHA);
-
-  // Latitude in radians
-  const lat_rad = toRad(latitude);
-
-  // Solar elevation (altitude)
-  const elevation_rad = Math.asin(
-    Math.sin(delta) * Math.sin(lat_rad) +
-    Math.cos(delta) * Math.cos(lat_rad) * Math.cos(LHA_rad)
-  );
-
-  // Solar azimuth
-  const azimuth_rad = Math.acos(
-    (Math.sin(delta) - Math.sin(elevation_rad) * Math.sin(lat_rad)) /
-    (Math.cos(elevation_rad) * Math.cos(lat_rad))
-  );
-
-  // Adjust azimuth based on hour angle
-  const azimuth = LHA_rad > 0 ? toDeg(azimuth_rad) : 360 - toDeg(azimuth_rad);
-
-  return {
-    elevation: toDeg(elevation_rad),
-    azimuth: azimuth
-  };
 }
 
 export default function SolarCalculatorScreen() {
@@ -269,6 +188,23 @@ export default function SolarCalculatorScreen() {
   const [horaOperacion, setHoraOperacion] = useState(
     new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: false })
   );
+
+  // Estado y resultado de la consulta de sombra por el punto exacto seleccionado (HU-09)
+  const [puntoSombraSeleccionado, setPuntoSombraSeleccionado] = useState<PointShadowSelection | null>(null);
+  const timelineSombra = useMemo(() => {
+    if (!puntoSombraSeleccionado) return null;
+    try {
+      return buildShadowTimeline({
+        date: fechaOperacion,
+        latitude: puntoSombraSeleccionado.lat,
+        longitude: puntoSombraSeleccionado.lon,
+        stepMinutes: 15,
+      });
+    } catch (error) {
+      console.warn('No se pudieron calcular las franjas de sombra:', error);
+      return null;
+    }
+  }, [fechaOperacion, puntoSombraSeleccionado]);
 
   /**
    * Recalcula la posición solar y actualiza el estado (result y resultadoSolarSimulacion) 
@@ -510,6 +446,34 @@ export default function SolarCalculatorScreen() {
     }
   };
 
+  const handleMapCoordinateSelection = (lat: number, lon: number) => {
+    console.log('Coordenada seleccionada:', { lat, lon, modoBusqueda, modoSeleccion });
+    setPuntoSombraSeleccionado({ lat, lon });
+
+    // Mantener sincronizado el resultado solar con el punto consultado.
+    if (modoBusqueda === 'lugar') {
+      const selectedDate = new Date(`${fechaOperacion}T${horaOperacion}:00`);
+      if (!Number.isNaN(selectedDate.getTime())) {
+        setResult(calculateSunPosition(selectedDate, lat, lon));
+      }
+      setLatitude(lat.toString());
+      setLongitude(lon.toString());
+      setLatitudeDisplay(truncarA6Decimales(lat.toString()));
+      setLongitudeDisplay(truncarA6Decimales(lon.toString()));
+      return;
+    }
+
+    if (modoBusqueda === 'ruta') {
+      if (modoSeleccion === 'origen') {
+        setOrigen({ lat, lon });
+        setModoSeleccion('destino');
+      } else if (modoSeleccion === 'destino') {
+        setDestino({ lat, lon });
+        setModoSeleccion('origen');
+      }
+    }
+  };
+
   return (
 
     <ScrollView
@@ -707,29 +671,7 @@ export default function SolarCalculatorScreen() {
             destino={destino}
             modoSeleccion={modoSeleccion}
             modoBusqueda={modoBusqueda}
-            onSeleccionarCoordenada={(lat, lon) => {
-              // Depuración: registrar coordenada seleccionada y el modo actual en consola
-              console.log('Coordenada seleccionada:', { lat, lon, modoBusqueda, modoSeleccion });
-
-              // Si estamos en modo lugar, actualizamos el formulario de cálculo solar
-              if (modoBusqueda === 'lugar') {
-                setLatitude(lat.toString());
-                setLongitude(lon.toString());
-                setLatitudeDisplay(truncarA6Decimales(lat.toString()));
-                setLongitudeDisplay(truncarA6Decimales(lon.toString()));
-              } else if (modoBusqueda === 'ruta') {
-                // Si estamos en modo ruta, alternamos continuamente entre origen y destino
-                if (modoSeleccion === 'origen') {
-                  // Establecemos el punto de origen y pasamos automáticamente a elegir destino
-                  setOrigen({ lat, lon });
-                  setModoSeleccion('destino');
-                } else if (modoSeleccion === 'destino') {
-                  // Establecemos el punto de destino y volvemos a origen para alternar continuamente
-                  setDestino({ lat, lon });
-                  setModoSeleccion('origen');
-                }
-              }
-            }}
+            onSeleccionarCoordenada={handleMapCoordinateSelection}
           />
         )}
         {/* Renderizado condicional: Vista 2D con sombras provisional */}
@@ -755,29 +697,7 @@ export default function SolarCalculatorScreen() {
               destino={destino}
               modoSeleccion={modoSeleccion}
               modoBusqueda={modoBusqueda}
-              onSeleccionarCoordenada={(lat, lon) => {
-                // Depuración: registrar coordenada seleccionada y el modo actual en consola
-                console.log('Coordenada seleccionada:', { lat, lon, modoBusqueda, modoSeleccion });
-
-                // Si estamos en modo lugar, actualizamos el formulario de cálculo solar
-                if (modoBusqueda === 'lugar') {
-                  setLatitude(lat.toString());
-                  setLongitude(lon.toString());
-                  setLatitudeDisplay(truncarA6Decimales(lat.toString()));
-                  setLongitudeDisplay(truncarA6Decimales(lon.toString()));
-                } else if (modoBusqueda === 'ruta') {
-                  // Si estamos en modo ruta, alternamos continuamente entre origen y destino
-                  if (modoSeleccion === 'origen') {
-                    // Establecemos el punto de origen y pasamos automáticamente a elegir destino
-                    setOrigen({ lat, lon });
-                    setModoSeleccion('destino');
-                  } else if (modoSeleccion === 'destino') {
-                    // Establecemos el punto de destino y volvemos a origen para alternar continuamente
-                    setDestino({ lat, lon });
-                    setModoSeleccion('origen');
-                  }
-                }
-              }}
+              onSeleccionarCoordenada={handleMapCoordinateSelection}
             />
           )}
         {/* Renderizado condicional: Vista 3D con visor de fragmentos de modelo */}
@@ -793,6 +713,15 @@ export default function SolarCalculatorScreen() {
             selection={shadowLayers}
             onSelectionChange={setShadowLayers}
             onWeightChange={setShadowWeight}
+          />
+        )}
+
+        {puntoSombraSeleccionado && timelineSombra && (
+          <PointShadowPanel
+            coordinate={puntoSombraSeleccionado}
+            date={fechaOperacion}
+            timeline={timelineSombra}
+            onClose={() => setPuntoSombraSeleccionado(null)}
           />
         )}
 
