@@ -198,7 +198,7 @@ export function buildShadowTimeline({
     fecha: baseDate,
     latitude,
     longitude,
-    intervalos,
+    intervalos: intervals,
     minutosSol,
     minutosSombra,
   };
