@@ -31,6 +31,11 @@ export function sourceUrl(baseUrl: string, source: ShadowSource, selection?: Sha
   return `${url.origin}/tiles/${source}/16/${url.searchParams.get('x') || ''}/${url.searchParams.get('y') || ''}.glb`;
 }
 
+export function tileSourceUrl(baseUrl: string, source: ShadowSource, x: number, y: number, zoom = 16) {
+  const url = new URL(baseUrl);
+  return `${url.origin}/tiles/${source}/${zoom}/${x}/${y}.glb`;
+}
+
 export function sourceOpacity(source: ShadowSource, weights?: Partial<ShadowLayerWeights>) {
   const weight = weights?.[source] ?? SHADOW_SOURCE_WEIGHTS[source];
   return Number.isFinite(weight) ? Math.max(0, Math.min(1, weight)) : SHADOW_SOURCE_WEIGHTS[source];
