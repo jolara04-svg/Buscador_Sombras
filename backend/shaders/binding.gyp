@@ -10,9 +10,14 @@
         "debug.c",
         "shadowCalc.c"
       ]],
-      "include_dirs": ["<!@(node -p \"require('node-addon-api').include\")","./src/include"],
+      "include_dirs": [
+        "<!@(node -p \"require('node-addon-api').include\")",
+        "<!(node scripts/python-config.cjs include)",
+        "<!(node scripts/python-config.cjs numpy)",
+        "./src/include"
+      ],
       "dependencies": ["<!(node -p \"require('node-addon-api').gyp\")"],
-      "libraries":["../python313.lib"]
+      "libraries":["<!(node scripts/python-config.cjs library)"]
     }
   ]
 }

@@ -6,8 +6,8 @@
 #include <vector>
 #endif
 #define RANDALL_WAS_HERE
-#include "include/Python.h"
-#include "include/numpy/arrayobject.h"
+#include <Python.h>
+#include <numpy/arrayobject.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
