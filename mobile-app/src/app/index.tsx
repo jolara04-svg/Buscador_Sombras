@@ -58,20 +58,8 @@ export default function SolarCalculatorScreen() {
   const [horaFin, setHoraFin] = useState('23:59');
   const [resultadoSolarSimulacion, setResultadoSolarSimulacion] = useState<SolarPosition | null>(null);
   
-  // Estado para el paso de minutos por tick (calculado para que la simulación dure 10 segundos con 10 updates/s)
-  const [pasoPorTick, setPasoPorTick] = useState(14.4);
-
-  /**
-   * Efecto para calcular el incremento de minutos por tick (`pasoPorTick`).
-   * Matemáticas: 
-   * - Duración total de la animación = 10 segundos.
-   * - Frecuencia de actualización = 10 ticks por segundo (cada 100ms).
-   * - Total de ticks = 10 segundos * 10 ticks/s = 100 ticks.
-   * - Rango total en minutos = Diferencia entre horaFin y horaInicio (manejando cruce de medianoche si es necesario).
-   * - pasoPorTick = Rango total de minutos / 100 ticks.
-   */
-  useEffect(() => {
-    // Convertir "HH:MM" a minutos totales desde las 00:00
+  // Paso de minutos por tick para que la simulación dure 10 segundos a 10 actualizaciones por segundo.
+  const pasoPorTick = useMemo(() => {
     const parseMinutos = (horaStr: string) => {
       const parts = horaStr.split(':');
       if (parts.length !== 2) return 0;
@@ -82,16 +70,9 @@ export default function SolarCalculatorScreen() {
 
     const minInicio = parseMinutos(horaInicio);
     let minFin = parseMinutos(horaFin);
-
-    // Si la hora de fin es menor o igual a la de inicio, asumimos que cruza la medianoche (añadir 24h = 1440 min)
-    if (minFin <= minInicio) {
-      minFin += 1440;
-    }
-
-    const diffMinutos = minFin - minInicio;
-    // Dividir entre 100 ticks (10s a 10 updates/s)
-    const paso = diffMinutos / 100;
-    setPasoPorTick(paso > 0 ? paso : 14.4);
+    if (minFin <= minInicio) minFin += 1440;
+    const paso = (minFin - minInicio) / 100;
+    return paso > 0 ? paso : 14.4;
   }, [horaInicio, horaFin]);
 
   // Estado para controlar la vista activa del mapa: '2d', '3d' o '2d-sombras'
