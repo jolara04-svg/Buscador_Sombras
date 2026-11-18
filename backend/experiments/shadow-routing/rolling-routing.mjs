@@ -17,15 +17,17 @@ export function distanceToDestination(edges, target) {
 
 // Horizonte movil: planifica con la foto ACTUAL, pero ejecuta solo hasta el
 // cambio de franja. getExposure(slot) debe suministrar una foto por franja.
-export function createRollingPlanner({edges,target,getExposure,intervalSeconds=1800,preventBacktracking=true}) {
+export function createRollingPlanner({edges,target,getExposure,intervalSeconds=1800,preventBacktracking=true,maxEdges=500000}) {
   if(!(intervalSeconds>0)||!Number.isFinite(intervalSeconds)||typeof getExposure!=='function')throw new Error('Configuracion temporal invalida');
+  if(!Array.isArray(edges)||!Number.isInteger(maxEdges)||maxEdges<1||edges.length>maxEdges)throw new Error('Grafo fuera del presupuesto de aristas');
   const potential=distanceToDestination(edges,target),ids=new Set(edges.flatMap(e=>[e.source,e.target]));
   if(!ids.has(target))throw new Error('Destino inexistente');
-  let cachedSlot=null,cachedExposure=null;
-  function plan(state,timeSeconds,{speedMps=1.4,penalty=4,mode='shade'}={}) {
+  let cachedSlot=null,cachedExposure=null,prepared=null;
+  const stats={preparations:0,cacheHits:0,snapshotLoads:0};
+  function plan(state,timeSeconds,{speedMps=1.4,penalty=4,mode='shade',maxVisited=250000}={}) {
     if(!Number.isFinite(timeSeconds)||timeSeconds<0||!Number.isFinite(speedMps)||speedMps<=0||!Number.isFinite(penalty)||penalty<1||!['shade','distance'].includes(mode))throw new Error('Parametros de viaje invalidos');
     const slot=Math.floor(timeSeconds/intervalSeconds),nextChange=(slot+1)*intervalSeconds;
-    if(cachedSlot!==slot){const snapshot=getExposure(slot);if(!Array.isArray(snapshot)||snapshot.length!==edges.length)throw new Error('Falta la foto de sombra de esta franja');cachedExposure=snapshot;cachedSlot=slot;}
+    if(cachedSlot!==slot){const snapshot=getExposure(slot);if(!Array.isArray(snapshot)||snapshot.length!==edges.length)throw new Error('Falta la foto de sombra de esta franja');cachedExposure=snapshot;cachedSlot=slot;prepared=null;stats.snapshotLoads++;}
     const exposure=cachedExposure;
     if(state.node===target)return {arrived:true,state,timeSeconds,slot,nextChange,segments:[],lengthM:0,durationSeconds:0};
     let virtual='__rolling_position__';while(ids.has(virtual))virtual+='_';
@@ -36,7 +38,12 @@ export function createRollingPlanner({edges,target,getExposure,intervalSeconds=1
       if(!positionEdge||!(state.fraction>0&&state.fraction<1)||![1,-1].includes(state.direction)||(state.direction===1?!positionEdge.forward:!positionEdge.reverse))throw new Error('Posicion en arista invalida');
       source=virtual;
     }
-    const graph=[],weights=[],mapping=[];
+    const key=positionEdge?`${state.edgeIndex}:${state.fraction}:${state.direction}`:'nodes';
+    const cacheHit=prepared?.key===key;
+    let graph,weights,mapping,router;
+    if(cacheHit){({weights,mapping,router}=prepared);stats.cacheHits++;}
+    else {
+    graph=[];weights=[];mapping=[];
     function add(originalIndex,from,to,fromFraction,toFraction) {
       const original=edges[originalIndex],e=exposure[originalIndex],fraction=Math.abs(toFraction-fromFraction);
       if(!e||e.cost===null||e.unknownM>1e-7)return;
@@ -56,8 +63,10 @@ export function createRollingPlanner({edges,target,getExposure,intervalSeconds=1
       if(positionEdge.forward&&(!preventBacktracking||state.direction===1))add(state.edgeIndex,virtual,positionEdge.target,state.fraction,1);
       if(positionEdge.reverse&&(!preventBacktracking||state.direction===-1))add(state.edgeIndex,virtual,positionEdge.source,state.fraction,0);
     }
-    const router=createCompactRouter(graph,weights);
-    const route=router.search(source,target,{penalty,mode});
+    router=createCompactRouter(graph,weights);
+    prepared={key,weights,mapping,router};stats.preparations++;
+    }
+    const route=router.search(source,target,{penalty,mode,maxVisited});
     if(!route)return {arrived:false,unreachable:true,state,timeSeconds,slot,nextChange,segments:[],lengthM:0,durationSeconds:0};
     let budget=(nextChange-timeSeconds)*speedMps,used=0,shadeM=0,sunM=0,endState={...state};
     const segments=[];
@@ -73,7 +82,8 @@ export function createRollingPlanner({edges,target,getExposure,intervalSeconds=1
     const arrived=endState.node===target;
     return {arrived,unreachable:false,state:endState,timeSeconds:arrived?timeSeconds+used/speedMps:nextChange,slot,nextChange,segments,
       lengthM:used,shadeM,sunM,cost:shadeM+penalty*sunM,durationSeconds:used/speedMps,
-      plannedRoute:route.edgeIndices.map(i=>mapping[i]),plannedLengthM:route.lengthM,preventBacktracking};
+      plannedRoute:route.edgeIndices.map(i=>mapping[i]),plannedLengthM:route.lengthM,preventBacktracking,
+      search:{visited:route.visited,peakQueue:route.peakQueue,typedArrayBytes:router.stats.typedArrayBytes,cacheHit}};
   }
-  return {plan,remainingDistance:node=>potential.get(node)??Infinity};
+  return {plan,stats,remainingDistance:node=>potential.get(node)??Infinity};
 }

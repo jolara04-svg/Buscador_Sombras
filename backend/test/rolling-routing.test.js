@@ -50,3 +50,15 @@ test('horizonte: conserva avance en sentido inverso y cruza medianoche sin reini
   const second=p.plan(first.state,first.timeSeconds,{speedMps:1});assert.ok(Math.abs(second.state.fraction-.2)<1e-10);assert.deepEqual(slots,[47,48]);
   const last=p.plan(second.state,second.timeSeconds,{speedMps:1});assert.ok(last.arrived);assert.ok(Math.abs(last.timeSeconds-(23*3600+50*60+3000))<1e-8);
 });
+test('horizonte: cache limitada reutiliza pesos y buffers; nueva franja invalida preparacion',async()=>{
+  const {createRollingPlanner}=await api,edges=[edge('a','b',100),edge('b','t',100)];
+  const p=createRollingPlanner({edges,target:'t',getExposure:()=>photo(edges,[.5,.5])});
+  const a=p.plan({node:'a'},0),b=p.plan({node:'b'},10,{penalty:8});
+  assert.equal(a.search.cacheHit,false);assert.equal(b.search.cacheHit,true);assert.equal(b.cost,450);
+  assert.equal(p.stats.preparations,1);assert.equal(p.stats.snapshotLoads,1);
+  p.plan({node:'a'},1800);assert.equal(p.stats.preparations,2);assert.equal(p.stats.snapshotLoads,2);
+  p.plan({node:'a'},0);assert.equal(p.stats.preparations,3); // no acumula fotos antiguas
+  assert.throws(()=>p.plan({node:'a'},0,{maxVisited:1}),{code:'SEARCH_LIMIT'});
+  assert.ok(p.plan({node:'a'},0).arrived);
+  assert.throws(()=>createRollingPlanner({edges,target:'t',getExposure:()=>[],maxEdges:1}));
+});
