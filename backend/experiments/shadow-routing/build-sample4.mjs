@@ -1,0 +1,11 @@
+import fs from 'node:fs/promises';
+const read=name=>fs.readFile(new URL(name,import.meta.url),'utf8');
+const graph=JSON.parse(await read('data/graph.json')),report=JSON.parse(await read('output/report.json'));
+const byId=new Map(report.edges.map(e=>[e.id,e]));
+const data={graph,exposure:graph.edges.map(e=>{const p=byId.get(e.id);if(!p||Math.abs(p.lengthM-e.lengthM)>1e-6)throw new Error('Datos incompatibles');const shadeM=Math.max(0,Math.min(e.lengthM,p.shadeM));return {...p,shadeM,sunM:e.lengthM-shadeM};}),example:{source:'13567263103',target:'9847636020'}};
+const compact=(await read('compact-routing.mjs')).replaceAll('export function','function');
+const rolling=(await read('rolling-routing.mjs')).replace(/^import[^\n]+\n/,'').replaceAll('export function','function');
+const ui=await read('sample4-ui.js');
+const script=`const UCM=${JSON.stringify(data)};\n${compact}\n${rolling}\n${ui}`;
+await fs.writeFile(new URL('sample4.html',import.meta.url),(await read('sample4-template.html')).replace('/* SAMPLE4_SCRIPT */',()=>script.replaceAll('</script','<\\/script')));
+console.log('sample4.html generado: motor temporal y datos incrustados, sin servidor.');
