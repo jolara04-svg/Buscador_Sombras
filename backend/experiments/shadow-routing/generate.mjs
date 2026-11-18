@@ -3,7 +3,9 @@ import { fileURLToPath } from 'node:url';
 import { buildGraph, unproject } from './core.mjs';
 const root = new URL('./', import.meta.url);
 const scale = process.argv.includes('--scale');
-const prefix = scale ? 'scale-' : '';
+const campus = process.argv.includes('--campus');
+if(scale&&campus)throw new Error('Elige --scale o --campus');
+const prefix = campus ? 'campus-' : scale ? 'scale-' : '';
 const config = JSON.parse(await fs.readFile(new URL(`${prefix}config.json`, root)));
 await fs.mkdir(new URL('data/', root), { recursive: true });
 const rawPath = new URL(`data/${prefix}osm.json`, root);
@@ -24,14 +26,17 @@ if (!osm) {
   if (!response.ok) throw new Error(`Overpass ${response.status}: ${await response.text()}`);
   osm = await response.json();
   if (osm.remark || !Array.isArray(osm.elements)) throw new Error(`Overpass incompleto: ${osm.remark}`);
-  await fs.writeFile(rawPath, JSON.stringify(osm, null, 2));
+  await fs.writeFile(rawPath, JSON.stringify(osm, null, campus ? 0 : 2));
 }
+// La caja campus contiene decenas de miles de elementos: conservar el cache
+// reproducible sin multiplicar su tamano por el formato de presentacion.
+if(campus&&!downloaded)await fs.writeFile(rawPath,JSON.stringify(osm));
 const buildStart = performance.now();
 const graph = buildGraph(osm, config);
 if (!graph.edges.length) throw new Error('No se encontraron caminos en la zona');
 const buildMs = performance.now() - buildStart;
 const graphPath = new URL(`data/${prefix}graph.json`, root);
-await fs.writeFile(graphPath, JSON.stringify(graph, null, 2));
+await fs.writeFile(graphPath, JSON.stringify(graph, null, campus ? 0 : 2));
 const metrics = { downloaded, inputMs: buildStart - downloadStart, buildMs,
   totalMs: performance.now() - downloadStart, graphBytes: (await fs.stat(graphPath)).size,
   rawOsmBytes: (await fs.stat(rawPath)).size, memory: process.memoryUsage(), nodes: graph.nodes.length, edges: graph.edges.length };

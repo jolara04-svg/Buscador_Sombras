@@ -1,0 +1,88 @@
+{
+  "generatedAt": "2026-11-18T08:45:09.715Z",
+  "scope": {
+    "name": "Ciudad Universitaria de Madrid: recinto principal y entorno",
+    "center": {
+      "lat": 40.4485,
+      "lon": -3.7275
+    },
+    "sizeM": 4096,
+    "scope": "Caja de ensayo de 4,096 km de lado; no es un limite administrativo ni incluye campus separados como Somosaguas",
+    "sampleStepM": 2,
+    "sunPenalty": 4
+  },
+  "graph": {
+    "nodes": 36490,
+    "edges": 41637,
+    "components": 109,
+    "largestComponentNodes": 30940
+  },
+  "comparisonQueries": 32,
+  "compact": {
+    "prepareMs": 16.325000000000017,
+    "searchMedianMs": 3.869199999999978,
+    "searchMaxMs": 7.3125,
+    "typedArrayMiB": 2.841114044189453
+  },
+  "example": {
+    "source": "12361261641",
+    "target": "309412114",
+    "lengthM": 7215.913366489663,
+    "mode": "distance"
+  },
+  "walk": {
+    "arrived": true,
+    "lengthM": 7357.07701029762,
+    "shadeM": 4467.3441566830015,
+    "sunM": 2889.732853614621,
+    "durationMinutes": 87.58425012259067,
+    "potentialMs": 69.20830000000001,
+    "stages": [
+      {
+        "start": 44400,
+        "end": 45000,
+        "lengthM": 840,
+        "sunM": 320.1629610593201,
+        "ms": 35.8664,
+        "visited": 1853,
+        "bufferMiB": 2.158039093017578
+      },
+      {
+        "start": 45000,
+        "end": 46800,
+        "lengthM": 2519.9999999999995,
+        "sunM": 746.7446154554243,
+        "ms": 26.365600000000086,
+        "visited": 1134,
+        "bufferMiB": 2.1581039428710938
+      },
+      {
+        "start": 46800,
+        "end": 48600,
+        "lengthM": 2520.0000000000005,
+        "sunM": 948.2868289145058,
+        "ms": 33.36279999999999,
+        "visited": 450,
+        "bufferMiB": 2.1581039428710938
+      },
+      {
+        "start": 48600,
+        "end": 49655.05500735544,
+        "lengthM": 1477.0770102976205,
+        "sunM": 874.5384481853707,
+        "ms": 20.462400000000002,
+        "visited": 49,
+        "bufferMiB": 2.1581039428710938
+      }
+    ],
+    "cacheFirstMs": 20.584800000000087,
+    "cacheHitMs": 0.19180000000005748
+  },
+  "limitations": [
+    "Grafo real OSM; exposicion sintetica, no shader",
+    "Caja de ensayo, no limite administrativo",
+    "CPU Node local; no benchmark de movil",
+    "Buffers excluyen IDs, objetos, copias del worker y renderizado",
+    "Politica de avance protegido: no garantiza minimo sol global"
+  ]
+}

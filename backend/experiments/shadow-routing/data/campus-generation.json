@@ -1,0 +1,17 @@
+{
+  "downloaded": false,
+  "inputMs": 91.30789999999999,
+  "buildMs": 166.1479,
+  "totalMs": 396.1735,
+  "graphBytes": 15527461,
+  "rawOsmBytes": 5496684,
+  "memory": {
+    "rss": 182292480,
+    "heapTotal": 142233600,
+    "heapUsed": 92427816,
+    "external": 17449973,
+    "arrayBuffers": 15665216
+  },
+  "nodes": 36490,
+  "edges": 41637
+}

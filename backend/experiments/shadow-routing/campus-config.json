@@ -1,0 +1,8 @@
+{
+  "name": "Ciudad Universitaria de Madrid: recinto principal y entorno",
+  "center": { "lat": 40.4485, "lon": -3.7275 },
+  "sizeM": 4096,
+  "scope": "Caja de ensayo de 4,096 km de lado; no es un limite administrativo ni incluye campus separados como Somosaguas",
+  "sampleStepM": 2,
+  "sunPenalty": 4
+}
