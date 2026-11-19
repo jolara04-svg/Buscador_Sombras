@@ -1,0 +1,57 @@
+{
+  "environment": "Node v24.21.0, win32; rejillas sinteticas, CPU local; tiempos no extrapolables a movil",
+  "memoryScope": "Buffers numericos persistentes; no incluye objetos de entrada, IDs, worker, geometria ni imagenes.",
+  "results": [
+    {
+      "side": 100,
+      "nodes": 10000,
+      "edges": 19800,
+      "arcs": 39600,
+      "prepareMs": 11.977800000000002,
+      "searchMs": [
+        3.829199999999993,
+        6.085300000000004,
+        5.758800000000008,
+        5.099499999999992,
+        4.904699999999991
+      ],
+      "typedArrayMiB": 1.0986366271972656,
+      "visited": 10000,
+      "peakQueue": 134
+    },
+    {
+      "side": 250,
+      "nodes": 62500,
+      "edges": 124500,
+      "arcs": 249000,
+      "prepareMs": 34.8455,
+      "searchMs": [
+        6.435900000000004,
+        12.149399999999986,
+        9.871499999999997,
+        8.701999999999998,
+        5.207899999999995
+      ],
+      "typedArrayMiB": 6.895069122314453,
+      "visited": 62500,
+      "peakQueue": 334
+    },
+    {
+      "side": 400,
+      "nodes": 160000,
+      "edges": 319200,
+      "arcs": 638400,
+      "prepareMs": 67.8269,
+      "searchMs": [
+        15.097800000000007,
+        14.672400000000039,
+        14.812900000000013,
+        14.393099999999947,
+        14.929500000000019
+      ],
+      "typedArrayMiB": 17.669681549072266,
+      "visited": 160000,
+      "peakQueue": 546
+    }
+  ]
+}

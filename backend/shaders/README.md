@@ -7,27 +7,50 @@ Primero, hay que instalar en el ordenador todas las dependencias y herramientas 
     + node-addon-api
     + bindings
 * Python, de la versión 3.12 en adelante, preferiblemente la 3.13
-    > Es muy importante que descarges las cabeceras de la API de C junto con Python.
-    > Si están presentes, se encuentran en `.../python/python313/include`. Nótese que puede variar en el número según la versión.
-    > La versión disponible en <https://python.org> viene con estos archivos.
 * Las siguientes librerías de Python
     + Pygame
     + PyOpenGL
     + Numpy
-        > Al igual que con Python, se necesitan las cabeceras de la API de C de NumPy.
-        > Deberían estar en `.../python/python313/Lib/site-packages/numpy/_core/include`
-        > Instalándolo con `pip` vienen.
     + Trimesh
 
-Ahora toca colocarlo todo en su sitio
+La compilación necesita las cabeceras de la API de C de Python y NumPy. Desde una terminal en `backend\shaders` puedes instalar NumPy con:
 
-Primero, localiza los ficheros `.h` de Python y NumPy. Copia las carpetas `include` y pégalas en `src`.
-> Alternativamente, puedes poner los directorios donde se encuentran en el archivo `binding.gyp`
-> En ese caso, debes modificar `src/includes.h`, reemplazando `#include "include/Python.h"` por `#include <Python.h>` para Python y `#include "include/numpy/arrayobject.h"` por `#include <arrayobject.h>` para NumPy
+```cmd
+python -m pip install numpy
+```
 
-Segundo, localiza el archivo `python313.lib` (El número variará según la versión) y pégalo en este directorio. 
-> Alternativamente, puedes proporcionar un camino absoluto al archivo en `binding.gyp`
+`PyOpenGL`, `trimesh` y `pygame` se necesitan para ejecutar la parte Python/OpenGL del addon:
+
+```cmd
+python -m pip install PyOpenGL trimesh
+```
+
+`pygame` es necesario para `shader.py` y `debug_renderCube`. En Python 3.14 puede no existir una rueda compatible y `pip` puede intentar compilarlo desde código fuente. En ese caso, usa una versión de pygame compatible. Si cambias a Python 3.13 para la parte Python/OpenGL, selecciona esa misma instalación con `npm_config_python` y vuelve a ejecutar `npm ci` para que el addon se compile contra la misma versión. No es necesario para compilar el addon ni para ejecutar las pruebas JavaScript del backend.
+
+El archivo `binding.gyp` detecta automáticamente:
+
+- La carpeta que contiene `Python.h`.
+- La carpeta de cabeceras devuelta por `numpy.get_include()`.
+- La librería `pythonXY.lib` correspondiente a la versión de Python usada.
+
+No es necesario copiar manualmente `include`, `Python.h`, `numpy/arrayobject.h` ni `python313.lib` dentro del repositorio.
+
+Si tienes varias instalaciones de Python, puedes seleccionar una explícitamente:
+
+```cmd
+set npm_config_python=C:\Path\To\Python\python.exe
+npm install
+```
+
+También puedes proporcionar las rutas manualmente si tu instalación no sigue la estructura habitual:
+
+```cmd
+set PYTHON_INCLUDE_DIR=C:\Path\To\Python\include
+set NUMPY_INCLUDE_DIR=C:\Path\To\numpy\_core\include
+set PYTHON_LIBRARY=C:\Path\To\Python\libs\python314.lib
+npm install
+```
 
 Para compilar el addon, abre una terminal en este directorio y ejecuta `npm ci`. Para probarlo, `npm test`.
 
-Para instalarlo en el backend, ejecuta `npm install ./shaders` en `backend`. 
+Para instalarlo en el backend, ejecuta `npm install ./shaders` en `backend`.

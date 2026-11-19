@@ -3,9 +3,9 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { Mapa2D, type Mapa2DProps, type MapViewport } from './Mapa2D.web';
 import { buildingShaderMaterial, shadowShaderMaterialDefault, getShadowCastMatrix } from './shadersSombras';
-import { chunkReference, mercator, metersPerPixel } from './shadow-map-projection';
+import { chunkReference, mercator, metersPerPixel, shadowTilesForViewport, tileKey, tileOffsetFromReference, tilesAvailableInManifest, type ShadowTileManifest, type TileCoordinate } from './shadow-map-projection';
 import { disposeChunk } from './chunk-stream';
-import { sourceEnabled, sourceOpacity, sourceUrl, type ShadowSourceSelection } from './shadow-map-sources';
+import { sourceEnabled, sourceOpacity, tileSourceUrl, type ShadowSourceSelection } from './shadow-map-sources';
 import type { ShadowLayerSelection, ShadowLayerWeights } from './shadow-settings';
 import { ShadowLayerControls } from './ShadowLayerControls';
 
@@ -18,7 +18,23 @@ type Overlay = {
   buildings: THREE.ShaderMaterial;
   vegetation: THREE.ShaderMaterial;
   reference: ReturnType<typeof chunkReference>;
+  ensureTiles: (viewport: MapViewport) => void;
 };
+
+type ShadowSource = 'buildings' | 'trees';
+type Manifest = ShadowTileManifest;
+
+async function runWithConcurrency<T>(items: T[], limit: number, task: (item: T) => Promise<void>) {
+  let next = 0;
+  const worker = async () => {
+    while (next < items.length) {
+      const item = items[next];
+      next += 1;
+      await task(item);
+    }
+  };
+  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, worker));
+}
 
 function draw(overlay: Overlay, viewport: MapViewport) {
   if (viewport.width <= 0 || viewport.height <= 0) return;
@@ -42,7 +58,7 @@ export function ShadowMap({ chunkURL, azimuth, elevation, sources, weights, onSe
   const latest = useRef({ azimuth, elevation, viewport, weights });
   const [error, setError] = useState<string | null>(null);
 
-  const sourceSelectionKey = JSON.stringify({ sources, weights });
+  const sourceSelectionKey = JSON.stringify(sources);
 
   useEffect(() => {
     latest.current = { azimuth, elevation, viewport, weights };
@@ -61,41 +77,116 @@ export function ShadowMap({ chunkURL, azimuth, elevation, sources, weights, onSe
     const buildings = buildingShaderMaterial(1);
     const trees = shadowShaderMaterialDefault(latest.current.azimuth, latest.current.elevation, 1);
     trees.uniforms.shadowColor.value.w = 0.5 * sourceOpacity('trees', latest.current.weights);
-    const selection = sources;
-    const state = { renderer, scene, camera, shadow, buildings, vegetation: trees, reference: chunkReference(chunkURL) };
+    const state: Overlay = {
+      renderer,
+      scene,
+      camera,
+      shadow,
+      buildings,
+      vegetation: trees,
+      reference: chunkReference(chunkURL),
+      ensureTiles: () => {},
+    };
     overlay.current = state;
     if (latest.current.viewport) draw(state, latest.current.viewport);
 
-    const loadSource = async (source: 'buildings' | 'trees') => {
-      if (!sourceEnabled(selection, source)) return;
-      const url = sourceUrl(chunkURL, source, selection);
-      if (!url) return;
-      const gltf = await new GLTFLoader().loadAsync(url);
-      if (!active) { disposeChunk(gltf.scene); return; }
-      gltf.scene.updateMatrixWorld(true);
-      const geometries: THREE.BufferGeometry[] = [];
-      gltf.scene.traverse(object => { if (object instanceof THREE.Mesh) geometries.push(object.geometry.clone().applyMatrix4(object.matrixWorld)); });
-      disposeChunk(gltf.scene);
-      const bounds = new THREE.Box3();
-      geometries.forEach(geometry => { geometry.computeBoundingBox(); bounds.union(geometry.boundingBox!); });
-      geometries.forEach(geometry => {
-        geometry.translate(0, 0, -bounds.min.z);
-        const material = source === 'trees' ? trees : shadow;
-        const cast = new THREE.Mesh(geometry, material);
-        // The shader moves vertices outside the original geometry bounds.
-        cast.frustumCulled = false;
-        scene.add(cast);
-        if (source === 'buildings') {
-          const building = new THREE.Mesh(geometry, buildings);
-          building.frustumCulled = false;
-          scene.add(building);
-        }
-      });
-      materialFor(source).uniforms.shadowCastMatrix.value.copy(getShadowCastMatrix(latest.current.azimuth, latest.current.elevation, 1));
-      if (latest.current.viewport) draw(state, latest.current.viewport);
+    const loader = new GLTFLoader();
+    const originTile: TileCoordinate = { x: state.reference.tileX, y: state.reference.tileY, z: 16 };
+    const loadedTiles = new Set<string>();
+    const loadingTiles = new Set<string>();
+    const manifests = new Map<ShadowSource, Manifest | null>();
+    let groundZ: number | null = null;
+
+    const materialFor = (source: ShadowSource) => source === 'trees' ? trees : shadow;
+    const isOrigin = (tile: TileCoordinate) => tile.x === originTile.x && tile.y === originTile.y;
+
+    const loadManifest = async (source: ShadowSource) => {
+      if (manifests.has(source)) return manifests.get(source) ?? null;
+      try {
+        const base = new URL(chunkURL);
+        const response = await fetch(`${base.origin}/manifest/${source}`);
+        const manifest = response.ok ? await response.json() as Manifest : null;
+        manifests.set(source, manifest);
+        return manifest;
+      } catch {
+        manifests.set(source, null);
+        return null;
+      }
     };
-    const materialFor = (source: 'buildings' | 'trees') => source === 'trees' ? trees : shadow;
-    void Promise.all((['buildings', 'trees'] as const).map(source => loadSource(source))).catch(() => { if (active) setError('No se pudieron cargar las capas 3D de esta zona.'); });
+
+    const loadTile = async (source: ShadowSource, tile: TileCoordinate, manifest: Manifest | null) => {
+      const key = `${source}:${tileKey(tile)}`;
+      if (!active || loadedTiles.has(key) || loadingTiles.has(key)) return;
+      if (manifest ? tilesAvailableInManifest([tile], manifest).length === 0 : !isOrigin(tile)) return;
+
+      loadingTiles.add(key);
+      try {
+        const url = tileSourceUrl(chunkURL, source, tile.x, tile.y, tile.z);
+        const gltf = await loader.loadAsync(url);
+        if (!active) {
+          disposeChunk(gltf.scene);
+          return;
+        }
+
+        gltf.scene.updateMatrixWorld(true);
+        const offset = tileOffsetFromReference(tile, state.reference);
+        const geometries: THREE.BufferGeometry[] = [];
+        const bounds = new THREE.Box3();
+        gltf.scene.traverse(object => {
+          if (!(object instanceof THREE.Mesh)) return;
+          const geometry = object.geometry.clone().applyMatrix4(object.matrixWorld);
+          geometry.translate(offset.x, offset.y, 0);
+          geometry.computeBoundingBox();
+          if (geometry.boundingBox) bounds.union(geometry.boundingBox);
+          geometries.push(geometry);
+        });
+        disposeChunk(gltf.scene);
+
+        if (!geometries.length || bounds.isEmpty()) return;
+        if (groundZ === null) groundZ = bounds.min.z;
+
+        geometries.forEach(geometry => {
+          geometry.translate(0, 0, -groundZ!);
+          const material = materialFor(source);
+          const cast = new THREE.Mesh(geometry, material);
+          // The shader moves vertices outside the original geometry bounds.
+          cast.frustumCulled = false;
+          scene.add(cast);
+          if (source === 'buildings') {
+            const building = new THREE.Mesh(geometry, buildings);
+            building.frustumCulled = false;
+            scene.add(building);
+          }
+        });
+        loadedTiles.add(key);
+        materialFor(source).uniforms.shadowCastMatrix.value.copy(getShadowCastMatrix(latest.current.azimuth, latest.current.elevation, 1));
+        if (latest.current.viewport) draw(state, latest.current.viewport);
+      } catch (loadError) {
+        if (active && isOrigin(tile)) {
+          console.warn(`No se pudo cargar el chunk central de ${source}:`, loadError);
+          setError('No se pudieron cargar las capas 3D de esta zona.');
+        }
+      } finally {
+        loadingTiles.delete(key);
+      }
+    };
+
+    state.ensureTiles = (nextViewport) => {
+      const tiles = shadowTilesForViewport(chunkURL, nextViewport);
+      const sourcesToLoad = (['buildings', 'trees'] as const).filter(source => sourceEnabled(sources, source));
+      void (async () => {
+        const jobs: { source: ShadowSource; tile: TileCoordinate; manifest: Manifest | null }[] = [];
+        for (const source of sourcesToLoad) {
+          const manifest = await loadManifest(source);
+          const available = manifest ? tilesAvailableInManifest(tiles, manifest) : tiles.filter(isOrigin);
+          available.forEach(tile => jobs.push({ source, tile, manifest }));
+        }
+        await runWithConcurrency(jobs, 4, ({ source, tile, manifest }) => loadTile(source, tile, manifest));
+        if (active && latest.current.viewport) draw(state, latest.current.viewport);
+      })();
+    };
+
+    if (latest.current.viewport) state.ensureTiles(latest.current.viewport);
 
     return () => {
       active = false;
@@ -108,11 +199,12 @@ export function ShadowMap({ chunkURL, azimuth, elevation, sources, weights, onSe
       state.vegetation.dispose();
       renderer.dispose();
     };
-  }, [chunkURL, sourceSelectionKey]);
+  }, [chunkURL, sourceSelectionKey, sources]);
 
   useEffect(() => {
     const state = overlay.current;
     if (!state || !viewport) return;
+    state.ensureTiles(viewport);
     state.shadow.uniforms.shadowCastMatrix.value.copy(getShadowCastMatrix(azimuth, elevation, 1));
     state.shadow.uniforms.shadowColor.value.w = elevation > 0 ? 0.5 * sourceOpacity('buildings', weights) : 0;
     state.vegetation.uniforms.shadowCastMatrix.value.copy(getShadowCastMatrix(azimuth, elevation, 1));

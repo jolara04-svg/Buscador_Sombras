@@ -17,12 +17,16 @@ Las pruebas utilizan el runner nativo de Node.js, por lo que no es necesario ins
 1. Preparar el backend
 ----------------------
 
-Desde la carpeta raíz del proyecto, instala las dependencias del backend la primera vez:
+Desde la carpeta raíz del proyecto, prepara NumPy para compilar el addon nativo y luego instala las dependencias del backend la primera vez:
 
 ```cmd
-cd backend
+cd backend\shaders
+python -m pip install numpy
+cd ..
 npm ci
 ```
+
+`pygame`, `PyOpenGL` y `trimesh` solo son necesarios para ejecutar la parte Python/OpenGL del addon. En Python 3.14, `pygame` puede no tener una rueda compatible y tratar de compilarse desde código fuente. Ese problema no impide ejecutar `npm ci` ni las pruebas JavaScript del backend.
 
 2. Ejecutar las pruebas del backend
 -----------------------------------
