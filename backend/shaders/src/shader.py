@@ -34,7 +34,7 @@ if not glGetProgramiv(program, GL_LINK_STATUS):
     print(glGetProgramInfoLog(program))
     raise ValueError("shader failed to link")
 
-if True: ##TODO: Check if already initialized. (cmodule function)
+if cmodule.firstPass():
     glClearColor(1.0, 1.0, 1.0, 1.0)
     glUseProgram(program)
     buffer=glGenBuffers(1)

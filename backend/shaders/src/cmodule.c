@@ -17,16 +17,19 @@ static PyObject* getFilePath(PyObject* self, PyObject* args){
     return filePath;
 }
 
-static PyObject* getModel(PyObject* self, PyObject* args){
-    int x, y;
-    if(!PyArg_ParseTuple(args, "ll"), &x, &y)
-        return NULL;
-    return Py_None;
+int _firstPass=1;
+static PyObject* firstPass(PyObject* self, PyObject* args){
+    if(_firstPass){
+        _firstPass=0;
+        Py_RETURN_TRUE;
+    }
+    else
+        Py_RETURN_FALSE;
 }
 
 static struct PyMethodDef methods[]={
     {"getFilePath", getFilePath, METH_NOARGS, "Returns the working path, NOT ending in '/'"},
-    {"getModel", getModel, METH_VARARGS, ""},
+    {"firstPass", firstPass, METH_NOARGS, "Returns True on the first call. Returns False on subsequent calls."},
     {NULL, NULL, 0, NULL}
 };
 
