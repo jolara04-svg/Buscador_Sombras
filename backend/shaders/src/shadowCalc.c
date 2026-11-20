@@ -803,8 +803,8 @@ double getShade(double lon1, double lat1, double lon2, double lat2, double elev,
             Py_DECREF(matrix);
             return -1.0;
         }
-        xt=(uchar)256*(xf-(double)xu);
-        yt=(uchar)256*(yf-(double)yu);
+        xt=(uchar)(256*(xf-(double)xu));
+        yt=(uchar)(256*(yf-(double)yu));
         result=PyObject_CallMethod(module, "getShadeAt", "Oll", surface, (long)xt, (long)yt);
         if(result==NULL){
             PyErr_Print();
