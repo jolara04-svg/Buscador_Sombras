@@ -1,7 +1,7 @@
 #include "includes.h"
 #include "shadowCalc.h"
 #define PI 3.141592653589793
-#define SCALE 0.0021479482615089193
+#define SCALE 0.004295896523017839
 #define MODEL_CACHE_SIZE 16
 #define TEXTURE_CACHE_SIZE 16
 #define PATH_SIZE 1024
@@ -78,13 +78,11 @@ void setMadridFilePath(){
     }
     if(j==0)
         Py_UNREACHABLE();
-    puts(filePath);
 #ifdef USE_BACKSLASH
     strcpy(&filePath[strlen(filePath)],"\\madrid_chunks\\16\\%hu\\%hu.glb");
 #else
     strcpy(&filePath[strlen(filePath)],"/madrid_chunks/16/%hu/%hu.glb");
 #endif
-    puts(filePath);
 }
 
 void incref(Model* model){
@@ -249,22 +247,17 @@ void latLonToTile(double lon, double lat, double* x, double* y){
 PyObject* getMatrix(double elev, double azim){
     if(sin(elev)==0.0){
         PyErr_SetString(PyExc_ZeroDivisionError, "sin(elev) was zero");
-        puts("Zero div");
         return NULL;
     }
     float* ptr;  
     const double cotg=cos(elev)/sin(elev);
-    puts("just bebore calling PyArray_SimpleNew");
     //PyArrayObject* res=PyArray_SimpleNew(1, &SIXTEEN, NPY_FLOAT32);
     PyObject* float32=PyObject_GetAttrString(numpy, "float32");
     PyObject* res=PyObject_CallMethod(numpy, "empty", "(ll)O", 4, 4, float32);
     Py_DECREF(float32);
-    puts("called PyArray_SimpleNew successfully");
     if(res==NULL)
         return NULL;
-    puts("just before calling PyArray_GetPtr");
     ptr=PyArray_GETPTR1(res, 0);
-    puts("called PyArray_GetPtr successfully");
     for(int i=0; i<16; i++){
         ptr[i]=0.0f;
     }
@@ -345,7 +338,6 @@ int reserve(Model* model, PyObject* list){
     if(model->vertices==NULL)
         return -1;
 
-    printf("model->triangle_count=%u, _Size=%zu\n", model->triangle_count, model->triangle_count*sizeof(Triangle));
     model->triangles=malloc(model->triangle_count*sizeof(Triangle));
     if(model->triangles==NULL){
         free(model->vertices);
@@ -355,7 +347,6 @@ int reserve(Model* model, PyObject* list){
 }
 
 size_t copyTriangles(Triangle* dest, PyObject* src, size_t start, size_t offset){
-    puts("copyTriangles");
     if(PyErr_Occurred()){
         PyErr_Print();
     }
@@ -367,7 +358,6 @@ size_t copyTriangles(Triangle* dest, PyObject* src, size_t start, size_t offset)
     length=getLength(src);
     if(PyErr_Occurred())
         return -1;
-    printf("length=%zu\n", length);
     for(size_t i=0; i<length; i++){
         index=PyLong_FromSize_t(i);
         if(index==NULL)
@@ -377,7 +367,6 @@ size_t copyTriangles(Triangle* dest, PyObject* src, size_t start, size_t offset)
         if(row==NULL)
             return -1;
         for(size_t j=0; j<3; j++){
-            printf("start=%zu, i=%zu, j=%zu\n", start, i, j);
             index=PyLong_FromSize_t(j);
             if(index==NULL){
                 Py_DECREF(row);
@@ -405,12 +394,10 @@ size_t copyTriangles(Triangle* dest, PyObject* src, size_t start, size_t offset)
         Py_DECREF(row);
         start++;
     }
-    puts("End of the loop");
     return start;
 }
 
 size_t copyVertices(Vertex* dest, PyObject* src, size_t start){
-    puts("copyVertices");
     PyObject* row;
     PyObject* elem;
     PyObject* index;
@@ -452,7 +439,6 @@ size_t copyVertices(Vertex* dest, PyObject* src, size_t start){
 }
 
 int populate(Model* model, PyObject* list){
-    puts("populate");
     PyObject* iter;
     PyObject* item;
     PyObject* vertices;
@@ -469,7 +455,6 @@ int populate(Model* model, PyObject* list){
             Py_DECREF(item);
             return -1;
         }
-        printf("model->triangle_count=%u\n", model->triangle_count);
         triangle_index=copyTriangles(model->triangles, triangles, triangle_index, vertex_index);
         Py_DECREF(triangles);
         if(PyErr_Occurred()){
@@ -536,7 +521,6 @@ const borrowed Model* loadModel(ushort x, ushort y){
     PyObject* mesh;
     Model* model;
     snprintf(fileName, PATH_SIZE, filePath, x, y);
-    puts(fileName);
     file=PyUnicode_DecodeFSDefault(fileName);
     if(file==NULL)
         return NULL;
@@ -545,7 +529,6 @@ const borrowed Model* loadModel(ushort x, ushort y){
     if(mesh==NULL){
         if(PyErr_ExceptionMatches(PyExc_ValueError)){
             PyErr_Clear();
-            puts("File not found (Why is this a ValueError?)");
             return &EMPTY;
         }
         else
@@ -581,9 +564,7 @@ borrowed PyObject* getTexture(ushort x, ushort y, double elev, double azim, PyOb
     _Triangle* ptr;
     texture=getCachedTexture(x, y, elev, azim);
     if(texture==NULL){
-        puts("Calling getModel");
         model=getModel(x, y);
-        puts("Got model(?)");
         if(model==NULL)
             return NULL;
         size=model->triangle_count*9;
@@ -594,7 +575,6 @@ borrowed PyObject* getTexture(ushort x, ushort y, double elev, double azim, PyOb
         Py_DECREF(dtype);
         if(array==NULL)
             return NULL;
-        puts("just before calling PyArray_GETPTR1");
         ptr=PyArray_GETPTR1(array, 0);
         for(size_t i=0; i<model->triangle_count; i++)
             for(char j=0; j<3; j++)
@@ -620,14 +600,12 @@ double getShade(double lon1, double lat1, double lon2, double lat2, double elev,
     size_t num=0;
     latLonToTile(lon1, lat1, &x1, &y1);
     latLonToTile(lon2, lat2, &x2, &y2);
-    puts("latLonToTile");
     matrix=getMatrix(elev, azim);
     if(matrix==NULL){
         PyErr_Print();
         PyErr_Clear();
         return -1.0;
     }
-    puts("previous work done");
     for(size_t i=0; i<=samples; i++){
         xf=(i*x1+(samples-i)*x2)/samples;
         yf=(i*y1+(samples-i)*y2)/samples;

@@ -48,7 +48,7 @@ if cmodule.firstPass():
 
 def castShadows(vertices:np.array, matrix:np.array, length:int)->pygame.Surface:
     print("castShadows")
-    glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT|GL_STENCIL_BUFFER_BIT)
+    glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT)
     glBufferData(GL_ARRAY_BUFFER, vertices, GL_STATIC_DRAW)
     glUniformMatrix4fv(shadow, 1, GL_TRUE, matrix)
     glDrawArrays(GL_TRIANGLES, 0, length)
