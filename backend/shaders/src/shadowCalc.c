@@ -144,13 +144,13 @@ void cacheChunk(stolen Model* model, ushort x, ushort y){
             modelCache_start++;
             if(modelCache_start>=MODEL_CACHE_SIZE)
                 modelCache_start=0;
-            modelCache[modelCache_end].model=model;
-            modelCache[modelCache_end].x=x;
-            modelCache[modelCache_end].y=y;
-            modelCache_end++;
-            if(modelCache_end>=MODEL_CACHE_SIZE)
-                modelCache_end=0;
         }
+        modelCache[modelCache_end].model=model;
+        modelCache[modelCache_end].x=x;
+        modelCache[modelCache_end].y=y;
+        modelCache_end++;
+        if(modelCache_end>=MODEL_CACHE_SIZE)
+            modelCache_end=0;
     }
 }
 
@@ -227,15 +227,15 @@ void cacheTexture(stolen PyObject* surface, ushort x, ushort y, double elev, dou
             textureCache_start++;
             if(textureCache_start>=TEXTURE_CACHE_SIZE)
                 textureCache_start=0;
-            textureCache[textureCache_start].surface=surface;
-            textureCache[textureCache_start].x=x;
-            textureCache[textureCache_start].y=y;
-            textureCache[textureCache_start].elev=elev;
-            textureCache[textureCache_start].azim=azim;
-            textureCache_end++;
-            if(textureCache_end>=TEXTURE_CACHE_SIZE)
-                textureCache_end=0;
         }
+        textureCache[textureCache_start].surface=surface;
+        textureCache[textureCache_start].x=x;
+        textureCache[textureCache_start].y=y;
+        textureCache[textureCache_start].elev=elev;
+        textureCache[textureCache_start].azim=azim;
+        textureCache_end++;
+        if(textureCache_end>=TEXTURE_CACHE_SIZE)
+            textureCache_end=0;
     }
 }
 
