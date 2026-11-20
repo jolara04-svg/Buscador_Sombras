@@ -35,7 +35,7 @@ if not glGetProgramiv(program, GL_LINK_STATUS):
     raise ValueError("shader failed to link")
 
 if cmodule.firstPass():
-    glClearColor(1.0, 1.0, 1.0, 1.0)
+    glClearColor(0.0, 0.0, 0.0, 1.0)
     glUseProgram(program)
     buffer=glGenBuffers(1)
     position=glGetAttribLocation(program, b"position\0")
@@ -48,7 +48,7 @@ if cmodule.firstPass():
 
 def castShadows(vertices:np.array, matrix:np.array, length:int)->pygame.Surface:
     print("castShadows")
-    screen.fill("#000000")
+    glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT|GL_STENCIL_BUFFER_BIT)
     glBufferData(GL_ARRAY_BUFFER, vertices, GL_STATIC_DRAW)
     glUniformMatrix4fv(shadow, 1, GL_TRUE, matrix)
     glDrawArrays(GL_TRIANGLES, 0, length)
