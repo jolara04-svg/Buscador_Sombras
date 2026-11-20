@@ -790,6 +790,11 @@ double getShade(double lon1, double lat1, double lon2, double lat2, double elev,
     latLonToTile(lon2, lat2, &x2, &y2);
     puts("latLonToTile");
     matrix=getMatrix(elev, azim);
+    if(matrix==NULL){
+        PyErr_Print();
+        PyErr_Clear();
+        return -1.0;
+    }
     puts("previous work done");
     for(size_t i=0; i<=samples; i++){
         xf=(i*x1+(samples-i)*x2)/samples;
