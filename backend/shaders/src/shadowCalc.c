@@ -412,7 +412,7 @@ const borrowed Model* getModel(ushort x, ushort y){
             return (Model*)PyErr_NoMemory();
         }
         model->triangles=malloc(triangle_count*sizeof(Triangle));
-        if(model->vertices==NULL){
+        if(model->triangles==NULL){
             Py_DECREF(list);
             Py_DECREF(listIter);
             free(model->vertices);
