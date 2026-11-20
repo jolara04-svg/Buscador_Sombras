@@ -5,12 +5,13 @@
 #define MODEL_CACHE_SIZE 16
 #define TEXTURE_CACHE_SIZE 16
 #define PATH_SIZE 1024
+#define OFFSET_SIZE 64
 #define borrowed
 #define stolen
 #define USE_BACKSLASH
 
 typedef unsigned char uchar;
-typedef unsigned short ushort;
+typedef unsigned long ushort;
 typedef float Vertex[3];
 typedef ushort Triangle[3];
 typedef struct{
@@ -275,467 +276,298 @@ PyObject* getMatrix(double elev, double azim){
     return res;
 }
 
-const borrowed Model* getModel(ushort x, ushort y){
-    Model* model;
-    PyObject* mesh;
-    PyObject* file;
-    PyObject* list;
-    PyObject* listIter;
-    PyObject* vertices;
+size_t getLength(PyObject* array){
     PyObject* shape;
+    PyObject* number;
+    shape=PyObject_GetAttrString(array, "shape");
+    if(shape==NULL)
+        return -1;
+    if(!PyTuple_CheckExact(shape)){
+        PyErr_SetString(PyExc_TypeError, "shape was not a tuple");
+        return -1;
+    }
+    number=PyTuple_GetItem(shape, 0);
+    Py_DECREF(shape);
+    if(number==NULL)
+        return -1;
+    return PyLong_AsSize_t(number);
+}
+
+
+
+int reserve(Model* model, PyObject* list){
+    PyObject* iter;
     PyObject* item;
-    PyObject* vertexIter;
-    PyObject* vertex;
-    size_t vertex_count=0;
-    size_t triangle_count=0;
+    PyObject* vertices;
+    PyObject* triangles;
+    size_t vertex_count;
+    size_t triangle_count;
+    iter=PyObject_GetIter(list);
+    if(iter==NULL)
+        return -1;
+    while(item=PyIter_Next(iter)){
+        vertices=PyObject_GetAttrString(item, "vertices");
+        if(vertices==NULL){
+            Py_DECREF(iter);
+            Py_DECREF(item);
+            return -1;
+        }
+        model->vertex_count+=getLength(vertices);
+        if(PyErr_Occurred()){
+            Py_DECREF(iter);
+            Py_DECREF(item);
+            return -1;
+        }
+        Py_DECREF(vertices);
+
+        triangles=PyObject_GetAttrString(item, "faces");
+        if(triangles==NULL){
+            Py_DECREF(iter);
+            Py_DECREF(item);
+            return -1;
+        }
+        model->triangle_count+=getLength(triangles);
+        if(PyErr_Occurred()){
+            Py_DECREF(iter);
+            Py_DECREF(item);
+            return -1;
+        }
+        Py_DECREF(triangles);
+
+        Py_DECREF(item);
+    }
+    Py_DECREF(iter);
+    if(PyErr_Occurred())
+        return -1;
+
+    
+    model->vertices=malloc(model->vertex_count*sizeof(Vertex));
+    if(model->vertices==NULL)
+        return -1;
+
+    printf("model->triangle_count=%u, _Size=%zu\n", model->triangle_count, model->triangle_count*sizeof(Triangle));
+    model->triangles=malloc(model->triangle_count*sizeof(Triangle));
+    if(model->triangles==NULL){
+        free(model->vertices);
+        return -1;
+    }
+    return 0;
+}
+
+size_t copyTriangles(Triangle* dest, PyObject* src, size_t start, size_t offset){
+    puts("copyTriangles");
+    if(PyErr_Occurred()){
+        PyErr_Print();
+    }
+    PyObject* row;
+    PyObject* elem;
+    PyObject* index;
+    PyObject* number;
+    size_t length;
+    length=getLength(src);
+    if(PyErr_Occurred())
+        return -1;
+    printf("length=%zu\n", length);
+    for(size_t i=0; i<length; i++){
+        index=PyLong_FromSize_t(i);
+        if(index==NULL)
+            return -1;
+        row=PyObject_GetItem(src, index);
+        Py_DECREF(index);
+        if(row==NULL)
+            return -1;
+        for(size_t j=0; j<3; j++){
+            printf("start=%zu, i=%zu, j=%zu\n", start, i, j);
+            index=PyLong_FromSize_t(j);
+            if(index==NULL){
+                Py_DECREF(row);
+                return -1;
+            }
+            elem=PyObject_GetItem(row, index);
+            Py_DECREF(index);
+            if(elem==NULL){
+                Py_DECREF(row);
+                return -1;
+            }
+            number=PyNumber_Long(elem);
+            Py_DECREF(elem);
+            if(number==NULL){
+                Py_DECREF(row);
+                return -1;
+            }
+            dest[start][j]=PyLong_AsSize_t(number)+offset;
+            Py_DECREF(number);
+            if(PyErr_Occurred()){
+                Py_DECREF(row);
+                return -1;
+            }
+        }
+        Py_DECREF(row);
+        start++;
+    }
+    puts("End of the loop");
+    return start;
+}
+
+size_t copyVertices(Vertex* dest, PyObject* src, size_t start){
+    puts("copyVertices");
+    PyObject* row;
+    PyObject* elem;
+    PyObject* index;
+    size_t length;
+    length=getLength(src);
+    if(PyErr_Occurred())
+        return -1;
+    for(size_t i=0; i<length; i++){
+        index=PyLong_FromSize_t(i);
+        if(index==NULL)
+            return -1;
+        row=PyObject_GetItem(src, index);
+        Py_DECREF(index);
+        if(row==NULL)
+            return -1;
+        for(size_t j=0; j<3; j++){
+            index=PyLong_FromSize_t(j);
+            if(index==NULL){
+                Py_DECREF(row);
+                return -1;
+            }
+            elem=PyObject_GetItem(row, index);
+            Py_DECREF(index);
+            if(elem==NULL){
+                Py_DECREF(row);
+                return -1;
+            }
+            dest[start][j]=PyFloat_AsDouble(elem);
+            Py_DECREF(elem);
+            if(PyErr_Occurred()){
+                Py_DECREF(row);
+                return -1;
+            }
+        }
+        Py_DECREF(row);
+        start++;
+    }
+    return start;
+}
+
+int populate(Model* model, PyObject* list){
+    puts("populate");
+    PyObject* iter;
+    PyObject* item;
+    PyObject* vertices;
+    PyObject* triangles;
     size_t vertex_index=0;
     size_t triangle_index=0;
+    iter=PyObject_GetIter(list);
+    if(iter==NULL)
+        return -1;
+    while(item=PyIter_Next(iter)){
+        triangles=PyObject_GetAttrString(item, "faces");
+        if(triangles==NULL){
+            Py_DECREF(iter);
+            Py_DECREF(item);
+            return -1;
+        }
+        printf("model->triangle_count=%u\n", model->triangle_count);
+        triangle_index=copyTriangles(model->triangles, triangles, triangle_index, vertex_index);
+        Py_DECREF(triangles);
+        if(PyErr_Occurred()){
+            Py_DECREF(iter);
+            Py_DECREF(item);
+            return -1;
+        }
+
+        vertices=PyObject_GetAttrString(item, "vertices");
+        if(vertices==NULL){
+            Py_DECREF(iter);
+            Py_DECREF(item);
+            return -1;
+        }
+        vertex_index=copyVertices(model->vertices, vertices, vertex_index);
+        Py_DECREF(vertices);
+        if(PyErr_Occurred()){
+            Py_DECREF(iter);
+            Py_DECREF(item);
+            return -1;
+        }
+    }
+    Py_DECREF(iter);
+    if(PyErr_Occurred())
+        return -1;
+    model->vertex_count=vertex_index;
+    model->triangle_count=triangle_index;
+}
+
+Model* newModel(borrowed PyObject* mesh){
+    Model* model;
+    PyObject* list;
+    model=malloc(sizeof(Model));
+    if(model==NULL){
+        return (Model*)PyErr_NoMemory();
+    }
+    model->refc=1;
+    model->vertex_count=0;
+    model->triangle_count=0;
+    if(PyObject_HasAttrString(mesh, "dump"))
+        list=PyObject_CallMethod(mesh, "dump", NULL);
+    else
+        list=Py_BuildValue("[O]", mesh);
+    if(list==NULL){
+        free(model);
+        return NULL;
+    }
+    if(reserve(model, list)){
+        Py_DECREF(list);
+        free(model);
+        return NULL;
+    }
+    if(populate(model, list)){
+        Py_DECREF(list);
+        free(model);
+        return NULL;
+    };
+    Py_DECREF(list);
+    return model;
+}
+
+const borrowed Model* loadModel(ushort x, ushort y){
+    PyObject* file;
+    PyObject* mesh;
+    Model* model;
+    snprintf(fileName, PATH_SIZE, filePath, x, y);
+    puts(fileName);
+    file=PyUnicode_DecodeFSDefault(fileName);
+    if(file==NULL)
+        return NULL;
+    mesh=PyObject_CallMethod(trimesh, "load", "O", file);
+    Py_DECREF(file);
+    if(mesh==NULL){
+        if(PyErr_ExceptionMatches(PyExc_ValueError)){
+            PyErr_Clear();
+            puts("File not found (Why is this a ValueError?)");
+            return &EMPTY;
+        }
+        else
+            return NULL;
+    }
+    model=newModel(mesh);
+    if(model==NULL)
+        return NULL;
+    cacheChunk(model, x, y);
+    return model;
+}
+
+const borrowed Model* getModel(ushort x, ushort y){
+    Model* model;
     model=getCachedChunk(x, y);
     if(model==NULL){
-        puts("model no in cache");
-        snprintf(fileName, PATH_SIZE, filePath, x, y);
-        puts(fileName);
-        file=PyUnicode_DecodeFSDefault(fileName);
-        if(file==NULL)
-            return NULL;
-        mesh=PyObject_CallMethod(trimesh, "load", "O", file);
-        Py_DECREF(file);
-        if(mesh==NULL){
-            if(PyErr_ExceptionMatches(PyExc_ValueError)){
-                PyErr_Clear();
-                puts("File not found (Why is this a ValueError?)");
-                return &EMPTY;
-            }
-            else
-                return NULL;
-        }
-        puts("file found");
-        if(PyObject_HasAttrString(mesh, "dump"))
-            list=PyObject_CallMethod(mesh, "dump", NULL);
-        else
-            list=Py_BuildValue("[O]", mesh);
-        Py_DECREF(mesh);
-        if(list==NULL)
-            return NULL;
-        listIter=PyObject_GetIter(list);
-        if(listIter==NULL){
-            Py_DECREF(list);
-            return NULL;
-        }
-        while(file=PyIter_Next(listIter)){
-            vertices=PyObject_GetAttrString(file, "vertices");
-            if(vertices==NULL){
-                Py_DECREF(file);
-                Py_DECREF(list);
-                Py_DECREF(listIter);
-                return NULL;
-            }
-            shape=PyObject_GetAttrString(vertices, "shape");
-            if(shape==NULL){
-                Py_DECREF(file);
-                Py_DECREF(list);
-                Py_DECREF(listIter);
-                Py_DECREF(vertices);
-                return NULL;
-            }
-            item=PyTuple_GetItem(shape, 0);
-            if(item==NULL){
-                Py_DECREF(file);
-                Py_DECREF(list);
-                Py_DECREF(listIter);
-                Py_DECREF(vertices);
-                return NULL;
-            }
-            vertex_count+=PyLong_AsSize_t(item);
-            if(PyErr_Occurred()){
-                Py_DECREF(file);
-                Py_DECREF(list);
-                Py_DECREF(listIter);
-                Py_DECREF(vertices);
-                return NULL;
-            }
-            Py_DECREF(vertices);
-            vertices=PyObject_GetAttrString(file, "triangles");
-            if(vertices==NULL){
-                Py_DECREF(file);
-                Py_DECREF(list);
-                Py_DECREF(listIter);
-                return NULL;
-            }
-            shape=PyObject_GetAttrString(vertices, "shape");
-            if(shape==NULL){
-                Py_DECREF(file);
-                Py_DECREF(list);
-                Py_DECREF(listIter);
-                Py_DECREF(vertices);
-                return NULL;
-            }
-            item=PyTuple_GetItem(shape, 0);
-            if(item==NULL){
-                Py_DECREF(file);
-                Py_DECREF(list);
-                Py_DECREF(listIter);
-                Py_DECREF(vertices);
-                return NULL;
-            }
-            triangle_count+=PyLong_AsSize_t(item);
-            if(PyErr_Occurred()){
-                Py_DECREF(file);
-                Py_DECREF(list);
-                Py_DECREF(listIter);
-                Py_DECREF(vertices);
-                return NULL;
-            }
-            Py_DECREF(vertices);
-            Py_DECREF(file);
-        }
-        if(PyErr_Occurred()){
-            Py_DECREF(list);
-            Py_DECREF(listIter);
-            return NULL;
-        }
-        puts("got vertex & triangle counts");
-        model=malloc(sizeof(Model));
+        model=loadModel(x, y);
         if(model==NULL){
-            Py_DECREF(list);
-            Py_DECREF(listIter);
-            return (Model*)PyErr_NoMemory();
-        }
-        model->refc=1;
-        model->vertex_count=vertex_count;
-        model->triangle_count=triangle_count;
-        model->vertices=malloc(vertex_count*sizeof(Vertex));
-        if(model->vertices==NULL){
-            Py_DECREF(list);
-            Py_DECREF(listIter);
-            free(model);
-            return (Model*)PyErr_NoMemory();
-        }
-        model->triangles=malloc(triangle_count*sizeof(Triangle));
-        if(model->triangles==NULL){
-            Py_DECREF(list);
-            Py_DECREF(listIter);
-            free(model->vertices);
-            free(model);
-            return (Model*)PyErr_NoMemory();
-        }
-        printf("model=%p, vertices=%p, triangles=%p, vertex_count=%u, triangle_count=%u\n", model, model->vertices, model->triangles, model->vertex_count, model->triangle_count);
-        Py_DECREF(listIter);
-        puts("allocated memory for the model");
-        listIter=PyObject_GetIter(list);
-        if(listIter==NULL){
-            Py_DECREF(list);
-            decref(model);
+            PyErr_Print();
+            PyErr_Clear();
             return NULL;
         }
-        while(file=PyIter_Next(listIter)){
-            //puts("on the copying loop");
-            vertices=PyObject_GetAttrString(file, "faces");
-            if(vertices==NULL){
-                Py_DECREF(file);
-                Py_DECREF(list);
-                Py_DECREF(listIter);
-                decref(model);
-                return NULL;
-            }
-            //puts("got faces attr");
-            vertexIter=PyObject_GetIter(vertices);
-            if(vertexIter==NULL){
-                Py_DECREF(file);
-                Py_DECREF(list);
-                Py_DECREF(listIter);
-                Py_DECREF(vertices);
-                decref(model);
-                return NULL;
-            }
-            Py_DECREF(vertices);
-            while(vertex=PyIter_Next(vertexIter)){
-                //puts("on the triangle loop");
-                shape=PyObject_GetItem(vertex, Py_GetConstant(Py_CONSTANT_ZERO));
-                if(shape==NULL){
-                    Py_DECREF(list);
-                    Py_DECREF(listIter);
-                    Py_DECREF(file);
-                    Py_DECREF(vertexIter);
-                    Py_DECREF(vertex);
-                    decref(model);
-                    return NULL;
-                }
-                //puts("got object at [0]");
-                item=PyNumber_Long(shape);
-                if(item==NULL){
-                    puts("Object could not be casted to a PyLong"); 
-                    Py_DECREF(list);
-                    Py_DECREF(listIter);
-                    Py_DECREF(file);
-                    Py_DECREF(vertexIter);
-                    Py_DECREF(vertex);
-                    Py_DECREF(shape);
-                    decref(model);
-                    return NULL;
-                }
-                //puts("casted said object to a PyLong");
-                //printf("%p\n", model->triangles);
-                //printf("%p\n",model->triangles[triangle_index]);
-                //printf("%p\n", &model->triangles[triangle_count][0]);
-                model->triangles[triangle_index][0]=(ushort)PyLong_AsLong(item);
-                //puts("stored it");
-                Py_DECREF(shape);
-                Py_DECREF(item);
-                //puts("stored it and Py_DECREF'd");
-                if(PyErr_Occurred()){
-                    Py_DECREF(list);
-                    Py_DECREF(listIter);
-                    Py_DECREF(file);
-                    Py_DECREF(vertexIter);
-                    Py_DECREF(vertex);
-                    decref(model);
-                    return NULL;
-                }
-                shape=PyObject_GetItem(vertex, Py_GetConstant(Py_CONSTANT_ONE));
-                if(shape==NULL){
-                    Py_DECREF(list);
-                    Py_DECREF(listIter);
-                    Py_DECREF(file);
-                    Py_DECREF(vertexIter);
-                    Py_DECREF(vertex);
-                    decref(model);
-                    return NULL;
-                }
-                item=PyNumber_Long(shape);
-                if(item==NULL){
-                    Py_DECREF(list);
-                    Py_DECREF(listIter);
-                    Py_DECREF(file);
-                    Py_DECREF(vertexIter);
-                    Py_DECREF(vertex);
-                    Py_DECREF(shape);
-                    decref(model);
-                    return NULL;
-                }
-                model->triangles[triangle_index][1]=(ushort)PyLong_AsLong(item);
-                Py_DECREF(shape);
-                Py_DECREF(item);
-                if(PyErr_Occurred()){
-                    Py_DECREF(list);
-                    Py_DECREF(listIter);
-                    Py_DECREF(file);
-                    Py_DECREF(vertexIter);
-                    Py_DECREF(vertex);
-                    decref(model);
-                    return NULL;
-                }
-                item=PyLong_FromLong(2);
-                if(item==NULL){
-                    Py_DECREF(list);
-                    Py_DECREF(listIter);
-                    Py_DECREF(file);
-                    Py_DECREF(vertexIter);
-                    Py_DECREF(vertex);
-                    decref(model);
-                    return NULL;
-                }
-                shape=PyObject_GetItem(vertex, item);
-                Py_DECREF(item);
-                if(shape==NULL){
-                    Py_DECREF(list);
-                    Py_DECREF(listIter);
-                    Py_DECREF(file);
-                    Py_DECREF(vertexIter);
-                    Py_DECREF(vertex);
-                    decref(model);
-                    return NULL;
-                }
-                item=PyNumber_Long(shape);
-                if(item==NULL){
-                    Py_DECREF(list);
-                    Py_DECREF(listIter);
-                    Py_DECREF(file);
-                    Py_DECREF(vertexIter);
-                    Py_DECREF(vertex);
-                    Py_DECREF(shape);
-                    decref(model);
-                    return NULL;
-                }
-                model->triangles[triangle_index][2]=(ushort)PyLong_AsLong(item);
-                Py_DECREF(shape);
-                Py_DECREF(item);
-                if(PyErr_Occurred()){
-                    Py_DECREF(list);
-                    Py_DECREF(listIter);
-                    Py_DECREF(file);
-                    Py_DECREF(vertexIter);
-                    Py_DECREF(vertex);
-                    decref(model);
-                    return NULL;
-                }
-                Py_DECREF(vertex);
-                triangle_index++;
-                //printf("triangle_index=%zu\n", triangle_index);
-            }
-            if(PyErr_Occurred()){
-                Py_DECREF(list);
-                Py_DECREF(listIter);
-                Py_DECREF(file);
-                Py_DECREF(vertexIter);
-                decref(model);
-                return NULL;
-            }
-            puts("out of the faces loop");
-            Py_DECREF(vertexIter);
-            vertices=PyObject_GetAttrString(file, "vertices");
-            if(vertices==NULL){
-                Py_DECREF(file);
-                Py_DECREF(list);
-                Py_DECREF(listIter);
-                decref(model);
-                return NULL;
-            }
-            vertexIter=PyObject_GetIter(vertices);
-            if(vertexIter==NULL){
-                Py_DECREF(file);
-                Py_DECREF(list);
-                Py_DECREF(listIter);
-                Py_DECREF(vertices);
-                decref(model);
-                return NULL;
-            }
-            Py_DECREF(vertices);
-            while(vertex=PyIter_Next(vertexIter)){
-                //puts("on the vertex loop");
-                shape=PyObject_GetItem(vertex, Py_GetConstant(Py_CONSTANT_ZERO));
-                if(shape==NULL){
-                    Py_DECREF(list);
-                    Py_DECREF(listIter);
-                    Py_DECREF(file);
-                    Py_DECREF(vertexIter);
-                    Py_DECREF(vertex);
-                    decref(model);
-                    return NULL;
-                }
-                item=PyNumber_Float(shape);
-                if(item==NULL){
-                    Py_DECREF(list);
-                    Py_DECREF(listIter);
-                    Py_DECREF(file);
-                    Py_DECREF(vertexIter);
-                    Py_DECREF(vertex);
-                    Py_DECREF(shape);
-                    decref(model);
-                    return NULL;
-                }
-                model->vertices[vertex_index][0]=(float)PyFloat_AsDouble(item);
-                Py_DECREF(shape);
-                Py_DECREF(item);
-                if(PyErr_Occurred()){
-                    Py_DECREF(list);
-                    Py_DECREF(listIter);
-                    Py_DECREF(file);
-                    Py_DECREF(vertexIter);
-                    Py_DECREF(vertex);
-                    decref(model);
-                    return NULL;
-                }
-                shape=PyObject_GetItem(vertex, Py_GetConstant(Py_CONSTANT_ONE));
-                if(shape==NULL){
-                    Py_DECREF(list);
-                    Py_DECREF(listIter);
-                    Py_DECREF(file);
-                    Py_DECREF(vertexIter);
-                    Py_DECREF(vertex);
-                    decref(model);
-                    return NULL;
-                }
-                item=PyNumber_Float(shape);
-                if(item==NULL){
-                    Py_DECREF(list);
-                    Py_DECREF(listIter);
-                    Py_DECREF(file);
-                    Py_DECREF(vertexIter);
-                    Py_DECREF(vertex);
-                    Py_DECREF(shape);
-                    decref(model);
-                    return NULL;
-                }
-                model->vertices[vertex_index][1]=(float)PyFloat_AsDouble(item);
-                Py_DECREF(shape);
-                Py_DECREF(item);
-                if(PyErr_Occurred()){
-                    Py_DECREF(list);
-                    Py_DECREF(listIter);
-                    Py_DECREF(file);
-                    Py_DECREF(vertexIter);
-                    Py_DECREF(vertex);
-                    decref(model);
-                    return NULL;
-                }
-                item=PyLong_FromLong(2);
-                if(item==NULL){
-                    Py_DECREF(list);
-                    Py_DECREF(listIter);
-                    Py_DECREF(file);
-                    Py_DECREF(vertexIter);
-                    Py_DECREF(vertex);
-                    decref(model);
-                    return NULL;
-                }
-                shape=PyObject_GetItem(vertex, item);
-                Py_DECREF(item);
-                if(shape==NULL){
-                    Py_DECREF(list);
-                    Py_DECREF(listIter);
-                    Py_DECREF(file);
-                    Py_DECREF(vertexIter);
-                    Py_DECREF(vertex);
-                    decref(model);
-                    return NULL;
-                }
-                item=PyNumber_Float(shape);
-                if(item==NULL){
-                    Py_DECREF(list);
-                    Py_DECREF(listIter);
-                    Py_DECREF(file);
-                    Py_DECREF(vertexIter);
-                    Py_DECREF(vertex);
-                    Py_DECREF(shape);
-                    decref(model);
-                    return NULL;
-                }
-                model->vertices[vertex_index][2]=(float)PyFloat_AsDouble(item);
-                Py_DECREF(shape);
-                Py_DECREF(item);
-                if(PyErr_Occurred()){
-                    Py_DECREF(list);
-                    Py_DECREF(listIter);
-                    Py_DECREF(file);
-                    Py_DECREF(vertexIter);
-                    Py_DECREF(vertex);
-                    decref(model);
-                    return NULL;
-                }
-                Py_DECREF(vertex);
-                vertex_index++;
-                //printf("vertex_index=%zu\n", vertex_index);
-            }
-            if(PyErr_Occurred()){
-                Py_DECREF(list);
-                Py_DECREF(listIter);
-                Py_DECREF(file);
-                Py_DECREF(vertexIter);
-                decref(model);
-                return NULL;
-            }
-            Py_DECREF(vertexIter);
-            Py_DECREF(file);
-        }
-        if(PyErr_Occurred()){
-            Py_DECREF(list);
-            Py_DECREF(listIter);
-            decref(model);
-            return NULL;
-        }
-        puts("copied model");
-        cacheChunk(model, x, y);
     }
     return model;
 }
