@@ -5,7 +5,7 @@ from OpenGL.GL import *
 import ctypes
 import cmodule
 
-screen=pygame.display.set_mode((256,256),pygame.DOUBLEBUF|pygame.OPENGL)
+screen=pygame.display.set_mode((256,256),pygame.OPENGL)
 
 with open(cmodule.getFilePath()+"/vertexShader.glsl") as file:
     vertexShaderSource=file.read()
@@ -46,20 +46,19 @@ if cmodule.firstPass():
     shadow=glGetUniformLocation(program, b"shadow\0")
     print("shadow=%d"%shadow)
 
-def castShadows(vertices:np.array, matrix:np.array, length:int)->pygame.Surface:
+def castShadows(vertices:np.array, matrix:np.array, length:int, *args)->pygame.Surface:
     print("castShadows")
     glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT)
     glBufferData(GL_ARRAY_BUFFER, vertices, GL_STATIC_DRAW)
     glUniformMatrix4fv(shadow, 1, GL_TRUE, matrix)
     glDrawArrays(GL_TRIANGLES, 0, length)
-    pygame.display.flip()
-    res=pygame.Surface((256, 256), depth=8)
-    res.blit(screen, (0, 0))
+    res=np.empty((256, 256), np.int8)
+    glReadPixels(0, 0, 256, 256, GL_RED, GL_BYTE, res)
+    print(res)
     return res
 
 def getShadeAt(surface, x, y):
-    color=surface.get_at((x, y))
-    if color.r:
+    if surface[x][y]:
         return True
     else:
         return False

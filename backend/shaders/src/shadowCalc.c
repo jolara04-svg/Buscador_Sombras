@@ -2,18 +2,25 @@
 #include "shadowCalc.h"
 #define PI 3.141592653589793
 #define SCALE 0.004295896523017839
-#define MODEL_CACHE_SIZE 16
-#define TEXTURE_CACHE_SIZE 16
+#define SIZE 465.56766610355527
+#define RADIUS 1
+#define DIAMETER (2*RADIUS+1)
+#define OFFSET_TILE(z, k) ((z)+(k)-RADIUS)
+#define OFFSET_METERS(z) (SIZE*((z)-RADIUS))
+#define MODEL_CACHE_SIZE 64
+#define TEXTURE_CACHE_SIZE 64
 #define PATH_SIZE 1024
 #define OFFSET_SIZE 64
 #define borrowed
 #define stolen
 #define USE_BACKSLASH
+#define INDEX_TEXTURE(ptr, x, y) (((char*)(ptr))[((x)<<5)+((y)>>3)]&(1<<((y)&7)))
 
 typedef unsigned char uchar;
-typedef unsigned long ushort;
+typedef unsigned short ushort;
+typedef unsigned long ulong;
 typedef float Vertex[3];
-typedef ushort Triangle[3];
+typedef ulong Triangle[3];
 typedef struct{
     size_t refc;
     uint32_t vertex_count;
@@ -39,6 +46,7 @@ static const Model EMPTY={(size_t)LLONG_MIN, 0, 0, NULL, NULL};
 static PyObject* module=NULL;
 static PyObject* trimesh=NULL;
 static PyObject* numpy=NULL;
+static PyObject* pyOpenGL=NULL;
 CachedChunk modelCache[MODEL_CACHE_SIZE];
 int modelCache_start=0;
 int modelCache_end=-1;
@@ -60,6 +68,13 @@ void setTrimesh(PyObject* _module){
         Py_DECREF(trimesh);
     trimesh=_module;
     Py_INCREF(trimesh);
+}
+
+void setPyOpenGL(PyObject* _module){
+    if(pyOpenGL!=NULL)
+        Py_DECREF(pyOpenGL);
+    pyOpenGL=_module;
+    Py_INCREF(pyOpenGL);
 }
 
 void setMadridFilePath(){
@@ -293,8 +308,6 @@ int reserve(Model* model, PyObject* list){
     PyObject* item;
     PyObject* vertices;
     PyObject* triangles;
-    size_t vertex_count;
-    size_t triangle_count;
     iter=PyObject_GetIter(list);
     if(iter==NULL)
         return -1;
@@ -343,6 +356,7 @@ int reserve(Model* model, PyObject* list){
         free(model->vertices);
         return -1;
     }
+    printf("vertex_count=%u, triangle_count=%u\n", model->vertex_count, model->triangle_count);
     return 0;
 }
 
@@ -482,6 +496,7 @@ int populate(Model* model, PyObject* list){
         return -1;
     model->vertex_count=vertex_index;
     model->triangle_count=triangle_index;
+    return 0;
 }
 
 Model* newModel(borrowed PyObject* mesh){
@@ -546,13 +561,99 @@ const borrowed Model* getModel(ushort x, ushort y){
     model=getCachedChunk(x, y);
     if(model==NULL){
         model=loadModel(x, y);
-        if(model==NULL){
-            PyErr_Print();
-            PyErr_Clear();
+        if(model==NULL)
             return NULL;
-        }
     }
     return model;
+}
+
+PyObject* copyArray(Model* models[DIAMETER][DIAMETER]){
+    puts("copyArray");
+    size_t size;
+    npy_intp A;
+    PyObject* dtype;
+    PyObject* array;
+    _Triangle* ptr; 
+    size=0;
+    for(int x=0;x<DIAMETER;x++){
+        for(int y=0;y<DIAMETER;y++){
+            size+=models[x][y]->triangle_count;
+        }
+    }
+    puts("sum done!");
+    printf("numpy=%p\n", numpy);
+    if(PyErr_Occurred()){
+        PyErr_Print();
+    }
+    dtype=PyObject_GetAttrString(numpy, "float32");
+    puts("got (?) dtype");
+    if(dtype==NULL){
+        puts("dtype was NULL");
+        return NULL;
+    }
+    puts("checked dtype");
+    printf("size=%zu\n", size);
+    array=PyObject_CallMethod(numpy, "empty", "(K)O", 9*size, dtype);
+    puts("created the array");
+    Py_DECREF(dtype);
+    if(array==NULL)
+        return NULL;
+    ptr=PyArray_GETPTR1(array, 0);
+    A=0;
+    puts("entering the loop");
+    for(int x=0; x<DIAMETER; x++){
+        for(int y=0; y<DIAMETER; y++){
+            printf("x=%d, y=%d, A=%zu\n", x, y, A);
+            for(size_t i=0; i<models[x][y]->triangle_count; i++){
+                for(char j=0; j<3; j++){
+                    ptr[A][j][0]=models[x][y]->vertices[models[x][y]->triangles[i][j]][0]+OFFSET_METERS(x);
+                    ptr[A][j][1]=models[x][y]->vertices[models[x][y]->triangles[i][j]][1]+OFFSET_METERS(y);
+                    ptr[A][j][2]=models[x][y]->vertices[models[x][y]->triangles[i][j]][2];
+                }
+                A++;    
+            }
+        }
+    }
+    return array;
+}
+
+int getModelMatrix(Model* model[DIAMETER][DIAMETER], ushort x, ushort y){
+    for(int i=0;i<DIAMETER;i++){
+        for(int j=0;j<DIAMETER;j++){
+            model[i][j]=getModel(OFFSET_TILE(x, i), OFFSET_TILE(y, j));
+            if(model[i][j]==NULL)
+                return -1;
+        }
+    }
+    return 0;
+}
+
+borrowed PyObject* newTexture(ushort x, ushort y, double elev, double azim, PyObject* matrix){
+    Model* model[DIAMETER][DIAMETER];
+    PyObject* array;
+    PyObject* surface;
+    size_t length;
+    if(getModelMatrix(model, x, y))
+        return NULL;
+    array=copyArray(model);
+    if(array==NULL)
+        return NULL;
+    length=PyObject_Length(array);
+    if(PyErr_Occurred()){
+        Py_DECREF(array);
+        return NULL;
+    }
+    length/=3;
+#ifndef $DEBUG
+    surface=PyObject_CallMethod(module, "castShadows", "OOK", array, matrix, length);
+#else
+    surface=PyObject_CallMethod(module, "castShadows", "OOKHH", array, matrix, length, x, y);
+#endif
+    Py_DECREF(array);
+    if(surface==NULL)
+        return NULL;
+    cacheTexture(surface, x, y, elev, azim);
+    return surface;
 }
 
 borrowed PyObject* getTexture(ushort x, ushort y, double elev, double azim, PyObject* matrix){
@@ -563,29 +664,8 @@ borrowed PyObject* getTexture(ushort x, ushort y, double elev, double azim, PyOb
     npy_intp size;
     _Triangle* ptr;
     texture=getCachedTexture(x, y, elev, azim);
-    if(texture==NULL){
-        model=getModel(x, y);
-        if(model==NULL)
-            return NULL;
-        size=model->triangle_count*9;
-        dtype=PyObject_GetAttrString(numpy, "float32");
-        if(dtype==NULL)
-            return NULL;
-        array=PyObject_CallMethod(numpy, "empty", "(K)O", size, dtype);
-        Py_DECREF(dtype);
-        if(array==NULL)
-            return NULL;
-        ptr=PyArray_GETPTR1(array, 0);
-        for(size_t i=0; i<model->triangle_count; i++)
-            for(char j=0; j<3; j++)
-                for(char k=0; k<3; k++)
-                    ptr[i][j][k]=model->vertices[model->triangles[i][j]][k];
-        texture=PyObject_CallMethod(module, "castShadows", "OOl", array, matrix, model->triangle_count*3);
-        Py_DECREF(array);
-        if(texture==NULL)
-            return NULL;
-        cacheTexture(texture, x, y, elev, azim);
-    }
+    if(texture==NULL)
+        texture=newTexture(x, y, elev, azim, matrix);
     return texture;
 }
 
