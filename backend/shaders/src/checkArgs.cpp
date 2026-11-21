@@ -28,7 +28,7 @@ bool checkFunction(Napi::Env& env, const Napi::Value& arg, const char* funcName,
     return false;
 }
 
-bool parseNumber(Napi::Env& env, const Napi::Value& val, const char* attrName, const char* funcName, float& res){
+bool parseNumber(Napi::Env& env, const Napi::Value& val, const char* attrName, const char* funcName, double& res){
     if(!val.IsNumber()){
         snprintf(message, MESSAGE,
             "%s argument of function %s must be of type number",
@@ -36,11 +36,11 @@ bool parseNumber(Napi::Env& env, const Napi::Value& val, const char* attrName, c
         );
         THROW(true);
     }
-    res=val.As<Napi::Number>().FloatValue();
+    res=val.As<Napi::Number>().DoubleValue();
     return false;
 }
 
-bool parseGetShadow(Napi::Env& env, const Napi::CallbackInfo& info, const char* funcName, float& lon1, float& lat1, float& lon2, float& lat2, float& elev, float& azim){
+bool parseGetShadow(Napi::Env& env, const Napi::CallbackInfo& info, const char* funcName, double& lon1, double& lat1, double& lon2, double& lat2, double& elev, double& azim){
     if(checkArgCount(env, info, 6, funcName))
         return true;
     if(parseNumber(env, info[0], "lon1", funcName, lon1))

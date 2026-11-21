@@ -36,7 +36,7 @@ Napi::Value isInitialized(const Napi::CallbackInfo& info){
 
 Napi::Value getShadow(const Napi::CallbackInfo& info){
     Napi::Env env=info.Env();
-    float lon1, lat1, lon2, lat2, elev, azim, res;
+    double lon1, lat1, lon2, lat2, elev, azim, res;
     if(parseGetShadow(env, info, __FUNCTION__, lon1, lat1, lon2, lat2, elev, azim))
         return env.Undefined();
     res=getShade(lon1, lat1, lon2, lat2, elev, azim, 16);
