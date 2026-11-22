@@ -58,7 +58,7 @@ def castShadows(vertices:np.array, matrix:np.array, length:int, *args)->pygame.S
     return res
 
 def getShadeAt(surface, x, y):
-    if surface[x][y]:
+    if surface[surface.shape[0] - 1 - y][x]:
         return True
     else:
         return False

@@ -234,11 +234,11 @@ void cacheTexture(stolen PyObject* surface, ushort x, ushort y, double elev, dou
             if(textureCache_start>=TEXTURE_CACHE_SIZE)
                 textureCache_start=0;
         }
-        textureCache[textureCache_start].surface=surface;
-        textureCache[textureCache_start].x=x;
-        textureCache[textureCache_start].y=y;
-        textureCache[textureCache_start].elev=elev;
-        textureCache[textureCache_start].azim=azim;
+        textureCache[textureCache_end].surface=surface;
+        textureCache[textureCache_end].x=x;
+        textureCache[textureCache_end].y=y;
+        textureCache[textureCache_end].elev=elev;
+        textureCache[textureCache_end].azim=azim;
         textureCache_end++;
         if(textureCache_end>=TEXTURE_CACHE_SIZE)
             textureCache_end=0;
@@ -482,6 +482,7 @@ int populate(Model* model, PyObject* list){
             Py_DECREF(item);
             return -1;
         }
+        Py_DECREF(item);
     }
     Py_DECREF(iter);
     if(PyErr_Occurred())
@@ -516,7 +517,7 @@ Model* newModel(borrowed PyObject* mesh){
     }
     if(populate(model, list)){
         Py_DECREF(list);
-        free(model);
+        decref(model);
         return NULL;
     };
     Py_DECREF(list);
@@ -542,6 +543,7 @@ const borrowed Model* loadModel(ushort x, ushort y){
             return NULL;
     }
     model=newModel(mesh);
+    Py_DECREF(mesh);
     if(model==NULL)
         return NULL;
     cacheChunk(model, x, y);
