@@ -46,7 +46,6 @@ static const Model EMPTY={(size_t)LLONG_MIN, 0, 0, NULL, NULL};
 static PyObject* module=NULL;
 static PyObject* trimesh=NULL;
 static PyObject* numpy=NULL;
-static PyObject* pyOpenGL=NULL;
 CachedChunk modelCache[MODEL_CACHE_SIZE];
 int modelCache_start=0;
 int modelCache_end=-1;
@@ -68,13 +67,6 @@ void setTrimesh(PyObject* _module){
         Py_DECREF(trimesh);
     trimesh=_module;
     Py_INCREF(trimesh);
-}
-
-void setPyOpenGL(PyObject* _module){
-    if(pyOpenGL!=NULL)
-        Py_DECREF(pyOpenGL);
-    pyOpenGL=_module;
-    Py_INCREF(pyOpenGL);
 }
 
 void setMadridFilePath(){
@@ -356,7 +348,7 @@ int reserve(Model* model, PyObject* list){
         free(model->vertices);
         return -1;
     }
-    printf("vertex_count=%u, triangle_count=%u\n", model->vertex_count, model->triangle_count);
+    //printf("vertex_count=%u, triangle_count=%u\n", model->vertex_count, model->triangle_count);
     return 0;
 }
 
@@ -568,7 +560,7 @@ const borrowed Model* getModel(ushort x, ushort y){
 }
 
 PyObject* copyArray(Model* models[DIAMETER][DIAMETER]){
-    puts("copyArray");
+    //puts("copyArray");
     size_t size;
     npy_intp A;
     PyObject* dtype;
@@ -580,30 +572,30 @@ PyObject* copyArray(Model* models[DIAMETER][DIAMETER]){
             size+=models[x][y]->triangle_count;
         }
     }
-    puts("sum done!");
-    printf("numpy=%p\n", numpy);
+    //puts("sum done!");
+    //printf("numpy=%p\n", numpy);
     if(PyErr_Occurred()){
         PyErr_Print();
     }
     dtype=PyObject_GetAttrString(numpy, "float32");
-    puts("got (?) dtype");
+    //puts("got (?) dtype");
     if(dtype==NULL){
-        puts("dtype was NULL");
+        //puts("dtype was NULL");
         return NULL;
     }
-    puts("checked dtype");
-    printf("size=%zu\n", size);
+    //puts("checked dtype");
+    //printf("size=%zu\n", size);
     array=PyObject_CallMethod(numpy, "empty", "(K)O", 9*size, dtype);
-    puts("created the array");
+    //puts("created the array");
     Py_DECREF(dtype);
     if(array==NULL)
         return NULL;
     ptr=PyArray_GETPTR1(array, 0);
     A=0;
-    puts("entering the loop");
+    //puts("entering the loop");
     for(int x=0; x<DIAMETER; x++){
         for(int y=0; y<DIAMETER; y++){
-            printf("x=%d, y=%d, A=%zu\n", x, y, A);
+            //printf("x=%d, y=%d, A=%zu\n", x, y, A);
             for(size_t i=0; i<models[x][y]->triangle_count; i++){
                 for(char j=0; j<3; j++){
                     ptr[A][j][0]=models[x][y]->vertices[models[x][y]->triangles[i][j]][0]+OFFSET_METERS(x);
@@ -625,6 +617,9 @@ int getModelMatrix(Model* model[DIAMETER][DIAMETER], ushort x, ushort y){
                 return -1;
         }
     }
+    for(int i=0;i<DIAMETER;i++)
+        for(int j=0;j<DIAMETER;j++)
+            incref(model[i][j]);
     return 0;
 }
 
@@ -636,6 +631,9 @@ borrowed PyObject* newTexture(ushort x, ushort y, double elev, double azim, PyOb
     if(getModelMatrix(model, x, y))
         return NULL;
     array=copyArray(model);
+    for(int i=0;i<DIAMETER;i++)
+        for(int j=0;j<DIAMETER;j++)
+            decref(model[i][j]);
     if(array==NULL)
         return NULL;
     length=PyObject_Length(array);
