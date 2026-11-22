@@ -1,5 +1,24 @@
 # Laboratorio: grafo peatonal y máscara de sombra
 
+## Qué se conserva
+
+La integración vigente está en `backend/routing/`, mediante `POST /api/routes`.
+Para comprobarla con el shader real: `node routing/check-native.cjs`, desde
+`backend`. La explicación está en `README CAMBIOS VICTOR.md`, en la raíz.
+
+Se retiraron las demos iniciales `presentacion`, `sample2` y `sample3`, con sus
+generadores y comprobadores, porque estaban sustituidas por las posteriores.
+Se conservan:
+
+- `sample4.html`: recálculo por franjas y demostración del riesgo de bucles.
+- `sample5.html`: prueba del campus con sombras sintéticas, descrita en `CAMPUS.md`.
+- `index.html` y `scale.html`: laboratorio de máscaras WebGL; no son la web de producción.
+- Las pruebas automáticas de `backend/test`.
+
+`core.mjs`, `compact-routing.mjs` y `rolling-routing.mjs`, además de los grafos
+local y campus, son dependencias del backend actual; no son demos prescindibles.
+Los apartados siguientes documentan el laboratorio original.
+
 **Ampliación:** ya existe una prueba de nueve zonas y rutas Dijkstra. Consultar
 [resultados y explicación paso a paso](output/SCALE_RESULTS.md). Se ejecuta con
 `npm run graph:scale` y `npm run shadow:scale`, desde `backend`. Para verla,
