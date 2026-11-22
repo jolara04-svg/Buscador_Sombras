@@ -75,6 +75,11 @@ async function request(route) {
 }
 
 describe('API backend', () => {
+  it('valida las rutas sin cargar el addon nativo', async () => {
+    const response=await fetch(`${baseUrl}/api/routes`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({source:'a',target:'b'})});
+    assert.equal(response.status,400);
+    assert.match((await response.json()).error,/fecha ISO/);
+  });
   it('devuelve el manifest publicado', async () => {
     const response = await request('/manifest');
     assert.equal(response.status, 200);

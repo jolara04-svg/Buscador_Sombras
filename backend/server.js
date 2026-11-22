@@ -23,6 +23,7 @@ const ZOOM = 16;
 
 // Línea necesaria para usar desde web por seguridad en browsers.
 app.use(cors());
+require('./routing/routes.cjs').installVictorRoutes(app);
 
 // -------------------------------------------------------------
 // Carga de datos y configuración de Fuse.js para el buscador

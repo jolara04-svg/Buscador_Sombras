@@ -4,7 +4,7 @@ Este documento recoge las correcciones que han quedado en el código tras
 reducir el cambio al mínimo. Se mantienen los nombres de variables, las
 funciones y la estructura del compañero.
 
-Solo se han modificado dos archivos de código: `backend/shaders/src/shader.py`
+Para esas correcciones solo se han modificado dos archivos de código: `backend/shaders/src/shader.py`
 y `backend/shaders/src/shadowCalc.c`. Son nueve líneas nuevas o sustituidas:
 una de lectura de píxeles y ocho de caché y gestión de memoria.
 
@@ -124,3 +124,112 @@ pero quedó bloqueada porque la configuración mezclaba Python 3.13 y 3.14
 y solicitaba `python313.lib`. No se modificó esa configuración ni se da por
 validado el addon recompilado. La comparación visual se ejecutó por separado
 con Python/OpenGL.
+
+## Integración posterior: sombras de Víctor y rutas
+
+Se ha añadido una capa de unión, sin volver a modificar el código nativo ni
+renombrar sus variables:
+
+- `backend/routing/victor-adapter.mjs`: convierte la fracción devuelta por
+  `getShadow` en metros de sombra y sol por arista. Divide los segmentos en
+  partes de hasta 16 m para no usar las mismas 17 muestras nativas en una
+  calle arbitrariamente larga. Pondera por longitud, valida los resultados y
+  utiliza nuestro planificador de recálculo cada media hora.
+- `backend/routing/victor-worker.cjs`: carga el addon y lo inicializa en un
+  proceso separado. Las llamadas a Python/OpenGL se ejecutan en un único hilo.
+  Así, un cierre del módulo nativo no cierra también el servidor HTTP.
+- `backend/routing/routes.cjs`: publica `POST /api/routes`. Solo permite una
+  petición nativa a la vez, sin cola ilimitada, y detiene el proceso si supera
+  120 segundos. El servidor lo registra mediante una línea en `server.js`.
+
+El adaptador conserva la firma de Víctor: longitud, latitud de cada extremo,
+elevación y azimut. El HTTP recibe ángulos en grados, con azimut desde el norte
+en sentido horario; el adaptador los convierte a los radianes y la convención
+del eje este de la matriz nativa. La foto se reutiliza solo cuando coinciden
+grafo, franja y ángulos. Se conserva una sola foto en caché.
+
+### Ejemplo de petición
+
+Arrancar el backend con `node server.js` y enviar JSON a
+`http://localhost:3000/api/routes`:
+
+```json
+{
+  "graph": "local",
+  "source": "13567249178",
+  "target": "13567249179",
+  "at": "2026-11-22T12:20:00+01:00",
+  "speedMps": 1.4,
+  "penalty": 4,
+  "sun": { "elevationDeg": 35, "azimuthDeg": 180 }
+}
+```
+
+Los ángulos del ejemplo son de prueba, no una posición solar calculada para
+esa fecha. Quien llama debe calcular `sun` para el inicio de la franja de
+media hora. `at` necesita zona horaria explícita. Se admite `graph: "campus"`
+para el grafo grande guardado. Los identificadores deben pertenecer al grafo
+elegido; el endpoint no conecta automáticamente coordenadas GPS a las calles.
+
+La respuesta contiene la ruta prevista (`plannedGeometry`), la etapa hasta
+el cambio, `state` y `nextRecalculateAt`. Si no se ha llegado, la siguiente
+petición puede enviar ese `state` en lugar de `source`, mantener `target` y
+actualizar fecha y sol. `state` es una posición prevista, no una medición GPS:
+si el usuario se para o se desvía, el cliente debe usar su posición real.
+
+La aplicación móvil todavía debe consumir este endpoint; este cambio une
+las dos partes en el backend, sin modificar la interfaz del móvil.
+
+### Cobertura, límites y estado de validación
+
+Antes de consultar un subsegmento se comprueba que existen los chunks
+centrales de sus 17 muestras. Una arista sin cobertura queda desconocida y
+no se transforma en sol ni recibe pesos sintéticos. Aun así, la ausencia de
+chunks vecinos puede omitir edificios que proyecten sombra desde fuera.
+La integración actual utiliza edificios, no la capa de árboles.
+
+La respuesta mantiene la política de avance protegido ya explicada en las
+demos; no garantiza el mínimo sol global. El coste de generar pesos reales
+no es el mismo que buscar con pesos preparados: no se extrapolan a este
+endpoint los tiempos anteriores de Dijkstra sobre sombras sintéticas.
+
+`npm test`, desde `backend`, supera 38 pruebas. Las pruebas nuevas usan un
+doble del addon para verificar el contrato, la conversión de pesos, la caché,
+el avance parcial, las respuestas HTTP y los errores del proceso. No validan
+el resultado físico del shader real.
+
+Finalmente se compiló el addon ajustando únicamente variables de entorno a
+Python 3.14, sin cambiar fuentes ni `binding.gyp`. Las dependencias Python de
+ejecución se instalaron dentro de `backend/shaders/build/runtime-deps`, sin
+modificar el Python global. El proceso nativo añade esa ruta a `PYTHONPATH`.
+
+Desde `backend/shaders`, en PowerShell, se puede repetir la preparación:
+
+```powershell
+$env:PYTHON_INCLUDE_DIR = python -B -c "import sysconfig; print(sysconfig.get_path('include'))"
+$env:NUMPY_INCLUDE_DIR = python -B -c "import numpy; print(numpy.get_include())"
+$env:PYTHON_LIBRARY = python -B -c "import sys, pathlib; print(pathlib.Path(sys.base_prefix) / 'libs' / ('python'+str(sys.version_info.major)+str(sys.version_info.minor)+'.lib'))"
+npm rebuild
+python -m pip install --target build/runtime-deps --no-deps pygame-ce trimesh
+```
+
+NumPy y PyOpenGL deben estar disponibles en ese mismo Python. Las librerías,
+cabeceras y dependencias deben corresponder a su versión; las rutas del ejemplo
+de compilación son para Windows.
+
+La prueba real se repite desde `backend` con `node routing/check-native.cjs`.
+Hace dos peticiones HTTP al endpoint usando el addon real, sin dobles, y guarda
+`experiments/shadow-routing/output/victor-integration-report.json`. La ruta de
+ejemplo mide 56,16 m: se obtuvieron 31,38 m de sombra y 24,78 m de sol. La segunda
+consulta reutilizó la foto y no llamó de nuevo al shader. No valida un paseo
+completo por el campus ni la exactitud física de la proyección.
+
+En el grafo local, 875 de 962 aristas resultaron desconocidas por falta de
+chunks centrales en alguna muestra. La pareja de nodos usada en las demos
+anteriores no tiene un recorrido cubierto con estos datos y devuelve 422;
+el ejemplo HTTP de este documento usa una arista cubierta. Esta comprobación
+evita presentar como soleadas zonas que no tienen modelos disponibles.
+
+Si el addon falta o falla, el endpoint devuelve un error 503; nunca recurre a
+las sombras simuladas de las demos. Un recorrido sin conexión/cobertura
+devuelve 422, y una entrada mal formada, 400.

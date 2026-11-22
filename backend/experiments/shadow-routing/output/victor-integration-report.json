@@ -1,0 +1,183 @@
+{
+  "generatedAt": "2026-11-22T16:52:53.746Z",
+  "request": {
+    "graph": "local",
+    "source": "13567249178",
+    "target": "13567249179",
+    "at": "2026-11-22T12:20:00+01:00",
+    "sun": {
+      "elevationDeg": 35,
+      "azimuthDeg": 180
+    }
+  },
+  "results": [
+    {
+      "penalty": 4,
+      "httpMs": 767.6868,
+      "arrived": true,
+      "unreachable": false,
+      "state": {
+        "node": "13567249179"
+      },
+      "timeSeconds": 1795346440.1124415,
+      "slot": 997414,
+      "nextChange": 1795347000,
+      "segments": [
+        {
+          "edgeIndex": 705,
+          "from": "13567249178",
+          "to": "13567249179",
+          "fromFraction": 0,
+          "toFraction": 1,
+          "lengthM": 56.157418280676744,
+          "shadeM": 31.382086686260532,
+          "sunM": 24.775331594416212
+        }
+      ],
+      "lengthM": 56.157418280676744,
+      "shadeM": 31.382086686260532,
+      "sunM": 24.775331594416212,
+      "cost": 130.48341306392538,
+      "durationSeconds": 40.11244162905482,
+      "plannedRoute": [
+        {
+          "edgeIndex": 705,
+          "from": "13567249178",
+          "to": "13567249179",
+          "fromFraction": 0,
+          "toFraction": 1
+        }
+      ],
+      "plannedLengthM": 56.157418280676744,
+      "preventBacktracking": true,
+      "search": {
+        "visited": 2,
+        "peakQueue": 1,
+        "typedArrayBytes": 5276,
+        "cacheHit": false
+      },
+      "graph": "local",
+      "at": "2026-11-22T12:20:00+01:00",
+      "nextRecalculateAt": "2026-11-22T11:30:00.000Z",
+      "reachesStageEndAt": "2026-11-22T11:20:40.112Z",
+      "positionAtStageEnd": {
+        "lon": -3.7312141,
+        "lat": 40.4508899
+      },
+      "plannedGeometry": [
+        [
+          {
+            "lon": -3.7318704,
+            "lat": 40.4508186
+          },
+          {
+            "lon": -3.7312141,
+            "lat": 40.4508899
+          }
+        ]
+      ],
+      "shadow": {
+        "provider": "victor-native",
+        "cacheHit": false,
+        "calls": 116,
+        "unknownEdges": 875,
+        "frameStartsAt": "2026-11-22T11:00:00.000Z",
+        "sun": {
+          "elevationDeg": 35,
+          "azimuthDeg": 180
+        },
+        "limitations": [
+          "Solo edificios; vecinos ausentes pueden omitir sombras",
+          "17 muestras nativas por subsegmento; fracciones parciales aproximadas",
+          "Avance protegido: no garantiza minimo sol global"
+        ]
+      }
+    },
+    {
+      "penalty": 8,
+      "httpMs": 8.854600000000005,
+      "arrived": true,
+      "unreachable": false,
+      "state": {
+        "node": "13567249179"
+      },
+      "timeSeconds": 1795346440.1124415,
+      "slot": 997414,
+      "nextChange": 1795347000,
+      "segments": [
+        {
+          "edgeIndex": 705,
+          "from": "13567249178",
+          "to": "13567249179",
+          "fromFraction": 0,
+          "toFraction": 1,
+          "lengthM": 56.157418280676744,
+          "shadeM": 31.382086686260532,
+          "sunM": 24.775331594416212
+        }
+      ],
+      "lengthM": 56.157418280676744,
+      "shadeM": 31.382086686260532,
+      "sunM": 24.775331594416212,
+      "cost": 229.58473944159022,
+      "durationSeconds": 40.11244162905482,
+      "plannedRoute": [
+        {
+          "edgeIndex": 705,
+          "from": "13567249178",
+          "to": "13567249179",
+          "fromFraction": 0,
+          "toFraction": 1
+        }
+      ],
+      "plannedLengthM": 56.157418280676744,
+      "preventBacktracking": true,
+      "search": {
+        "visited": 2,
+        "peakQueue": 1,
+        "typedArrayBytes": 5276,
+        "cacheHit": false
+      },
+      "graph": "local",
+      "at": "2026-11-22T12:20:00+01:00",
+      "nextRecalculateAt": "2026-11-22T11:30:00.000Z",
+      "reachesStageEndAt": "2026-11-22T11:20:40.112Z",
+      "positionAtStageEnd": {
+        "lon": -3.7312141,
+        "lat": 40.4508899
+      },
+      "plannedGeometry": [
+        [
+          {
+            "lon": -3.7318704,
+            "lat": 40.4508186
+          },
+          {
+            "lon": -3.7312141,
+            "lat": 40.4508899
+          }
+        ]
+      ],
+      "shadow": {
+        "provider": "victor-native",
+        "cacheHit": true,
+        "calls": 0,
+        "unknownEdges": 875,
+        "frameStartsAt": "2026-11-22T11:00:00.000Z",
+        "sun": {
+          "elevationDeg": 35,
+          "azimuthDeg": 180
+        },
+        "limitations": [
+          "Solo edificios; vecinos ausentes pueden omitir sombras",
+          "17 muestras nativas por subsegmento; fracciones parciales aproximadas",
+          "Avance protegido: no garantiza minimo sol global"
+        ]
+      }
+    }
+  ],
+  "limitations": [
+    "Sol de prueba, no calculado para la fecha",
+    "Ruta corta cubierta: no valida cobertura ni rendimiento del campus completo"
+  ]
+}
