@@ -388,3 +388,26 @@ eligieron puntos cercanos distintos del caso exacto: la rápida muestra
 224 m y 8 % de sombra, frente a 234 m y 45 % de la alternativa, con un
 ahorro estimado de 76 m al sol. Las cifras de pantalla están redondeadas.
 No se hacen commits.
+
+## Reutilización de trabajo en consultas repetidas
+
+`coordinate-routes.mjs` conserva una única selección de puntos y un único
+análisis de cobertura del grafo. Así no vuelve a buscar los mismos puntos
+ni a comprobar todos los caminos del campus al repetir una consulta. También
+reutiliza el recorrido cubierto que sirve para limitar las consultas al shader.
+No se guarda una lista ilimitada de rutas. El worker trata el grafo y el manifest
+como inmutables: sustituir el objeto grafo invalida estos datos y la foto de
+sombra; cambiar los puntos invalida su selección. La foto solar sigue
+invalidándose al cambiar sol o franja. Si cambian archivos de modelos o el
+manifest durante la ejecución, hay que reiniciar el proceso de rutas.
+
+Prueba real en esta máquina con el caso de 249,69 m: primera consulta de
+2.128 ms (incluye cargar Python/OpenGL y 3.042 consultas nativas). Las cinco
+repeticiones tardan 37,1 / 32,2 / 45,5 / 19,9 / 20,1 ms, sin nuevas llamadas
+al shader y conservando exactamente la ruta y el ahorro de 65,08 m al sol.
+Antes de reutilizar cobertura y puntos, las repeticiones medidas tardaron
+entre 308,9 y 2.150,9 ms; los tiempos dependen de la carga del ordenador y
+no son una garantía para cualquier recorrido. La carga inicial sigue siendo
+costosa. Se superan 45 pruebas del backend, incluida la invalidación al
+sustituir el grafo. Las tres invocaciones de `binding.gyp` también resuelven
+rutas existentes desde el auxiliar trasladado a `backend/scripts`.
