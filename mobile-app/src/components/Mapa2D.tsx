@@ -62,10 +62,13 @@ export function Mapa2D({ onSeleccionarCoordenada, initialLat = 40.4168, initialL
         ${modoBusqueda === 'lugar' ? `var marker = L.marker([${initialLat}, ${initialLon}]).addTo(map);` : 'var marker = null;'}
 
         // El círculo verde (origen) solo se pinta si origen no es nulo Y modoBusqueda === 'ruta'
-        ${origen && modoBusqueda === 'ruta' ? `L.circleMarker([${origen.lat}, ${origen.lon}], { color: '#28a745', radius: 8, fillOpacity: 1 }).addTo(map);` : ''}
+        ${origen && modoBusqueda === 'ruta' ? `L.circleMarker([${origen.lat}, ${origen.lon}], { color: '#28a745', radius: 8, fillOpacity: 1 }).addTo(map).bindTooltip('Origen', { permanent: true, direction: 'top' });` : ''}
 
         // El círculo rojo (destino) solo se pinta si destino no es nulo Y modoBusqueda === 'ruta'
-        ${destino && modoBusqueda === 'ruta' ? `L.circleMarker([${destino.lat}, ${destino.lon}], { color: '#dc3545', radius: 8, fillOpacity: 1 }).addTo(map);` : ''}
+        ${destino && modoBusqueda === 'ruta' ? `L.circleMarker([${destino.lat}, ${destino.lon}], { color: '#dc3545', radius: 8, fillOpacity: 1 }).addTo(map).bindTooltip('Destino', { permanent: true, direction: 'top' });` : ''}
+
+        ${modoBusqueda === 'ruta' && origen && destino ? `map.fitBounds([[${origen.lat}, ${origen.lon}], [${destino.lat}, ${destino.lon}]], { padding: [45, 45], maxZoom: 16, animate: false });` :
+          modoBusqueda === 'ruta' && origen ? `map.setView([${origen.lat}, ${origen.lon}], 16);` : ''}
 
         map.on('click', function(e) {
           var lat = e.latlng.lat;

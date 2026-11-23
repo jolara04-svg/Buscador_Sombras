@@ -247,3 +247,30 @@ Se mantienen el código de rutas, los grafos y las pruebas automáticas.
 Desde `backend`, `npm test` comprueba el backend y `npm run routes:check`
 ejecuta la prueba HTTP con el shader real. No se modifica el código de Víctor
 ni la interfaz móvil en esta limpieza.
+
+## Selección de origen y destino en el mapa 2D
+
+Se completa el flujo existente de `mobile-app/src/app/index.tsx`, manteniendo
+los estados `origen` y `destino`. La ubicación obtenida al abrir la aplicación
+se guarda por separado: consultar un lugar no convierte ese lugar en tu GPS.
+En modo ruta, el origen utiliza esa ubicación por defecto. Si el permiso falla,
+Madrid solo sirve de centro inicial del mapa; no se presenta como tu origen.
+
+Elegir un resultado del buscador en la vista 2D lo fija como destino y abre
+los campos de ruta. Se puede buscar un origen alternativo o volver a
+«Mi ubicación». Al editar un campo se descarta su selección anterior; una
+respuesta de búsqueda antigua no puede reemplazar los resultados del otro
+campo. Limpiar la selección restaura el origen GPS y deja el destino vacío.
+
+Las versiones web y móvil de `Mapa2D` muestran los marcadores etiquetados
+«Origen» y «Destino» y encuadran ambos. No se añaden páginas HTML de prueba ni
+se modifica el shader de Víctor. Este cambio selecciona coordenadas; todavía
+no conecta esos puntos con nodos del grafo ni dibuja una ruta de Dijkstra.
+
+Validación: 40 pruebas del frontend superadas, incluidas cuatro sobre la
+selección, el permiso denegado, las respuestas antiguas y la limpieza.
+TypeScript pasa. Se comprobó en navegador la elección de dos lugares y los
+dos marcadores; el GPS real no estuvo disponible en ese navegador y su caso
+se verificó con un servicio de ubicación controlado en las pruebas.
+El lint de los archivos modificados no tiene errores; el lint general conserva
+dos errores previos en `ShadowLayerControls.tsx`, ajenos a esta selección.
