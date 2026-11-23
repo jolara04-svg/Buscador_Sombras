@@ -264,8 +264,8 @@ campo. Limpiar la selección restaura el origen GPS y deja el destino vacío.
 
 Las versiones web y móvil de `Mapa2D` muestran los marcadores etiquetados
 «Origen» y «Destino» y encuadran ambos. No se añaden páginas HTML de prueba ni
-se modifica el shader de Víctor. Este cambio selecciona coordenadas; todavía
-no conecta esos puntos con nodos del grafo ni dibuja una ruta de Dijkstra.
+se modifica el shader de Víctor. La conexión de estas coordenadas con el
+cálculo de Dijkstra se añade en el apartado siguiente.
 
 Validación: 40 pruebas del frontend superadas, incluidas cuatro sobre la
 selección, el permiso denegado, las respuestas antiguas y la limpieza.
@@ -274,3 +274,55 @@ dos marcadores; el GPS real no estuvo disponible en ese navegador y su caso
 se verificó con un servicio de ubicación controlado en las pruebas.
 El lint de los archivos modificados no tiene errores; el lint general conserva
 dos errores previos en `ShadowLayerControls.tsx`, ajenos a esta selección.
+
+## Rutas desde los puntos del mapa 2D
+
+Se añade «Calcular rutas» después de elegir origen y destino. Calcula primero
+la alternativa más rápida y después la que prioriza la sombra. Las tarjetas
+permiten seleccionar la línea destacada y muestran distancia, tiempo estimado
+y sombra cuando se ha consultado. La rápida minimiza distancia con velocidad
+constante de 1,4 m/s: no utiliza tráfico ni tiempos reales de acceso.
+
+La preferencia empieza en 50 % y se puede ajustar. Para un peso `w`, Dijkstra
+minimiza `(1-w) * metros_totales + w * metros_al_sol`: al 50 % un metro al
+sol cuesta el doble que uno en sombra. No significa prometer un recorrido
+con 50 % de sombra. Con 0 % se calcula por distancia sin invocar el shader;
+con 100 % se minimizan metros al sol, pudiendo aceptar desvíos largos.
+
+`POST /api/routes` acepta ahora `origin` y `destination` con `{lat, lon}`,
+`mode` (`fastest` o `shade`), `shadePreference` (0–1, predeterminado 0.5),
+`at` con zona horaria y `sun` para la alternativa con sombra. Se conserva
+el contrato anterior basado en identificadores de nodos. La aplicación usa
+el grafo del campus y la posición solar al comienzo de la franja de 30 minutos.
+
+`snap-points.mjs` conecta cada punto con el camino más cercano a menos de
+100 m, dividiendo la arista sin perder sentidos, curvas ni conexiones OSM.
+Las versiones web y WebView dibujan la geometría real de ambas rutas. Los
+accesos entre marcadores y caminos aparecen discontinuos: no se comprueba
+si atraviesan edificios, vallas o entradas cerradas.
+
+La ruta rápida no depende del módulo nativo. Para la sombra se descartan
+caminos sin cobertura, sin considerarlos soleados. Antes de consultar la
+GPU se busca un recorrido cubierto de longitud L. Para `w < 1`, una mejora
+no puede medir más de `L / (1-w)`; esta cota permite excluir consultas lejanas
+sin cambiar el óptimo del modelo actual. La caché conserva una sola foto,
+incluida su zona de consulta. Con 100 % no existe esa cota y consultar zonas
+grandes sigue pudiendo sobrecargar el módulo nativo. No se cambia su código.
+
+Si falta cobertura o falla el shader, se informa del fallo y permanece
+disponible la rápida. De noche se resuelve por distancia sin invocar la GPU.
+Cambiar puntos, fecha, hora o peso invalida los resultados y cancela la
+espera anterior, evitando pintar respuestas de una selección antigua.
+
+La alternativa usa la foto de sombra actual y avisa de su próxima caducidad.
+Se devuelve también el tramo hasta el siguiente cambio de media hora. Esta
+pantalla no implementa seguimiento GPS ni recálculo automático durante la
+marcha; hay que volver a pulsar «Calcular rutas» al cambiar la franja.
+
+Validación: 42 pruebas del backend y 53 del frontend superadas, además de
+TypeScript y lint de los archivos modificados (sin errores). Consulta HTTP
+real con el grafo del campus: 56,16 m, 31,38 m de sombra y 24,78 m de sol,
+con ángulos de prueba de 35°/180°; no valida todo el campus. En navegador se
+seleccionaron puntos del mapa, se calcularon ambas alternativas y se verificó
+el dibujo con preferencia inicial del 50 %. No se añaden demos HTML ni se
+crean commits.

@@ -20,8 +20,9 @@ export function createCompactRouter(edges, exposure) {
   const dist=new Float64Array(count),seen=new Uint32Array(count),closed=new Uint32Array(count),previous=new Uint32Array(count),via=new Uint32Array(count),heap=new Uint32Array(count),position=new Uint32Array(count);
   let generation=0;
   const typedArrayBytes=[length,shade,sun,offset,to,edgeIndex,dist,seen,closed,previous,via,heap,position].reduce((n,a)=>n+a.byteLength,0);
-  function search(source,target,{penalty=4,mode='shade',maxVisited=Math.max(1,count)}={}){
-    if(!Number.isFinite(penalty)||penalty<1||!['shade','distance'].includes(mode)||!Number.isInteger(maxVisited)||maxVisited<1)throw new Error('Parametros de busqueda invalidos');
+  function search(source,target,{penalty=4,shadePreference,mode='shade',maxVisited=Math.max(1,count)}={}){
+    if(!Number.isFinite(penalty)||penalty<1||shadePreference!==undefined&&(!Number.isFinite(shadePreference)||shadePreference<0||shadePreference>1)||!['shade','distance'].includes(mode)||!Number.isInteger(maxVisited)||maxVisited<1)throw new Error('Parametros de busqueda invalidos');
+    const shadeWeight=shadePreference===undefined?1:1-shadePreference,sunWeight=shadePreference===undefined?penalty:1;
     if(!index.has(source)||!index.has(target))return null;
     generation=(generation+1)>>>0;if(generation===0){seen.fill(0);closed.fill(0);generation=1;}
     const start=index.get(source),goal=index.get(target);let size=0,visited=0,peak=0;
@@ -36,10 +37,10 @@ export function createCompactRouter(edges, exposure) {
     while(size){
       if(visited>=maxVisited){const error=new Error('Limite de nodos explorados alcanzado; no se devuelve una ruta parcial.');error.code='SEARCH_LIMIT';throw error;}
       const current=pop();closed[current]=generation;visited++;
-      if(current===goal){const nodes=[ids[goal]],edgeIndices=[];let n=goal;while(n!==start){edgeIndices.push(via[n]);n=previous[n];nodes.push(ids[n]);}nodes.reverse();edgeIndices.reverse();let lengthM=0,shadeM=0,sunM=0;for(const i of edgeIndices){lengthM+=length[i];shadeM+=shade[i];sunM+=sun[i];}return {cost:dist[goal],weightedCost:shadeM+penalty*sunM,lengthM,shadeM,sunM,shadeFraction:lengthM?shadeM/lengthM:0,nodes,edgeIndices,visited,peakQueue:peak};}
+      if(current===goal){const nodes=[ids[goal]],edgeIndices=[];let n=goal;while(n!==start){edgeIndices.push(via[n]);n=previous[n];nodes.push(ids[n]);}nodes.reverse();edgeIndices.reverse();let lengthM=0,shadeM=0,sunM=0;for(const i of edgeIndices){lengthM+=length[i];shadeM+=shade[i];sunM+=sun[i];}return {cost:dist[goal],weightedCost:shadeWeight*shadeM+sunWeight*sunM,lengthM,shadeM,sunM,shadeFraction:lengthM?shadeM/lengthM:0,nodes,edgeIndices,visited,peakQueue:peak};}
       for(let p=offset[current];p<offset[current+1];p++){
         const next=to[p],i=edgeIndex[p];if(closed[next]===generation)continue;
-        const candidate=dist[current]+(mode==='distance'?length[i]:shade[i]+penalty*sun[i]);
+        const candidate=dist[current]+(mode==='distance'?length[i]:shadeWeight*shade[i]+sunWeight*sun[i]);
         if(!Number.isFinite(candidate))throw new Error('Coste fuera del rango numerico');
         if(seen[next]!==generation||candidate<dist[next]){if(seen[next]!==generation){seen[next]=generation;position[next]=count;}dist[next]=candidate;previous[next]=current;via[next]=i;insertOrDecrease(next);}
       }

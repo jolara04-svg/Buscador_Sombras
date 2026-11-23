@@ -14,7 +14,7 @@ function createNativeRouteClient({timeoutMs=120000,spawn=()=>fork(path.join(__di
       try{
         if(!child){
           const current=child=spawn();
-          current.on('message',message=>{if(child!==current||!pending||message.id!==pending.id)return;const p=pending;pending=null;clearTimeout(p.timer);message.error?p.reject(new Error(message.error)):p.resolve(message.result);});
+          current.on('message',message=>{if(child!==current||!pending||message.id!==pending.id)return;const p=pending;pending=null;clearTimeout(p.timer);message.error?p.reject(Object.assign(new Error(message.error),{status:message.status})):p.resolve(message.result);});
           current.on('error',error=>{if(child===current)stop(error);});
           current.on('exit',(code,signal)=>{if(child===current)stop(new Error(`El modulo nativo termino (${signal||code}); revisa su compilacion y dependencias`));});
         }
