@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import type { ShadowLayerSelection, ShadowLayerWeights } from './shadow-settings';
@@ -21,17 +21,37 @@ function CheckRow({ label, checked, onPress }: { label: string; checked: boolean
 
 export function ShadowLayerControls({ selection, weights, onSelectionChange, onWeightChange }: ShadowLayerControlsProps) {
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [buildingText, setBuildingText] = useState(String(weights.buildings));
-  const [treeText, setTreeText] = useState(String(weights.trees));
+  const [buildingDraft, setBuildingDraft] = useState('');
+  const [treeDraft, setTreeDraft] = useState('');
+  const [buildingEditing, setBuildingEditing] = useState(false);
+  const [treeEditing, setTreeEditing] = useState(false);
 
-  useEffect(() => setBuildingText(String(weights.buildings)), [weights.buildings]);
-  useEffect(() => setTreeText(String(weights.trees)), [weights.trees]);
+  const buildingText = buildingEditing ? buildingDraft : String(weights.buildings);
+  const treeText = treeEditing ? treeDraft : String(weights.trees);
+
+  const updateDraft = (layer: 'buildings' | 'trees', text: string) => {
+    if (layer === 'buildings') {
+      setBuildingEditing(true);
+      setBuildingDraft(text);
+    } else {
+      setTreeEditing(true);
+      setTreeDraft(text);
+    }
+  };
 
   const commit = (layer: 'buildings' | 'trees', text: string) => {
     const value = Number(text.replace(',', '.'));
-    if (Number.isFinite(value) && value >= 0) onWeightChange(layer, value);
-    else if (layer === 'buildings') setBuildingText(String(weights.buildings));
-    else setTreeText(String(weights.trees));
+    if (Number.isFinite(value) && value >= 0) {
+      onWeightChange(layer, value);
+      if (layer === 'buildings') setBuildingEditing(false);
+      else setTreeEditing(false);
+    } else if (layer === 'buildings') {
+      setBuildingDraft(String(weights.buildings));
+      setBuildingEditing(false);
+    } else {
+      setTreeDraft(String(weights.trees));
+      setTreeEditing(false);
+    }
   };
 
   return (
@@ -59,7 +79,7 @@ export function ShadowLayerControls({ selection, weights, onSelectionChange, onW
               accessibilityLabel="Peso de edificios"
               keyboardType="decimal-pad"
               value={buildingText}
-              onChangeText={setBuildingText}
+              onChangeText={(text) => updateDraft('buildings', text)}
               onEndEditing={() => commit('buildings', buildingText)}
               style={styles.input}
             />
@@ -70,7 +90,7 @@ export function ShadowLayerControls({ selection, weights, onSelectionChange, onW
               accessibilityLabel="Peso de árboles"
               keyboardType="decimal-pad"
               value={treeText}
-              onChangeText={setTreeText}
+              onChangeText={(text) => updateDraft('trees', text)}
               onEndEditing={() => commit('trees', treeText)}
               style={styles.input}
             />
