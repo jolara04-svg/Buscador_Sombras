@@ -22,6 +22,8 @@ const {
   fechaRepresentativaDeEstacion,
   formatearFechaLocal,
 } = load('seasonal-solar.ts');
+const { calculateSunPosition } = load('point-shadow-query.ts');
+const { getShadowCastMatrix } = load('shadersSombras.ts');
 
 test('HU10 expone las cuatro estaciones en el orden esperado', () => {
   assert.deepEqual(
@@ -72,4 +74,25 @@ test('HU10 formatea fechas locales sin desplazar el día por la zona horaria', (
 test('HU10 rechaza referencias y fechas inválidas', () => {
   assert.throws(() => fechaRepresentativaDeEstacion('verano', 'fecha inválida'), /referencia no es válida/);
   assert.throws(() => formatearFechaLocal(new Date('fecha inválida')), /fecha inválida/);
+});
+
+test('HU10 cambia la elevación y el acimut solar entre verano e invierno', () => {
+  const referencia = new Date(2026, 0, 15, 9, 0);
+  const fechaVerano = fechaRepresentativaDeEstacion('verano', referencia);
+  const fechaInvierno = fechaRepresentativaDeEstacion('invierno', referencia);
+  const verano = calculateSunPosition(fechaVerano, 40.4168, -3.7038);
+  const invierno = calculateSunPosition(fechaInvierno, 40.4168, -3.7038);
+
+  assert.ok(verano.elevation > invierno.elevation, 'El sol debe estar más alto en verano en Madrid');
+  assert.notEqual(verano.azimuth, invierno.azimuth, 'La dirección solar debe cambiar entre estaciones');
+});
+
+test('HU10 produce matrices de sombra diferentes para cada estación', () => {
+  const referencia = new Date(2026, 0, 15, 9, 0);
+  const verano = calculateSunPosition(fechaRepresentativaDeEstacion('verano', referencia), 40.4168, -3.7038);
+  const invierno = calculateSunPosition(fechaRepresentativaDeEstacion('invierno', referencia), 40.4168, -3.7038);
+  const matrizVerano = getShadowCastMatrix(verano.azimuth, verano.elevation, 1).elements;
+  const matrizInvierno = getShadowCastMatrix(invierno.azimuth, invierno.elevation, 1).elements;
+
+  assert.notDeepEqual(matrizVerano, matrizInvierno, 'La proyección de sombra debe variar entre estaciones');
 });
