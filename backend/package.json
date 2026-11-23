@@ -6,10 +6,9 @@
   "scripts": {
     "test": "node --test test/*.test.js",
     "graph:generate": "node experiments/shadow-routing/generate.mjs",
-    "shadow:demo": "node experiments/shadow-routing/server.cjs",
-    "shadow:check": "node experiments/shadow-routing/run.mjs",
     "graph:scale": "node experiments/shadow-routing/generate.mjs --scale",
-    "shadow:scale": "node experiments/shadow-routing/run.mjs --scale"
+    "graph:campus": "node experiments/shadow-routing/generate.mjs --campus",
+    "routes:check": "node routing/check-native.cjs"
   },
   "keywords": [],
   "author": "",

@@ -233,3 +233,17 @@ evita presentar como soleadas zonas que no tienen modelos disponibles.
 Si el addon falta o falla, el endpoint devuelve un error 503; nunca recurre a
 las sombras simuladas de las demos. Un recorrido sin conexión/cobertura
 devuelve 422, y una entrada mal formada, 400.
+
+## Limpieza de las demos HTML
+
+Se han retirado todos los HTML versionados del laboratorio: las páginas de
+una zona, escala y los ejemplos temporales 4/5, incluida su plantilla.
+También se eliminan sus scripts de interfaz, generadores, comprobadores de
+páginas, servidor auxiliar y capturas, porque la integración actual se prueba
+directamente contra el backend. Los antiguos comandos `shadow:demo`,
+`shadow:check` y `shadow:scale` ya no están en `package.json`.
+
+Se mantienen el código de rutas, los grafos y las pruebas automáticas.
+Desde `backend`, `npm test` comprueba el backend y `npm run routes:check`
+ejecuta la prueba HTTP con el shader real. No se modifica el código de Víctor
+ni la interfaz móvil en esta limpieza.
