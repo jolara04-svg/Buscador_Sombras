@@ -18,9 +18,12 @@ function load(relativePath) {
 
 const {
   ESTACIONES,
+  alternarMenuEstacion,
+  crearEstadoSelectorEstacion,
   estacionDeFecha,
   fechaRepresentativaDeEstacion,
   formatearFechaLocal,
+  seleccionarEstacionEnMenu,
 } = load('seasonal-solar.ts');
 const { calculateSunPosition } = load('point-shadow-query.ts');
 const { getShadowCastMatrix } = load('shadersSombras.ts');
@@ -36,6 +39,19 @@ test('HU10 expone las cuatro estaciones en el orden esperado', () => {
   );
 });
 
+test('HU10 inicia el menú de estaciones cerrado y permite alternarlo', () => {
+  const inicial = crearEstadoSelectorEstacion('primavera');
+  assert.equal(inicial.menuAbierto, false);
+  assert.equal(alternarMenuEstacion(inicial).menuAbierto, true);
+  assert.equal(alternarMenuEstacion(alternarMenuEstacion(inicial)).menuAbierto, false);
+});
+
+test('HU10 cierra el menú después de seleccionar una estación', () => {
+  const abierto = alternarMenuEstacion(crearEstadoSelectorEstacion('primavera'));
+  const seleccionado = seleccionarEstacionEnMenu(abierto, 'invierno');
+
+  assert.deepEqual(seleccionado, { estacion: 'invierno', menuAbierto: false });
+});
 test('HU10 construye una fecha representativa conservando año y hora', () => {
   const referencia = new Date(2026, 0, 15, 14, 35, 12, 250);
   const fechaVerano = fechaRepresentativaDeEstacion('verano', referencia);
