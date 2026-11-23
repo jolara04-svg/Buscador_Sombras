@@ -13,11 +13,16 @@ import type { SolarPosition } from '@/components/point-shadow-query';
 import type { PointShadowSelection } from '@/components/point-shadow-view-model';
 import { DEFAULT_SHADOW_LAYER_SELECTION, useShadowLayerWeights, type ShadowLayerSelection } from '@/components/shadow-settings';
 import {
+  alternarMenuEstacion,
+  crearEstadoSelectorEstacion,
   ESTACIONES,
+  etiquetaEstacion,
   estacionDeFecha,
   fechaRepresentativaDeEstacion,
   formatearFechaLocal,
+  seleccionarEstacionEnMenu,
   type Estacion,
+  type SelectorEstacionState,
 } from '@/components/seasonal-solar';
 
 export { calculateSunPosition };
@@ -172,7 +177,10 @@ export default function SolarCalculatorScreen() {
   const [fechaOperacion, setFechaOperacion] = useState(
     new Date().toISOString().split('T')[0]
   );
-  const [estacionSeleccionada, setEstacionSeleccionada] = useState<Estacion>(() => estacionDeFecha(new Date()));
+  const [selectorEstacion, setSelectorEstacion] = useState<SelectorEstacionState>(() =>
+    crearEstadoSelectorEstacion(estacionDeFecha(new Date()))
+  );
+  const estacionSeleccionada = selectorEstacion.estacion;
   // Formateo de la hora a 24h (HH:MM)
   const [horaOperacion, setHoraOperacion] = useState(
     new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: false })
@@ -184,7 +192,7 @@ export default function SolarCalculatorScreen() {
     const nuevaFecha = fechaRepresentativaDeEstacion(estacion, referencia);
     const nuevaFechaTexto = formatearFechaLocal(nuevaFecha);
 
-    setEstacionSeleccionada(estacion);
+    setSelectorEstacion((estado) => seleccionarEstacionEnMenu(estado, estacion));
     setFechaOperacion(nuevaFechaTexto);
 
     const lat = parseFloat(latitude) || MADRID_LAT;
@@ -193,6 +201,11 @@ export default function SolarCalculatorScreen() {
     setResult(nuevaPosicionSolar);
     setResultadoSolarSimulacion(nuevaPosicionSolar);
   };
+
+  const alternarSelectorEstacion = () => {
+    setSelectorEstacion((estado) => alternarMenuEstacion(estado));
+  };
+
 
   // Estado y resultado de la consulta de sombra por el punto exacto seleccionado (HU-09)
   const [puntoSombraSeleccionado, setPuntoSombraSeleccionado] = useState<PointShadowSelection | null>(null);
@@ -639,27 +652,38 @@ export default function SolarCalculatorScreen() {
 
       </View>   
 
-      <View style={styles.seasonSelector} accessibilityRole="radiogroup">
-        <Text style={styles.seasonSelectorTitle}>Comparar estación</Text>
-        <View style={styles.seasonOptions}>
-          {ESTACIONES.map((estacion) => {
-            const selected = estacion.value === estacionSeleccionada;
-            return (
-              <Pressable
-                key={estacion.value}
-                accessibilityRole="radio"
-                accessibilityLabel={estacion.label}
-                accessibilityState={{ selected }}
-                style={[styles.seasonOption, selected && styles.seasonOptionActive]}
-                onPress={() => cambiarEstacion(estacion.value)}
-              >
-                <Text style={[styles.seasonOptionText, selected && styles.seasonOptionTextActive]}>
-                  {estacion.label}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </View>
+      <View style={styles.seasonSelector}>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Abrir selector de estación"
+          accessibilityState={{ expanded: selectorEstacion.menuAbierto }}
+          style={styles.seasonToggle}
+          onPress={alternarSelectorEstacion}
+        >
+          <Text style={styles.seasonToggleText}>☀ Estación: {etiquetaEstacion(estacionSeleccionada)}</Text>
+          <Text style={styles.seasonToggleIcon}>{selectorEstacion.menuAbierto ? '▲' : '▼'}</Text>
+        </Pressable>
+        {selectorEstacion.menuAbierto && (
+          <View style={styles.seasonOptions} accessibilityRole="menu">
+            {ESTACIONES.map((estacion) => {
+              const selected = estacion.value === estacionSeleccionada;
+              return (
+                <Pressable
+                  key={estacion.value}
+                  accessibilityRole="menuitem"
+                  accessibilityLabel={`Seleccionar ${estacion.label}`}
+                  accessibilityState={{ selected }}
+                  style={[styles.seasonOption, selected && styles.seasonOptionActive]}
+                  onPress={() => cambiarEstacion(estacion.value)}
+                >
+                  <Text style={[styles.seasonOptionText, selected && styles.seasonOptionTextActive]}>
+                    {estacion.label}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
+        )}
       </View>
 
       {/* Panel desplegable con resultados de búsqueda clicables (solo se muestra si hay búsqueda activa y resultados/carga) */}
@@ -1200,32 +1224,58 @@ const styles = StyleSheet.create({
     backgroundColor: '#ccc',
   },
   seasonSelector: {
+    position: 'relative',
+    alignSelf: 'flex-end',
     marginHorizontal: 15,
     marginBottom: 10,
-    padding: 10,
-    borderRadius: 10,
-    backgroundColor: '#fff',
+    zIndex: 40,
+  },
+  seasonToggle: {
+    minWidth: 174,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 12,
+    paddingVertical: 9,
+    borderRadius: 8,
+    backgroundColor: '#0066cc',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
+    shadowOpacity: 0.2,
     shadowRadius: 4,
-    elevation: 4,
+    elevation: 5,
   },
-  seasonSelectorTitle: {
-    marginBottom: 7,
-    fontSize: 12,
+  seasonToggleText: {
+    color: '#fff',
+    fontSize: 13,
     fontWeight: '700',
-    color: '#333',
+  },
+  seasonToggleIcon: {
+    marginLeft: 8,
+    color: '#fff',
+    fontSize: 11,
+    fontWeight: '700',
   },
   seasonOptions: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 6,
+    position: 'absolute',
+    top: 48,
+    right: 0,
+    minWidth: 174,
+    padding: 8,
+    borderRadius: 8,
+    backgroundColor: '#fff',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.24,
+    shadowRadius: 5,
+    elevation: 8,
+    gap: 4,
   },
   seasonOption: {
+    width: '100%',
     paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 16,
+    paddingVertical: 7,
+    borderRadius: 6,
     backgroundColor: '#f0f0f0',
   },
   seasonOptionActive: {
