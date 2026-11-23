@@ -74,3 +74,20 @@ export function estacionDeFecha(fecha: Date | string = new Date()): Estacion {
 export function etiquetaEstacion(estacion: Estacion) {
   return ESTACION_POR_VALOR.get(estacion)?.label ?? estacion;
 }
+
+export type SelectorEstacionState = {
+  estacion: Estacion;
+  menuAbierto: boolean;
+};
+
+export function crearEstadoSelectorEstacion(estacion: Estacion): SelectorEstacionState {
+  return { estacion, menuAbierto: false };
+}
+
+export function alternarMenuEstacion(state: SelectorEstacionState): SelectorEstacionState {
+  return { ...state, menuAbierto: !state.menuAbierto };
+}
+
+export function seleccionarEstacionEnMenu(state: SelectorEstacionState, estacion: Estacion): SelectorEstacionState {
+  return { estacion, menuAbierto: false };
+}
