@@ -20,6 +20,6 @@ const service=import('./victor-adapter.mjs').then(({createVictorRouteService})=>
 }}));
 process.on('message',async message=>{
   try{process.send({id:message.id,result:await (await service).plan(message.input)});}
-  catch(error){process.send({id:message.id,error:error.message});}
+  catch(error){process.send({id:message.id,error:error.message,status:error.status});}
 });
 process.on('disconnect',()=>process.exit(0));
