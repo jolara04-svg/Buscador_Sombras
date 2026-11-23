@@ -1,5 +1,7 @@
 import React, { useEffect, useMemo, useRef } from 'react';
 import { StyleSheet, View } from 'react-native';
+import {routeOverlayScript} from './route-map-overlay';
+import type {MapRoutes} from './route-api';
 
 export interface MapViewport {
   centerLat: number;
@@ -18,6 +20,7 @@ export interface Mapa2DProps {
   destino?: { lat: number; lon: number } | null;
   modoSeleccion?: 'solar' | 'origen' | 'destino';
   modoBusqueda?: 'lugar' | 'ruta';
+  rutas?: MapRoutes | null;
 }
 
 export const Mapa2D: React.FC<Mapa2DProps> = ({
@@ -27,6 +30,7 @@ export const Mapa2D: React.FC<Mapa2DProps> = ({
   initialLon = -3.7038,
   origen,
   destino,
+  rutas,
   modoBusqueda = 'lugar',
 }) => {
   const iframeRef = useRef<HTMLIFrameElement>(null);
@@ -106,6 +110,8 @@ export const Mapa2D: React.FC<Mapa2DProps> = ({
       ${modoBusqueda === 'ruta' && origen && destino ? `map.fitBounds([[${origen.lat}, ${origen.lon}], [${destino.lat}, ${destino.lon}]], { padding: [45, 45], maxZoom: 16, animate: false });` :
         modoBusqueda === 'ruta' && origen ? `map.setView([${origen.lat}, ${origen.lon}], 16);` : ''}
 
+      ${modoBusqueda === 'ruta' ? routeOverlayScript(rutas,origen,destino) : ''}
+
       map.on('click', function(e) {
         var clickedLat = e.latlng.lat;
         var clickedLon = e.latlng.lng;
@@ -120,7 +126,7 @@ export const Mapa2D: React.FC<Mapa2DProps> = ({
   </script>
 </body>
 </html>`;
-  }, [initialLat, initialLon, origen, destino, modoBusqueda]);
+  }, [initialLat, initialLon, origen, destino, modoBusqueda, rutas]);
 
   return (
     <View style={styles.container}>

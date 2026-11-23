@@ -6,6 +6,8 @@ import Slider from '@react-native-community/slider';
 import { getChunkUrl, BACKEND_URL } from '@/constants/backend';
 import { LocationChunkViewer } from '@/components/location-chunk-viewer';
 import { Mapa2D } from '@/components/Mapa2D';
+import {RouteControls} from '@/components/RouteControls';
+import type {MapRoutes} from '@/components/route-api';
 import { ShadowMap } from "@/components/ShadowMap";
 import { PointShadowPanel } from '@/components/PointShadowPanel';
 import { buildShadowTimeline, calculateSunPosition } from '@/components/point-shadow-query';
@@ -194,6 +196,9 @@ export default function SolarCalculatorScreen() {
   const [horaOperacion, setHoraOperacion] = useState(
     new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: false })
   );
+
+  const [rutas,setRutas]=useState<MapRoutes|null>(null);
+  const contextoRuta=JSON.stringify([origenSeleccionado?.lat,origenSeleccionado?.lon,destino?.lat,destino?.lon,fechaOperacion,horaOperacion]);
 
   const cambiarEstacion = (estacion: Estacion) => {
     const fechaHoraActual = new Date(`${fechaOperacion}T${horaOperacion}:00`);
@@ -770,6 +775,10 @@ export default function SolarCalculatorScreen() {
         </View>
       )}
 
+      {modoBusqueda === 'ruta' && vistaActiva === '2d' && <RouteControls key={contextoRuta}
+        origin={origenSeleccionado} destination={destino} date={fechaOperacion} time={horaOperacion}
+        contextKey={contextoRuta} onChange={setRutas} />}
+
       {/* CONTENEDOR PRINCIPAL DEL VISOR DE MAPA (Altura fija y ancho completo) */}
       <View style={styles.mapContainer}>
         {/* Renderizado condicional: Vista 2D y 2D con sombras */}
@@ -780,6 +789,7 @@ export default function SolarCalculatorScreen() {
             // Pasamos el origen, destino, modo de selección y el modo de búsqueda al mapa
             origen={origenSeleccionado}
             destino={destino}
+            rutas={rutas?.contextKey === contextoRuta ? rutas : null}
             modoSeleccion={modoSeleccion}
             modoBusqueda={modoBusqueda}
             onSeleccionarCoordenada={handleMapCoordinateSelection}
