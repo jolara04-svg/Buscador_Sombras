@@ -80,3 +80,26 @@ test('la consulta valida coordenadas, intervalo y fecha', () => {
   assert.throws(() => buildShadowTimeline({ date: 'no-es-una-fecha', latitude: 40, longitude: 0 }), /fecha/);
   assert.throws(() => buildShadowTimeline({ date: '2026-06-21', latitude: 40, longitude: 0, stepMinutes: 0 }), /muestreo/);
 });
+
+test('HU9 entrega al detector puntual la hora, fecha y posición solar de la muestra', () => {
+  let recibida;
+  const timeline = buildShadowTimeline({
+    date: '2026-06-21',
+    latitude: 40.4168,
+    longitude: -3.7038,
+    startMinute: 720,
+    endMinute: 735,
+    stepMinutes: 15,
+    isShadowed: (sample) => {
+      recibida = sample;
+      return true;
+    },
+  });
+
+  assert.equal(recibida.minuto, 727.5);
+  assert.equal(recibida.fecha.getHours(), 12);
+  assert.equal(recibida.fecha.getMinutes(), 7);
+  assert.equal(recibida.fecha.getSeconds(), 0);
+  assert.ok(recibida.elevation > 0);
+  assert.equal(timeline.intervalos[0].estado, 'sombra');
+});
