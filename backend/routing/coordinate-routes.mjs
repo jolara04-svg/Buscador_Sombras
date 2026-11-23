@@ -15,9 +15,14 @@ export function validateCoordinateRequest(r){
 }
 
 export function createCoordinateRouteService({loadGraph,getAddon,hasCoverage}) {
-  let snapshot=null;
+  // Una entrada por cache: el worker mantiene inmutables el grafo y el manifest.
+  let snapshot=null,prepared=null,coverageCache=null;
   async function planCoordinates(r){
-    const base=await loadGraph(r.graph),snapped=snapRoutePoints(base,r.origin,r.destination),graph=snapped.graph;
+    const base=await loadGraph(r.graph);
+    if(prepared?.base!==base){coverageCache=null;snapshot=null;}
+    const endpoints=JSON.stringify([r.origin.lat,r.origin.lon,r.destination.lat,r.destination.lon]);
+    if(prepared?.base!==base||prepared.endpoints!==endpoints)prepared={base,endpoints,snapped:snapRoutePoints(base,r.origin,r.destination)};
+    const snapped=prepared.snapped,graph=snapped.graph;
     const timeSeconds=Date.parse(r.at)/1000,slot=Math.floor(timeSeconds/1800),nextChange=(slot+1)*1800;
     let exposure,shadow;
     if(r.mode==='fastest'||r.shadePreference===0){
@@ -30,9 +35,14 @@ export function createCoordinateRouteService({loadGraph,getAddon,hasCoverage}) {
     }else{
       // Primero busca una cota usando solo cobertura y distancias, sin GPU.
       // Coste <= longitud; si w<1, ninguna mejora puede medir mas de L/(1-w).
-      const coverage=evaluateVictorExposure(base,r.sun,()=>0,hasCoverage);
-      const splitCoverage=graph.edges.map(e=>{const x=coverage.exposure[e.originalIndex];return {...x,lengthM:e.lengthM,shadeM:0,sunM:e.lengthM,unknownM:x.unknownM*e.lengthFraction};});
-      const candidate=snapped.source===snapped.target?{lengthM:0}:createCompactRouter(graph.edges,splitCoverage).search(snapped.source,snapped.target,{mode:'distance',maxVisited:250000});
+      // La cobertura no depende del sol: no se vuelve a recorrer el campus.
+      if(!coverageCache)coverageCache=evaluateVictorExposure(base,r.sun,()=>0,hasCoverage);
+      const coverage=coverageCache;
+      if(prepared.candidate===undefined){
+        const splitCoverage=graph.edges.map(e=>{const x=coverage.exposure[e.originalIndex];return {...x,lengthM:e.lengthM,shadeM:0,sunM:e.lengthM,unknownM:x.unknownM*e.lengthFraction};});
+        prepared.candidate=snapped.source===snapped.target?{lengthM:0}:createCompactRouter(graph.edges,splitCoverage).search(snapped.source,snapped.target,{mode:'distance',maxVisited:250000});
+      }
+      const candidate=prepared.candidate;
       if(!candidate)throw Object.assign(new Error('No hay un recorrido con datos de sombra suficientes. Puedes usar la ruta rápida.'),{status:422});
       const bound=r.shadePreference<1?candidate.lengthM/(1-r.shadePreference):Infinity;
       const start=project(snapped.snapped.origin.coordinate.lat,snapped.snapped.origin.coordinate.lon,base.config.center);

@@ -9,8 +9,8 @@ function graph(){
 }
 async function request(){const {unproject}=await core,g=graph();return {graph:'local',origin:unproject(0,0,g.config.center),destination:unproject(100,0,g.config.center),at:'2026-11-23T12:20:00+01:00',sun:{elevationDeg:35,azimuthDeg:180}};}
 test('coordenadas: rápida sin addon y equilibrio 50% elige desvio sombreado',async()=>{
-  const {createRouteService}=await api;let calls=0;
-  const service=createRouteService({loadGraph:()=>graph(),hasCoverage:()=>true,getAddon:()=>({getShadow:(x,y,xx,yy)=>{calls++;return y>40.450001||yy>40.450001?1:0;}})});
+  const {createRouteService}=await api,g=graph();let calls=0;
+  const service=createRouteService({loadGraph:()=>g,hasCoverage:()=>true,getAddon:()=>({getShadow:(x,y,xx,yy)=>{calls++;return y>40.450001||yy>40.450001?1:0;}})});
   const input=await request(),fast=await service.plan({...input,mode:'fastest'});assert.ok(Math.abs(fast.lengthM-100)<1e-7);assert.equal(calls,0);assert.equal(fast.sunM,null);
   const balanced=await service.plan(input);assert.equal(balanced.shadePreference,.5);assert.ok(balanced.lengthM>100&&balanced.lengthM<130);assert.ok(balanced.sunM<1e-7);
   assert.equal(balanced.comparison.samePath,false);assert.ok(balanced.comparison.savedSunM>99);assert.ok(balanced.comparison.fastest.sunM>99);
@@ -21,8 +21,8 @@ test('coordenadas: rápida sin addon y equilibrio 50% elige desvio sombreado',as
 });
 
 test('coordenadas: cambiar el sol o la franja invalida la foto y puede cambiar la ruta',async()=>{
-  const {createRouteService}=await api,input=await request();let calls=0;
-  const service=createRouteService({loadGraph:()=>graph(),hasCoverage:()=>true,getAddon:()=>({getShadow:(x,y,xx,yy,elev,azim)=>{
+  const {createRouteService}=await api,input=await request(),g=graph();let calls=0;
+  const service=createRouteService({loadGraph:()=>g,hasCoverage:()=>true,getAddon:()=>({getShadow:(x,y,xx,yy,elev,azim)=>{
     calls++;const detour=y>40.450001||yy>40.450001;return azim<-.1?Number(detour):Number(!detour);
   }})});
   const first=await service.plan(input);assert.equal(first.comparison.samePath,false);
@@ -31,13 +31,13 @@ test('coordenadas: cambiar el sol o la franja invalida la foto y puede cambiar l
   const after=calls;await service.plan({...input,at:'2026-11-23T12:30:00+01:00'});assert.ok(calls>after);
 });
 test('coordenadas: dos posiciones en la misma arista conservan el sentido',async()=>{
-  const {snapRoutePoints}=await snap,{unproject}=await core,g=graph();g.edges=[{...g.edges[0],reverse:false}];
+  const {snapRoutePoints}=await snap,{unproject}=await core;let g=graph();g.edges=[{...g.edges[0],reverse:false}];
   const {createRouteService}=await api,service=createRouteService({loadGraph:()=>g,getAddon:()=>{throw Error('No se usa');},hasCoverage:()=>false});
   const a=unproject(20,0,g.config.center),b=unproject(80,0,g.config.center),input=await request();
   const split=snapRoutePoints(g,a,b);assert.equal(split.graph.edges.length,3);
   const r=await service.plan({...input,origin:a,destination:b,mode:'fastest'});assert.ok(Math.abs(r.lengthM-60)<1e-6);
   await assert.rejects(service.plan({...input,origin:b,destination:a,mode:'fastest'}),/conectado/);
-  g.edges[0].reverse=true;
+  g={...g,edges:[{...g.edges[0],reverse:true}]};
   const reverse=await service.plan({...input,origin:b,destination:a,mode:'fastest',at:'2026-11-23T12:29:50+01:00'});
   assert.ok(Math.abs(reverse.geometry[0].lon-b.lon)<1e-9);
   assert.ok(Math.abs(reverse.geometry.at(-1).lon-a.lon)<1e-9);
@@ -76,4 +76,19 @@ test('coordenadas: la cota espacial evita consultas nativas ajenas al trayecto',
     calls++;assert.ok(lon<unproject(200,0,g.config.center).lon,'no consulta el desvío remoto');return 0;
   }})});
   const r=await s.plan(input);assert.ok(Math.abs(r.lengthM-100)<1e-6);assert.ok(calls>0);
+});
+
+test('coordenadas: reutiliza cobertura y puntos; invalidar el grafo no reutiliza datos viejos',async()=>{
+  const {createRouteService}=await api,{unproject}=await core,input=await request();
+  let current=graph(),coverageCalls=0,nativeCalls=0,covered=true;
+  const service=createRouteService({loadGraph:()=>current,hasCoverage:()=>{coverageCalls++;return covered;},getAddon:()=>({getShadow:()=>{nativeCalls++;return 0;}})});
+  const first=await service.plan(input),checks=coverageCalls,calls=nativeCalls;
+  const again=await service.plan(input);assert.deepEqual(again.geometry,first.geometry);assert.equal(coverageCalls,checks);assert.equal(nativeCalls,calls);
+  const moved=await service.plan({...input,destination:unproject(50,0,current.config.center)});
+  assert.ok(Math.abs(moved.lengthM-50)<1e-6);assert.notDeepEqual(moved.geometry,first.geometry);
+  current=graph();const beforeReload=nativeCalls;
+  await service.plan(input);assert.ok(nativeCalls>beforeReload);
+  current=graph();covered=false;
+  await assert.rejects(service.plan(input),/datos de sombra/);assert.ok(coverageCalls>checks);
+  const fast=await service.plan({...input,mode:'fastest'});assert.ok(Math.abs(fast.lengthM-100)<1e-6);
 });
