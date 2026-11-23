@@ -3,6 +3,7 @@ import {ActivityIndicator,Pressable,StyleSheet,Text,View} from 'react-native';
 import Slider from '@react-native-community/slider';
 import {BACKEND_URL} from '@/constants/backend';
 import {buildRouteRequest,fetchRoute,DEFAULT_SHADE_PREFERENCE,type CalculatedRoute,type MapRoutes,type RouteMode,type RoutePoint} from './route-api';
+import {routeComparisonText} from './route-comparison';
 
 type Props={origin: RoutePoint|null; destination: RoutePoint|null; date: string; time: string; contextKey: string; onChange: (routes: MapRoutes|null)=>void};
 export function RouteControls({origin,destination,date,time,contextKey,onChange}: Props) {
@@ -28,7 +29,8 @@ export function RouteControls({origin,destination,date,time,contextKey,onChange}
       try {
         const shadow=await fetchRoute(BACKEND_URL,{...request,mode:'shade'},abort.signal);
         if (id!==requestId.current) return;
-        setShaded(shadow);setSelected('shade');onChange({contextKey,fastest:quick,shaded:shadow,selected:'shade'});
+        const measured=shadow.comparison?.fastest?{...quick,...shadow.comparison.fastest,shadow:shadow.shadow}:quick;
+        setFastest(measured);setShaded(shadow);setSelected('shade');onChange({contextKey,fastest:measured,shaded:shadow,selected:'shade'});
       } catch (cause) {
         if (id===requestId.current) setError(`La ruta rápida sigue disponible. ${timedOut?'La consulta de sombra ha tardado demasiado.':cause instanceof Error?cause.message:'No se pudo calcular la alternativa con sombra.'}`);
       }
@@ -56,6 +58,7 @@ export function RouteControls({origin,destination,date,time,contextKey,onChange}
     </Pressable>
     {busy&&<View style={styles.loading}><ActivityIndicator size="small"/><Text>{fastest?'Buscando alternativa con sombra…':'Buscando el recorrido más rápido…'}</Text></View>}
     <View style={styles.cards}>{card(fastest,'fastest','Más rápida')}{card(shaded,'shade','Prioridad a la sombra')}</View>
+    {shaded&&!!routeComparisonText(shaded)&&<Text style={styles.note} accessibilityLiveRegion="polite">{routeComparisonText(shaded)}</Text>}
     {!!error&&<Text style={styles.error} accessibilityLiveRegion="polite">{error}</Text>}
     {shaded&&shaded.shadow.provider!=='not-evaluated'&&<Text style={styles.note}>Sombra estimada para esta franja, hasta las {new Date(shaded.nextRecalculateAt).toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'})}. Actualiza el cálculo después.</Text>}
     {fastest&&<Text style={styles.note}>Caminos disponibles en Ciudad Universitaria. Los accesos de los marcadores al camino se muestran discontinuos y no están validados.</Text>}

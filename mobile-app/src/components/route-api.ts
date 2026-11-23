@@ -14,6 +14,8 @@ export type CalculatedRoute = {
   nextRecalculateAt: string;
   snapped: {origin: {coordinate: RoutePoint; distanceM: number}; destination: {coordinate: RoutePoint; distanceM: number}};
   shadow: {provider: string; frameStartsAt: string};
+  comparison?: {samePath: boolean; reason: 'night'|'preference-zero'|'coverage-limited'|'same-optimum'|'different';
+    fastest: {lengthM: number;sunM: number;shadeM: number;shadeFraction: number}|null; savedSunM: number|null;extraDistanceM: number}|null;
 };
 export type MapRoutes = {contextKey: string; fastest: CalculatedRoute | null; shaded: CalculatedRoute | null; selected: RouteMode};
 export const DEFAULT_SHADE_PREFERENCE = 0.5;

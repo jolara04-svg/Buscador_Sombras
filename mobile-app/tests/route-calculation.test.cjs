@@ -15,7 +15,17 @@ function load(name){
 const {buildRouteRequest,fetchRoute}=load('route-api');
 const {calculateSunPosition}=load('point-shadow-query');
 const {routeOverlayScript}=load('route-map-overlay');
+const {routeComparisonText}=load('route-comparison');
 const origin={lat:40.45,lon:-3.73},destination={lat:40.451,lon:-3.731};
+test('comparacion: explica coincidencias, noche, cobertura y ahorro sin inventar sombra',()=>{
+  const text=comparison=>routeComparisonText({comparison});
+  assert.match(text({samePath:true,reason:'same-optimum'}),/coinciden/);
+  assert.match(text({reason:'night'}),/No hay sol/);
+  assert.match(text({reason:'preference-zero'}),/sin consultar sombras/);
+  assert.match(text({reason:'coverage-limited'}),/no se puede comparar/);
+  assert.match(text({samePath:false,reason:'different',savedSunM:65.08,extraDistanceM:1.98}),/evita 65 m al sol y añade 2 m/);
+  assert.equal(routeComparisonText({}),'');
+});
 test('rutas: peso inicial 50%, salida local y sol fijo en la franja de media hora',()=>{
   const r=buildRouteRequest(origin,destination,'2026-06-21','12:24','shade');
   assert.equal(r.shadePreference,.5);assert.equal(r.graph,'campus');
