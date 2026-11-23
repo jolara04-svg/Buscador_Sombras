@@ -12,6 +12,13 @@ import { buildShadowTimeline, calculateSunPosition } from '@/components/point-sh
 import type { SolarPosition } from '@/components/point-shadow-query';
 import type { PointShadowSelection } from '@/components/point-shadow-view-model';
 import { DEFAULT_SHADOW_LAYER_SELECTION, useShadowLayerWeights, type ShadowLayerSelection } from '@/components/shadow-settings';
+import {
+  ESTACIONES,
+  estacionDeFecha,
+  fechaRepresentativaDeEstacion,
+  formatearFechaLocal,
+  type Estacion,
+} from '@/components/seasonal-solar';
 
 export { calculateSunPosition };
 
@@ -165,10 +172,27 @@ export default function SolarCalculatorScreen() {
   const [fechaOperacion, setFechaOperacion] = useState(
     new Date().toISOString().split('T')[0]
   );
+  const [estacionSeleccionada, setEstacionSeleccionada] = useState<Estacion>(() => estacionDeFecha(new Date()));
   // Formateo de la hora a 24h (HH:MM)
   const [horaOperacion, setHoraOperacion] = useState(
     new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: false })
   );
+
+  const cambiarEstacion = (estacion: Estacion) => {
+    const fechaHoraActual = new Date(`${fechaOperacion}T${horaOperacion}:00`);
+    const referencia = Number.isNaN(fechaHoraActual.getTime()) ? new Date() : fechaHoraActual;
+    const nuevaFecha = fechaRepresentativaDeEstacion(estacion, referencia);
+    const nuevaFechaTexto = formatearFechaLocal(nuevaFecha);
+
+    setEstacionSeleccionada(estacion);
+    setFechaOperacion(nuevaFechaTexto);
+
+    const lat = parseFloat(latitude) || MADRID_LAT;
+    const lon = parseFloat(longitude) || MADRID_LON;
+    const nuevaPosicionSolar = calculateSunPosition(nuevaFecha, lat, lon);
+    setResult(nuevaPosicionSolar);
+    setResultadoSolarSimulacion(nuevaPosicionSolar);
+  };
 
   // Estado y resultado de la consulta de sombra por el punto exacto seleccionado (HU-09)
   const [puntoSombraSeleccionado, setPuntoSombraSeleccionado] = useState<PointShadowSelection | null>(null);
@@ -614,6 +638,29 @@ export default function SolarCalculatorScreen() {
                       </View>
 
       </View>   
+
+      <View style={styles.seasonSelector} accessibilityRole="radiogroup">
+        <Text style={styles.seasonSelectorTitle}>Comparar estación</Text>
+        <View style={styles.seasonOptions}>
+          {ESTACIONES.map((estacion) => {
+            const selected = estacion.value === estacionSeleccionada;
+            return (
+              <Pressable
+                key={estacion.value}
+                accessibilityRole="radio"
+                accessibilityLabel={estacion.label}
+                accessibilityState={{ selected }}
+                style={[styles.seasonOption, selected && styles.seasonOptionActive]}
+                onPress={() => cambiarEstacion(estacion.value)}
+              >
+                <Text style={[styles.seasonOptionText, selected && styles.seasonOptionTextActive]}>
+                  {estacion.label}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
+      </View>
 
       {/* Panel desplegable con resultados de búsqueda clicables (solo se muestra si hay búsqueda activa y resultados/carga) */}
       {(((modoBusqueda === 'lugar' && busqueda.trim().length >= 2) || (modoBusqueda === 'ruta' && ((tipoBusquedaRuta === 'destino' && busquedaDestino.trim().length >= 2) || (tipoBusquedaRuta === 'origen' && busquedaOrigen.trim().length >= 2)))) && (isSearching || searchResults.length > 0)) && (
@@ -1151,6 +1198,46 @@ const styles = StyleSheet.create({
     width: 1,
     height: '60%',
     backgroundColor: '#ccc',
+  },
+  seasonSelector: {
+    marginHorizontal: 15,
+    marginBottom: 10,
+    padding: 10,
+    borderRadius: 10,
+    backgroundColor: '#fff',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  seasonSelectorTitle: {
+    marginBottom: 7,
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#333',
+  },
+  seasonOptions: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+  },
+  seasonOption: {
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 16,
+    backgroundColor: '#f0f0f0',
+  },
+  seasonOptionActive: {
+    backgroundColor: '#0066cc',
+  },
+  seasonOptionText: {
+    fontSize: 12,
+    color: '#444',
+  },
+  seasonOptionTextActive: {
+    color: '#fff',
+    fontWeight: '700',
   },
   coordsBadge: {
     backgroundColor: 'rgba(255, 255, 255, 0.9)',
