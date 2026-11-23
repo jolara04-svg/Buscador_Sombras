@@ -5,6 +5,8 @@ const assert=require('node:assert/strict');
 const fs=require('node:fs');
 const path=require('node:path');
 const ts=require('typescript');
+const seasonalExports={};
+new Function('exports',ts.transpileModule(fs.readFileSync(path.resolve(__dirname,'../src/components/seasonal-solar.ts'),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText)(seasonalExports);
 
 // Ejecuta los manejadores del componente real con hooks y servicios controlados.
 // No solicita GPS real ni necesita un navegador para comprobar sus transiciones.
@@ -20,6 +22,8 @@ function screen(){
   const native={StyleSheet:{create:s=>s},Platform:{OS:'web'}};
   for(const name of ['Text','View','TextInput','Button','ScrollView','Pressable'])native[name]=name;
   const modules={react,'react/jsx-runtime':{jsx,jsxs:jsx},'react-native':native,'expo-location':{},'@react-native-community/slider':{default:'Slider'},
+    '@/components/RouteControls':{RouteControls:'RouteControls'},
+    '@/components/seasonal-solar':seasonalExports,
     '@/constants/backend':{BACKEND_URL:'http://test',getChunkUrl:()=>''},
     '@/components/Mapa2D':{Mapa2D:'Mapa2D'},'@/components/location-chunk-viewer':{LocationChunkViewer:'LocationChunkViewer'},
     '@/components/ShadowMap':{ShadowMap:'ShadowMap'},'@/components/PointShadowPanel':{PointShadowPanel:'PointShadowPanel'},
