@@ -20,6 +20,7 @@ const {
   ESTACIONES,
   alternarMenuEstacion,
   crearEstadoSelectorEstacion,
+  etiquetaEstacion,
   estacionDeFecha,
   fechaRepresentativaDeEstacion,
   formatearFechaLocal,
@@ -51,6 +52,16 @@ test('HU10 cierra el menú después de seleccionar una estación', () => {
   const seleccionado = seleccionarEstacionEnMenu(abierto, 'invierno');
 
   assert.deepEqual(seleccionado, { estacion: 'invierno', menuAbierto: false });
+});
+test('HU10 mantiene las cuatro opciones del menú y actualiza la etiqueta visible', () => {
+  const menuAbierto = alternarMenuEstacion(crearEstadoSelectorEstacion('primavera'));
+
+  for (const estacion of ESTACIONES) {
+    const seleccionado = seleccionarEstacionEnMenu(menuAbierto, estacion.value);
+    assert.equal(seleccionado.estacion, estacion.value);
+    assert.equal(seleccionado.menuAbierto, false);
+    assert.equal(etiquetaEstacion(seleccionado.estacion), estacion.label);
+  }
 });
 test('HU10 construye una fecha representativa conservando año y hora', () => {
   const referencia = new Date(2026, 0, 15, 14, 35, 12, 250);
