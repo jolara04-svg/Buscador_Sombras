@@ -88,11 +88,18 @@ export default function SolarCalculatorScreen() {
   const [busquedaDestino, setBusquedaDestino] = useState('');
   const [busquedaOrigen, setBusquedaOrigen] = useState('');
   const [tipoBusquedaRuta, setTipoBusquedaRuta] = useState<'origen' | 'destino' | null>(null);
+  const [ubicacionActual, setUbicacionActual] = useState<{ lat: number; lon: number } | null>(null);
+  const [usarUbicacionActual, setUsarUbicacionActual] = useState(true);
 
   // Estados para el buscador de lugares y debounce
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const searchRequestRef = useRef(0);
+  useEffect(() => () => {
+    searchRequestRef.current++;
+    if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
+  }, []);
 
   // Estado para la navegación con teclado en los resultados de búsqueda (versión web)
   const [selectedIndex, setSelectedIndex] = useState(-1);
@@ -110,6 +117,7 @@ export default function SolarCalculatorScreen() {
 
     const applyLocation = (lat: number, lon: number) => {
       if (cancelled || !Number.isFinite(lat) || !Number.isFinite(lon)) return;
+      setUbicacionActual({ lat, lon });
       setLatitude(String(lat));
       setLongitude(String(lon));
       setLatitudeDisplay(truncarA6Decimales(lat));
@@ -159,6 +167,7 @@ export default function SolarCalculatorScreen() {
   const [origen, setOrigen] = useState<{ lat: number, lon: number } | null>(null);
   const [destino, setDestino] = useState<{ lat: number, lon: number } | null>(null);
   const [modoSeleccion, setModoSeleccion] = useState<'solar' | 'origen' | 'destino'>('solar');
+  const origenSeleccionado = usarUbicacionActual ? ubicacionActual : origen;
 
 
   // Formateo de la fecha (YYYY-MM-DD)
@@ -324,7 +333,7 @@ export default function SolarCalculatorScreen() {
   };
 
   // Función para realizar la petición de búsqueda al backend
-  const handleSearch = async (text: string) => {
+  const handleSearch = async (text: string, requestId: number) => {
     if (!text || text.trim().length < 2) {
       setSearchResults([]);
       setIsSearching(false);
@@ -338,17 +347,20 @@ export default function SolarCalculatorScreen() {
         throw new Error('Error en la búsqueda');
       }
       const data = await response.json();
-      setSearchResults(data);
+      if (requestId === searchRequestRef.current) setSearchResults(data);
     } catch (error) {
       console.error('Error buscando lugares:', error);
-      setSearchResults([]);
+      if (requestId === searchRequestRef.current) setSearchResults([]);
     } finally {
-      setIsSearching(false);
+      if (requestId === searchRequestRef.current) setIsSearching(false);
     }
   };
 
   // Manejador de cambio de texto en el buscador con debounce de 300ms
   const handleTextChange = (text: string) => {
+    const requestId = ++searchRequestRef.current;
+    setSearchResults([]);
+    setIsSearching(text.trim().length >= 2);
     if (searchTimeoutRef.current) {
       clearTimeout(searchTimeoutRef.current);
     }
@@ -360,12 +372,23 @@ export default function SolarCalculatorScreen() {
     }
 
     searchTimeoutRef.current = setTimeout(() => {
-      handleSearch(text);
+      handleSearch(text, requestId);
     }, 300);
+  };
+
+  const cerrarBusqueda = () => {
+    searchRequestRef.current++;
+    if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
+    setSearchResults([]);
+    setIsSearching(false);
+    setSelectedIndex(-1);
+    setTipoBusquedaRuta(null);
   };
 
   // Función auxiliar para manejar la selección de un resultado de búsqueda (clic o Enter)
   const handleSelectResult = (item: any) => {
+    const lat = Number(item.lat), lon = Number(item.lon);
+    if (!Number.isFinite(lat) || !Number.isFinite(lon) || Math.abs(lat) > 90 || Math.abs(lon) > 180) return;
     // Actualizar coordenadas principales para la calculadora solar y vista
     setLatitude(String(item.lat));
     setLongitude(String(item.lon));
@@ -374,20 +397,25 @@ export default function SolarCalculatorScreen() {
 
     if (modoBusqueda === 'lugar') {
       setBusqueda(item.nombre);
-    } else if (modoBusqueda === 'ruta') {
-      if (tipoBusquedaRuta === 'destino') {
-        setDestino({ lat: item.lat, lon: item.lon });
+      if (vistaActiva === '2d') {
+        setDestino({ lat, lon });
         setBusquedaDestino(item.nombre);
-        // Al fijar destino, pasamos a buscar origen automáticamente
-        setTipoBusquedaRuta('origen');
+        setModoBusqueda('ruta');
+        setModoSeleccion('destino');
+        setPuntoSombraSeleccionado(null);
+      }
+    } else if (modoBusqueda === 'ruta') {
+      if (tipoBusquedaRuta !== 'origen') {
+        setDestino({ lat, lon });
+        setBusquedaDestino(item.nombre);
       } else if (tipoBusquedaRuta === 'origen') {
-        setOrigen({ lat: item.lat, lon: item.lon });
+        setUsarUbicacionActual(false);
+        setOrigen({ lat, lon });
         setBusquedaOrigen(item.nombre);
       }
     }
     // Limpiar resultados y reiniciar índice seleccionado para cerrar el panel inmediatamente
-    setSearchResults([]);
-    setSelectedIndex(-1);
+    cerrarBusqueda();
   };
 
   // Manejador de eventos de teclado (Flechas Arriba/Abajo y Enter) para la lista de resultados
@@ -429,10 +457,10 @@ export default function SolarCalculatorScreen() {
 
   const handleMapCoordinateSelection = (lat: number, lon: number) => {
     console.log('Coordenada seleccionada:', { lat, lon, modoBusqueda, modoSeleccion });
-    setPuntoSombraSeleccionado({ lat, lon });
 
     // Mantener sincronizado el resultado solar con el punto consultado.
     if (modoBusqueda === 'lugar') {
+      setPuntoSombraSeleccionado({ lat, lon });
       const selectedDate = new Date(`${fechaOperacion}T${horaOperacion}:00`);
       if (!Number.isNaN(selectedDate.getTime())) {
         setResult(calculateSunPosition(selectedDate, lat, lon));
@@ -446,12 +474,15 @@ export default function SolarCalculatorScreen() {
 
     if (modoBusqueda === 'ruta') {
       if (modoSeleccion === 'origen') {
+        setUsarUbicacionActual(false);
         setOrigen({ lat, lon });
+        setBusquedaOrigen(`${lat.toFixed(6)}, ${lon.toFixed(6)}`);
         setModoSeleccion('destino');
       } else if (modoSeleccion === 'destino') {
         setDestino({ lat, lon });
-        setModoSeleccion('origen');
+        setBusquedaDestino(`${lat.toFixed(6)}, ${lon.toFixed(6)}`);
       }
+      cerrarBusqueda();
     }
   };
 
@@ -496,8 +527,7 @@ export default function SolarCalculatorScreen() {
                                 onPress={() => {
                                   // Limpiar el estado de búsqueda
                                   setBusqueda('');
-                                  // Limpiar los resultados de búsqueda para cerrar el desplegable
-                                  setSearchResults([]);
+                                  cerrarBusqueda();
                                 }}
                               >
                                 <Text style={styles.clearLugarButtonText}>✕</Text>
@@ -506,13 +536,51 @@ export default function SolarCalculatorScreen() {
                           </View>
                         ) : (
                           <View style={styles.routeSearchWrapper}>
-                            {/* Input de Destino (siempre visible en modo ruta) y botón de limpiar ruta */}
-                            <View style={styles.routeDestinationRow}>
+                            <View style={styles.originInputRow}>
+                              <Text style={styles.routePointLabel}>Origen</Text>
                               <TextInput
                                 style={styles.searchInput}
+                                accessibilityLabel="Origen de la ruta"
+                                placeholder={locationStatus === 'loading' && usarUbicacionActual ? 'Obteniendo tu ubicación...' : 'Busca desde dónde sales'}
+                                value={usarUbicacionActual ? (ubicacionActual ? 'Mi ubicación actual' : '') : busquedaOrigen}
+                                selectTextOnFocus
+                                onFocus={() => { cerrarBusqueda(); setTipoBusquedaRuta('origen'); setModoSeleccion('origen'); }}
+                                onChangeText={(text) => {
+                                  setUsarUbicacionActual(false);
+                                  setOrigen(null);
+                                  setBusquedaOrigen(text);
+                                  setTipoBusquedaRuta('origen');
+                                  handleTextChange(text);
+                                }}
+                                onKeyPress={handleKeyPress}
+                              />
+                              <Pressable
+                                style={styles.myLocationButton}
+                                accessibilityRole="button"
+                                accessibilityLabel="Usar mi ubicación actual como origen"
+                                disabled={!ubicacionActual}
+                                onPress={() => {
+                                  setUsarUbicacionActual(true);
+                                  setOrigen(null);
+                                  setBusquedaOrigen('');
+                                  setModoSeleccion('destino');
+                                  cerrarBusqueda();
+                                }}
+                              >
+                                <Text style={styles.myLocationButtonText}>Mi ubicación</Text>
+                              </Pressable>
+                            </View>
+                            {/* Input de Destino (siempre visible en modo ruta) y botón de limpiar ruta */}
+                            <View style={styles.routeDestinationRow}>
+                              <Text style={[styles.routePointLabel, styles.destinationLabel]}>Destino</Text>
+                              <TextInput
+                                style={styles.searchInput}
+                                accessibilityLabel="Destino de la ruta"
                                 placeholder="¿A dónde quieres ir?"
                                 value={busquedaDestino}
+                                onFocus={() => { cerrarBusqueda(); setTipoBusquedaRuta('destino'); setModoSeleccion('destino'); }}
                                 onChangeText={(text) => {
+                                  setDestino(null);
                                   setBusquedaDestino(text);
                                   setTipoBusquedaRuta('destino');
                                   setSelectedIndex(-1); // Reiniciar selección al teclear
@@ -523,6 +591,8 @@ export default function SolarCalculatorScreen() {
                               {/* Botón para limpiar la ruta (visible exclusivamente en modo ruta, al lado del destino) */}
                               <Pressable
                                 style={styles.clearRouteButton}
+                                accessibilityRole="button"
+                                accessibilityLabel="Limpiar destino y usar mi ubicación como origen"
                                 onPress={() => {
                                   // Limpiar estados de origen y destino a null
                                   setOrigen(null);
@@ -530,38 +600,19 @@ export default function SolarCalculatorScreen() {
                                   // Limpiar textos de búsqueda de origen y destino
                                   setBusquedaDestino('');
                                   setBusquedaOrigen('');
-                                  // Volver a poner el modo de selección en 'origen'
-                                  setModoSeleccion('origen');
-                                  // Cerrar el desplegable de resultados de búsqueda
-                                  setSearchResults([]);
+                                  setUsarUbicacionActual(true);
+                                  setModoSeleccion('destino');
+                                  cerrarBusqueda();
                                 }}
                               >
                                 <Text style={styles.clearRouteButtonText}>✕</Text>
                               </Pressable>
                             </View>
-                            {/* Input de Origen (solo se muestra si ya se ha seleccionado un destino) */}
-                            {destino !== null && (
-                              <View style={styles.originInputRow}>
-                                <TextInput
-                                  style={styles.searchInput}
-                                  placeholder="¿Desde dónde sales?"
-                                  value={busquedaOrigen}
-                                  onChangeText={(text) => {
-                                    setBusquedaOrigen(text);
-                                    setTipoBusquedaRuta('origen');
-                                    setSelectedIndex(-1); // Reiniciar selección al teclear
-                                    handleTextChange(text);
-                                  }}
-                                  onKeyPress={handleKeyPress}
-                                />
-                                <Pressable
-                                  style={styles.myLocationButton}
-                                  onPress={() => console.log('Usar mi ubicación')}
-                                >
-                                  <Text style={styles.myLocationButtonText}>📍 Mi ubicación</Text>
-                                </Pressable>
-                              </View>
-                            )}
+                            <Text style={styles.routeStatus} accessibilityLiveRegion="polite">
+                              {origenSeleccionado && destino ? 'Origen y destino seleccionados en el mapa.' :
+                                !origenSeleccionado ? (locationStatus === 'loading' && usarUbicacionActual ? 'Esperando tu ubicación para fijar el origen.' : 'Busca un origen o permite el acceso a tu ubicación.') :
+                                'Elige un destino en el buscador o toca el mapa.'}
+                            </Text>
                           </View>
                         )}
                         
@@ -569,7 +620,10 @@ export default function SolarCalculatorScreen() {
                         <View style={styles.searchModeButtons}>
                           <Pressable 
                             style={[styles.modeButton, modoBusqueda === 'lugar' && styles.modeButtonActive]}
+                            accessibilityRole="button"
+                            accessibilityLabel="Buscar un lugar"
                             onPress={() => {
+                              cerrarBusqueda();
                               // Sincronizamos con el modo de búsqueda 'lugar' y el modo solar en el mapa
                               setModoBusqueda('lugar');
                               setModoSeleccion('solar');
@@ -579,7 +633,12 @@ export default function SolarCalculatorScreen() {
                           </Pressable>
                           <Pressable 
                             style={[styles.modeButton, modoBusqueda === 'ruta' && styles.modeButtonActive]}
+                            accessibilityRole="button"
+                            accessibilityLabel="Elegir origen y destino"
                             onPress={() => {
+                              cerrarBusqueda();
+                              setVistaActiva('2d');
+                              setPuntoSombraSeleccionado(null);
                               // Sincronizamos con el modo de búsqueda 'ruta' y aseguramos que el primer clic sea el origen
                               setModoBusqueda('ruta');
                               setModoSeleccion('destino'); // Por defecto comenzamos buscando el destino
@@ -648,7 +707,7 @@ export default function SolarCalculatorScreen() {
             initialLat={parseFloat(latitude) || MADRID_LAT}
             initialLon={parseFloat(longitude) || MADRID_LON}
             // Pasamos el origen, destino, modo de selección y el modo de búsqueda al mapa
-            origen={origen}
+            origen={origenSeleccionado}
             destino={destino}
             modoSeleccion={modoSeleccion}
             modoBusqueda={modoBusqueda}
@@ -674,7 +733,7 @@ export default function SolarCalculatorScreen() {
               initialLat={parseFloat(latitude) || MADRID_LAT}
               initialLon={parseFloat(longitude) || MADRID_LON}
               // Pasamos el origen, destino, modo de selección y el modo de búsqueda al mapa
-              origen={origen}
+              origen={origenSeleccionado}
               destino={destino}
               modoSeleccion={modoSeleccion}
               modoBusqueda={modoBusqueda}
@@ -986,6 +1045,7 @@ const styles = StyleSheet.create({
   },
   topBarContainer: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     paddingHorizontal: 15,
     paddingTop: 10,
     paddingBottom: 10,
@@ -995,6 +1055,8 @@ const styles = StyleSheet.create({
   },
   searchBar: {
     flex: 2,
+    flexBasis: 360,
+    minWidth: 240,
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#fff',
@@ -1010,6 +1072,7 @@ const styles = StyleSheet.create({
   },
   searchInput: {
     flex: 1,
+    minWidth: 0,
     fontSize: 15,
     color: '#333',
     height: 38,
@@ -1060,6 +1123,20 @@ const styles = StyleSheet.create({
     borderTopColor: '#eee',
     paddingTop: 6,
     gap: 8,
+  },
+  routePointLabel: {
+    width: 52,
+    color: '#218338',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  destinationLabel: {
+    color: '#c93646',
+  },
+  routeStatus: {
+    color: '#666',
+    fontSize: 12,
+    lineHeight: 17,
   },
   myLocationButton: {
     backgroundColor: '#f0f0f0',
@@ -1130,6 +1207,7 @@ const styles = StyleSheet.create({
   },
   datetimeBox: {
     flex: 1,
+    flexBasis: 200,
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#fff',
