@@ -29,7 +29,7 @@ function installVictorRoutes(app,{client=createNativeRouteClient()}={}){
   const express=require('express');
   app.post('/api/routes',express.json({limit:'16kb'}),async(req,res)=>{
     try{
-      const {validateRouteRequest}=await import('./victor-adapter.mjs');let input;
+      const {validateRouteRequest}=await import('./route-service.mjs');let input;
       try{input=validateRouteRequest(req.body);}catch(error){return res.status(400).json({error:error.message});}
       const result=await client.plan(input);
       return res.status(result.unreachable?422:200).json(result);
