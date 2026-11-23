@@ -175,3 +175,9 @@ test('shadow sources expose both layers and configurable default weights', () =>
   assert.equal(sourceUrl(base, 'buildings', { buildings: false, trees: true }), null);
   assert.equal(sourceOpacity('trees', { trees: 0.75 }), 0.75);
 });
+
+test('HU8 limita la opacidad de cada capa al rango visible de 0 a 1', () => {
+  assert.equal(sourceOpacity('buildings', { buildings: 3 }), 1);
+  assert.equal(sourceOpacity('trees', { trees: -2 }), 0);
+  assert.equal(sourceOpacity('buildings', { buildings: Number.NaN }), 1);
+});

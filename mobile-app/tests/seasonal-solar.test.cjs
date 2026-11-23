@@ -123,3 +123,17 @@ test('HU10 produce matrices de sombra diferentes para cada estación', () => {
 
   assert.notDeepEqual(matrizVerano, matrizInvierno, 'La proyección de sombra debe variar entre estaciones');
 });
+
+test('HU10 conserva la misma hora local al preparar las cuatro fechas estacionales', () => {
+  const referencia = new Date(2026, 0, 15, 16, 20, 0);
+  const fechas = ESTACIONES.map((estacion) => fechaRepresentativaDeEstacion(estacion.value, referencia));
+
+  assert.deepEqual(
+    fechas.map((fecha) => [fecha.getMonth(), fecha.getDate()]),
+    [[2, 20], [5, 21], [8, 22], [11, 21]],
+  );
+  assert.deepEqual(
+    fechas.map((fecha) => [fecha.getHours(), fecha.getMinutes()]),
+    [[16, 20], [16, 20], [16, 20], [16, 20]],
+  );
+});
