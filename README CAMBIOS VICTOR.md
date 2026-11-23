@@ -326,3 +326,65 @@ con ángulos de prueba de 35°/180°; no valida todo el campus. En navegador se
 seleccionaron puntos del mapa, se calcularon ambas alternativas y se verificó
 el dibujo con preferencia inicial del 50 %. No se añaden demos HTML ni se
 crean commits.
+
+## Separación de la integración y comprobación de alternativas
+
+El auxiliar de compilación `python-config.cjs` también se traslada fuera de
+la carpeta de Víctor: de `backend/shaders/scripts` a `backend/scripts`.
+En `backend/shaders/binding.gyp` solo se ajustan sus tres rutas de invocación.
+El descubrimiento de Python y NumPy conserva su comportamiento y no se
+modifican fuentes C/C++/Python ni shaders GLSL para este traslado.
+
+La lógica nueva por coordenadas se mueve a `backend/routing/coordinate-routes.mjs`.
+`route-service.mjs` selecciona ese servicio o la API anterior por nodos.
+`victor-adapter.mjs` vuelve a su contenido anterior a la integración de
+coordenadas (referencia `525b31c`); se reutiliza su lector de exposición.
+Solo se cambia la importación en el endpoint y el proceso de rutas. No se
+modifican fuentes de `backend/shaders` ni nombres de variables de Víctor.
+
+Se ha comprobado por qué ambas rutas pueden coincidir. En el grafo pequeño,
+con elevación 35° y acimut 180°, se compararon 1.687 pares conectados: ninguno
+cambia al 50 % ni al 100 %. Sus 29 aristas que pertenecen a circuitos tienen
+0 m de sombra según el shader. Los otros tramos sombreados no ofrecen un
+desvío que evite sol. Esto describe esa zona y esos datos, no todo el campus.
+
+Para comprobar un caso real con alternativas, desde `backend`:
+
+```powershell
+node routing/check-alternatives.cjs 35 180 0.5 --campus
+```
+
+El diagnóstico usa el shader real en un radio de 200 m alrededor de
+40.45085, -3.7315; no escribe resultados ni modifica grafos. En esta máquina
+compara 22.824 pares conectados y encuentra 4.272 con ahorro de sol. Imprime
+un caso reproducible, sus coordenadas, costes y metros de sol/sombra.
+Sin `--campus` analiza el grafo pequeño; el tercer argumento es el peso 0–1.
+Los ángulos de este comando son datos de prueba, independientes de la fecha.
+
+También se ha verificado el mismo caso mediante `POST /api/routes`, con el
+grafo completo del campus y peso 0.5:
+
+| Opción | Distancia | Metros al sol | Metros en sombra | Coste |
+| --- | ---: | ---: | ---: | ---: |
+| Rápida | 247,71 m | 246,39 m | 1,31 m | 247,05 |
+| Con sombra | 249,69 m | 181,31 m | 68,38 m | 215,50 |
+
+Origen: 40.4498328, -3.7332325. Destino: 40.44972, -3.730998.
+La alternativa añade 1,98 m y evita 65,08 m al sol. La consulta usa
+elevación 35° y acimut 180°, sin atribuir esos ángulos a una hora real.
+
+La API devuelve ahora `comparison`: indica si las rutas coinciden, si
+falta cobertura para comparar y, cuando se conoce, la exposición de la
+rápida y el ahorro de sol de la alternativa. La interfaz muestra esos
+datos y explica las coincidencias, la noche y el peso 0 %. Antes la tarjeta
+rápida no mostraba sombra: esa ausencia no significaba que tuviera cero.
+No se fuerza un desvío si tiene peor coste.
+
+Validación adicional: 44 pruebas del backend y 57 del frontend superadas,
+incluidos cambios de peso, sol y franja, caché, coincidencias válidas y
+explicaciones de cobertura. TypeScript y lint pasan; el lint general conserva
+13 avisos previos. En navegador, el 23/11/2026 a las 12:00 y peso 50 %, se
+eligieron puntos cercanos distintos del caso exacto: la rápida muestra
+224 m y 8 % de sombra, frente a 234 m y 45 % de la alternativa, con un
+ahorro estimado de 76 m al sol. Las cifras de pantalla están redondeadas.
+No se hacen commits.

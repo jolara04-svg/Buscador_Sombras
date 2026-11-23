@@ -12,12 +12,12 @@
       ]],
       "include_dirs": [
         "<!@(node -p \"require('node-addon-api').include\")",
-        "<!(node scripts/python-config.cjs include)",
-        "<!(node scripts/python-config.cjs numpy)",
+        "<!(node ../scripts/python-config.cjs include)",
+        "<!(node ../scripts/python-config.cjs numpy)",
         "./src/include"
       ],
       "dependencies": ["<!(node -p \"require('node-addon-api').gyp\")"],
-      "libraries":["<!(node scripts/python-config.cjs library)"]
+      "libraries":["<!(node ../scripts/python-config.cjs library)"]
     }
   ]
 }

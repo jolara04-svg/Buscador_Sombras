@@ -14,7 +14,7 @@ function hasCoverage(lon,lat){
 }
 const manifest=require('../madrid_chunks/manifest.json'),coverage=new Map();
 for(const [x,ys] of Object.entries(manifest))coverage.set(Number(x),new Set(ys.filter(y=>fs.existsSync(path.join(backend,'madrid_chunks/16',x,`${y}.glb`))).map(Number)));
-const service=import('./victor-adapter.mjs').then(({createVictorRouteService})=>createVictorRouteService({loadGraph,hasCoverage,getAddon(){
+const service=import('./route-service.mjs').then(({createRouteService})=>createRouteService({loadGraph,hasCoverage,getAddon(){
   if(!addon){const loaded=require('../shaders/lib/binding.js');loaded.initialize();addon=loaded;}
   return addon;
 }}));
