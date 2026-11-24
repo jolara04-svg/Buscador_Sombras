@@ -24,6 +24,8 @@ type Overlay = {
 type ShadowSource = 'buildings' | 'trees';
 type Manifest = ShadowTileManifest;
 
+const MAX_TILE_RADIUS = 3;
+
 async function runWithConcurrency<T>(items: T[], limit: number, task: (item: T) => Promise<void>) {
   let next = 0;
   const worker = async () => {
@@ -55,15 +57,14 @@ export function ShadowMap({ chunkURL, azimuth, elevation, sources, weights, onSe
   const canvas = useRef<HTMLCanvasElement>(null);
   const overlay = useRef<Overlay | null>(null);
   const [viewport, setViewport] = useState<MapViewport | null>(null);
-  const latest = useRef({ azimuth, elevation, viewport, weights });
+  const latest = useRef({ azimuth, elevation, viewport, weights, chunkURL, sources });
   const [error, setError] = useState<string | null>(null);
 
   const sourceSelectionKey = JSON.stringify(sources);
 
   useEffect(() => {
-    latest.current = { azimuth, elevation, viewport, weights };
-  }, [azimuth, elevation, viewport, weights]);
-
+    latest.current = { azimuth, elevation, viewport, weights, chunkURL, sources };
+  }, [azimuth, elevation, viewport, weights, chunkURL, sources]);
   useEffect(() => {
     if (!canvas.current) return;
     let active = true;
@@ -84,7 +85,7 @@ export function ShadowMap({ chunkURL, azimuth, elevation, sources, weights, onSe
       shadow,
       buildings,
       vegetation: trees,
-      reference: chunkReference(chunkURL),
+      reference: chunkReference(latest.current.chunkURL),
       ensureTiles: () => {},
     };
     overlay.current = state;
@@ -92,7 +93,7 @@ export function ShadowMap({ chunkURL, azimuth, elevation, sources, weights, onSe
 
     const loader = new GLTFLoader();
     const originTile: TileCoordinate = { x: state.reference.tileX, y: state.reference.tileY, z: 16 };
-    const loadedTiles = new Set<string>();
+    const loadedTiles = new Map<string, { meshes: THREE.Mesh[]; geometries: THREE.BufferGeometry[] }>();
     const loadingTiles = new Set<string>();
     const manifests = new Map<ShadowSource, Manifest | null>();
     let groundZ: number | null = null;
@@ -100,10 +101,18 @@ export function ShadowMap({ chunkURL, azimuth, elevation, sources, weights, onSe
     const materialFor = (source: ShadowSource) => source === 'trees' ? trees : shadow;
     const isOrigin = (tile: TileCoordinate) => tile.x === originTile.x && tile.y === originTile.y;
 
+    const evictTile = (key: string) => {
+      const entry = loadedTiles.get(key);
+      if (!entry) return;
+      entry.meshes.forEach(mesh => scene.remove(mesh));
+      entry.geometries.forEach(geometry => geometry.dispose());
+      loadedTiles.delete(key);
+    };
+ 
     const loadManifest = async (source: ShadowSource) => {
       if (manifests.has(source)) return manifests.get(source) ?? null;
       try {
-        const base = new URL(chunkURL);
+        const base = new URL(latest.current.chunkURL);
         const response = await fetch(`${base.origin}/manifest/${source}`);
         const manifest = response.ok ? await response.json() as Manifest : null;
         manifests.set(source, manifest);
@@ -121,7 +130,7 @@ export function ShadowMap({ chunkURL, azimuth, elevation, sources, weights, onSe
 
       loadingTiles.add(key);
       try {
-        const url = tileSourceUrl(chunkURL, source, tile.x, tile.y, tile.z);
+        const url = tileSourceUrl(latest.current.chunkURL, source, tile.x, tile.y, tile.z);
         const gltf = await loader.loadAsync(url);
         if (!active) {
           disposeChunk(gltf.scene);
@@ -145,6 +154,7 @@ export function ShadowMap({ chunkURL, azimuth, elevation, sources, weights, onSe
         if (!geometries.length || bounds.isEmpty()) return;
         if (groundZ === null) groundZ = bounds.min.z;
 
+        const meshes: THREE.Mesh[] = [];
         geometries.forEach(geometry => {
           geometry.translate(0, 0, -groundZ!);
           const material = materialFor(source);
@@ -152,13 +162,15 @@ export function ShadowMap({ chunkURL, azimuth, elevation, sources, weights, onSe
           // The shader moves vertices outside the original geometry bounds.
           cast.frustumCulled = false;
           scene.add(cast);
+          meshes.push(cast);
           if (source === 'buildings') {
             const building = new THREE.Mesh(geometry, buildings);
             building.frustumCulled = false;
             scene.add(building);
+            meshes.push(building);
           }
         });
-        loadedTiles.add(key);
+        loadedTiles.set(key, { meshes, geometries });
         materialFor(source).uniforms.shadowCastMatrix.value.copy(getShadowCastMatrix(latest.current.azimuth, latest.current.elevation, 1));
         if (latest.current.viewport) draw(state, latest.current.viewport);
       } catch (loadError) {
@@ -172,8 +184,31 @@ export function ShadowMap({ chunkURL, azimuth, elevation, sources, weights, onSe
     };
 
     state.ensureTiles = (nextViewport) => {
-      const tiles = shadowTilesForViewport(chunkURL, nextViewport);
-      const sourcesToLoad = (['buildings', 'trees'] as const).filter(source => sourceEnabled(sources, source));
+      // const tiles = shadowTilesForViewport(chunkURL, nextViewport);
+      // const sourcesToLoad = (['buildings', 'trees'] as const).filter(source => sourceEnabled(sources, source));
+      
+      const allTiles = shadowTilesForViewport(latest.current.chunkURL, nextViewport);
+      if (!allTiles.length) return;
+ 
+      const centerX = Math.round(allTiles.reduce((sum, t) => sum + t.x, 0) / allTiles.length);
+      const centerY = Math.round(allTiles.reduce((sum, t) => sum + t.y, 0) / allTiles.length);
+      const tiles = allTiles.filter(
+        t => Math.max(Math.abs(t.x - centerX), Math.abs(t.y - centerY)) <= MAX_TILE_RADIUS
+      );
+ 
+      const sourcesToLoad = (['buildings', 'trees'] as const).filter(source => sourceEnabled(latest.current.sources, source));
+ 
+      const desiredKeys = new Set<string>();
+      for (const source of sourcesToLoad) {
+        for (const tile of tiles) {
+          desiredKeys.add(`${source}:${tileKey(tile)}`);
+        }
+      }
+      for (const key of Array.from(loadedTiles.keys())) {
+        if (!desiredKeys.has(key)) evictTile(key);
+      }
+ 
+      
       void (async () => {
         const jobs: { source: ShadowSource; tile: TileCoordinate; manifest: Manifest | null }[] = [];
         for (const source of sourcesToLoad) {
@@ -191,20 +226,29 @@ export function ShadowMap({ chunkURL, azimuth, elevation, sources, weights, onSe
     return () => {
       active = false;
       overlay.current = null;
-      const geometries = new Set<THREE.BufferGeometry>();
-      scene.traverse(object => { if (object instanceof THREE.Mesh) geometries.add(object.geometry); });
-      geometries.forEach(geometry => geometry.dispose());
+      // const geometries = new Set<THREE.BufferGeometry>();
+      // scene.traverse(object => { if (object instanceof THREE.Mesh) geometries.add(object.geometry); });
+      // geometries.forEach(geometry => geometry.dispose());
+      for (const key of Array.from(loadedTiles.keys())) evictTile(key);
       shadow.dispose();
       buildings.dispose();
       state.vegetation.dispose();
       renderer.dispose();
     };
-  }, [chunkURL, sourceSelectionKey, sources]);
+  // }, [chunkURL, sourceSelectionKey, sources]);
+  }, []);
 
   useEffect(() => {
     const state = overlay.current;
     if (!state || !viewport) return;
     state.ensureTiles(viewport);
+  }, [viewport, chunkURL, sourceSelectionKey]);
+ 
+
+  useEffect(() => {
+    const state = overlay.current;
+    if (!state || !viewport) return;
+    // state.ensureTiles(viewport);
     state.shadow.uniforms.shadowCastMatrix.value.copy(getShadowCastMatrix(azimuth, elevation, 1));
     state.shadow.uniforms.shadowColor.value.w = elevation > 0 ? 0.5 * sourceOpacity('buildings', weights) : 0;
     state.vegetation.uniforms.shadowCastMatrix.value.copy(getShadowCastMatrix(azimuth, elevation, 1));
