@@ -31,6 +31,7 @@ export { calculateSunPosition };
 
 const MADRID_LAT = 40.4168;
 const MADRID_LON = -3.7038;
+const TOTAL_FRAMES = 50;
 
 /**
  * Trunca un número o string numérico a un máximo de 6 decimales para la visualización en los inputs.
@@ -55,6 +56,14 @@ function minutosAHora(minutos: number) {
   return `${String(horas).padStart(2, '0')}:${String(mins).padStart(2, '0')}`;
 }
 
+function parseMinutos(horaStr: string) {
+  const parts = horaStr.split(':');
+  if (parts.length !== 2) return 0;
+  const h = parseInt(parts[0], 10) || 0;
+  const m = parseInt(parts[1], 10) || 0;
+  return h * 60 + m;
+}
+
 export default function SolarCalculatorScreen() {
   // const [date, setDate] = useState(new Date());
   // const [time, setTime] = useState(new Date());
@@ -72,21 +81,22 @@ export default function SolarCalculatorScreen() {
   const [horaFin, setHoraFin] = useState('23:59');
   const [resultadoSolarSimulacion, setResultadoSolarSimulacion] = useState<SolarPosition | null>(null);
   
-  // Paso de minutos por tick para que la simulación dure 10 segundos a 10 actualizaciones por segundo.
-  const pasoPorTick = useMemo(() => {
-    const parseMinutos = (horaStr: string) => {
-      const parts = horaStr.split(':');
-      if (parts.length !== 2) return 0;
-      const h = parseInt(parts[0], 10) || 0;
-      const m = parseInt(parts[1], 10) || 0;
-      return h * 60 + m;
-    };
-
+  // Paso de minutos por tick para que la simulación dure exactamente 10 segundos en TOTAL_FRAMES frames.  const pasoPorTick = useMemo(() => {
+    // const parseMinutos = (horaStr: string) => {
+    //  const parts = horaStr.split(':');
+    //  if (parts.length !== 2) return 0;
+    //  const h = parseInt(parts[0], 10) || 0;
+    //  const m = parseInt(parts[1], 10) || 0;
+    //  return h * 60 + m;
+    //};
+    const pasoPorTick = useMemo(() => {
     const minInicio = parseMinutos(horaInicio);
     let minFin = parseMinutos(horaFin);
     if (minFin <= minInicio) minFin += 1440;
-    const paso = (minFin - minInicio) / 100;
-    return paso > 0 ? paso : 14.4;
+    // const paso = (minFin - minInicio) / 100;
+    // return paso > 0 ? paso : 14.4;
+    const paso = (minFin - minInicio) / TOTAL_FRAMES;
+    return paso > 0 ? paso : 1440 / TOTAL_FRAMES;
   }, [horaInicio, horaFin]);
 
   // Estado para controlar la vista activa del mapa: '2d', '3d' o '2d-sombras'
@@ -265,19 +275,30 @@ export default function SolarCalculatorScreen() {
     }
   };
 
+
+  useEffect(() => {
+    if (isPlaying) return;
+    const minInicio = parseMinutos(horaInicio);
+    setTiempoActualMinutos(minInicio);
+    if (simulacionActiva) {
+      actualizarSolPorMinutos(minInicio);
+    }
+  }, [horaInicio, horaFin]);
+
+
   /**
-   * Bucle de tiempo para la animación de simulación horaria (10 segundos totales a 10 updates/s).
+   * Bucle de tiempo para la animación de simulación horaria (10 segundos totales en TOTAL_FRAMES frames).
    */
   useEffect(() => {
     if (!isPlaying) return;
 
-    const parseMinutos = (horaStr: string) => {
-      const parts = horaStr.split(':');
-      if (parts.length !== 2) return 0;
-      const h = parseInt(parts[0], 10) || 0;
-      const m = parseInt(parts[1], 10) || 0;
-      return h * 60 + m;
-    };
+    // const parseMinutos = (horaStr: string) => {
+    //  const parts = horaStr.split(':');
+    //  if (parts.length !== 2) return 0;
+    //  const h = parseInt(parts[0], 10) || 0;
+    //  const m = parseInt(parts[1], 10) || 0;
+    //  return h * 60 + m;
+    //};
 
     const minInicioMax = parseMinutos(horaInicio);
     let minFinMax = parseMinutos(horaFin);
@@ -289,13 +310,16 @@ export default function SolarCalculatorScreen() {
       setTiempoActualMinutos((prev) => {
         const siguiente = prev + pasoPorTick;
         if (siguiente >= minFinMax) {
+          actualizarSolPorMinutos(minFinMax);
           setIsPlaying(false);
-          return minInicioMax;
+          // return minInicioMax;
+          return minFinMax;
         }
         actualizarSolPorMinutos(siguiente);
         return siguiente;
       });
-    }, 100);
+    // }, 100);
+    }, 10000 / TOTAL_FRAMES);
 
     return () => clearInterval(intervalId);
   }, [isPlaying, pasoPorTick, horaInicio, horaFin, fechaOperacion, latitude, longitude]);
@@ -940,7 +964,23 @@ export default function SolarCalculatorScreen() {
               />
               <Pressable
                 style={styles.simulationPlayButton}
-                onPress={() => setIsPlaying(!isPlaying)}
+                // onPress={() => setIsPlaying(!isPlaying)}
+                onPress={() => {
+                  if (!isPlaying) {
+                    const minInicio = parseMinutos(horaInicio);
+                    let minFin = parseMinutos(horaFin);
+                    if (minFin <= minInicio) minFin += 1440;
+                    if (
+                      tiempoActualMinutos === 0 ||
+                      tiempoActualMinutos < minInicio ||
+                      tiempoActualMinutos >= minFin
+                    ) {
+                      setTiempoActualMinutos(minInicio);
+                      actualizarSolPorMinutos(minInicio);
+                    }
+                  }
+                  setIsPlaying(!isPlaying);
+                }}
               >
                 <Text style={styles.simulationPlayText}>
                   {isPlaying ? '⏸' : '▶'}
