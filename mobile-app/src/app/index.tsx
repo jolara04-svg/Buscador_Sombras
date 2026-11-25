@@ -112,8 +112,39 @@ export default function SolarCalculatorScreen() {
   const [busquedaDestino, setBusquedaDestino] = useState('');
   const [busquedaOrigen, setBusquedaOrigen] = useState('');
   const [tipoBusquedaRuta, setTipoBusquedaRuta] = useState<'origen' | 'destino' | null>(null);
+  
+  // Estado para el toggle de visualización de parkings
+  const [mostrarParkings, setMostrarParkings] = useState(false);
+  // Estado para almacenar los parkings cercanos
+  const [parkings, setParkings] = useState<any[]>([]);
   const [ubicacionActual, setUbicacionActual] = useState<{ lat: number; lon: number } | null>(null);
   const [usarUbicacionActual, setUsarUbicacionActual] = useState(true);
+
+  /**
+   * Función asíncrona para cargar parkings cercanos desde el backend.
+   * @param {number} lat - Latitud
+   * @param {number} lon - Longitud
+   */
+  const cargarParkings = async (lat: number, lon: number) => {
+    try {
+      const response = await fetch(`http://localhost:3000/api/parkings?lat=${lat}&lon=${lon}&radius=500`);
+      if (!response.ok) {
+        throw new Error('Error al cargar parkings');
+      }
+      const data = await response.json();
+      setParkings(Array.isArray(data) ? data : data.parkings || []);
+    } catch (error) {
+      console.warn('No se pudieron cargar los parkings:', error);
+      setParkings([]);
+    }
+  };
+
+  // Limpiar parkings si mostrarParkings cambia a false
+  useEffect(() => {
+    if (!mostrarParkings) {
+      setParkings([]);
+    }
+  }, [mostrarParkings]);
 
   // Estados para el buscador de lugares y debounce
   const [searchResults, setSearchResults] = useState<any[]>([]);
@@ -463,6 +494,10 @@ export default function SolarCalculatorScreen() {
 
     if (modoBusqueda === 'lugar') {
       setBusqueda(item.nombre);
+      // Si el botón de parkings está activo, cargar parkings cercanos
+      if (mostrarParkings) {
+        cargarParkings(lat, lon);
+      }
       if (vistaActiva === '2d') {
         setDestino({ lat, lon });
         setBusquedaDestino(item.nombre);
@@ -474,6 +509,10 @@ export default function SolarCalculatorScreen() {
       if (tipoBusquedaRuta !== 'origen') {
         setDestino({ lat, lon });
         setBusquedaDestino(item.nombre);
+        // Si el botón de parkings está activo, cargar parkings para el destino
+        if (mostrarParkings) {
+          cargarParkings(lat, lon);
+        }
       } else if (tipoBusquedaRuta === 'origen') {
         setUsarUbicacionActual(false);
         setOrigen({ lat, lon });
@@ -535,6 +574,10 @@ export default function SolarCalculatorScreen() {
       setLongitude(lon.toString());
       setLatitudeDisplay(truncarA6Decimales(lat.toString()));
       setLongitudeDisplay(truncarA6Decimales(lon.toString()));
+      // Si el botón de parkings está activo, cargar parkings al tocar el mapa en modo lugar
+      if (mostrarParkings) {
+        cargarParkings(lat, lon);
+      }
       return;
     }
 
@@ -547,6 +590,10 @@ export default function SolarCalculatorScreen() {
       } else if (modoSeleccion === 'destino') {
         setDestino({ lat, lon });
         setBusquedaDestino(`${lat.toFixed(6)}, ${lon.toFixed(6)}`);
+        // Si el botón de parkings está activo, cargar parkings al seleccionar destino en el mapa
+        if (mostrarParkings) {
+          cargarParkings(lat, lon);
+        }
       }
       cerrarBusqueda();
     }
@@ -737,6 +784,19 @@ export default function SolarCalculatorScreen() {
                           placeholder="HH:MM"
                         />
                       </View>
+
+                      {/* Botón toggle para mostrar/ocultar parkings */}
+                      <Pressable
+                        style={[
+                          styles.parkingBox,
+                          mostrarParkings && styles.parkingBoxActive,
+                        ]}
+                        onPress={() => setMostrarParkings(!mostrarParkings)}
+                        accessibilityRole="button"
+                        accessibilityLabel="Alternar visualización de parkings"
+                      >
+                        <Text style={styles.parkingBoxText}>🚗</Text>
+                      </Pressable>
 
       </View>   
 
@@ -1350,6 +1410,27 @@ const styles = StyleSheet.create({
     width: 1,
     height: '60%',
     backgroundColor: '#ccc',
+  },
+  parkingBox: {
+    width: 50,
+    height: 50,
+    backgroundColor: '#fff',
+    borderRadius: 25,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  parkingBoxActive: {
+    backgroundColor: '#e0e0e0',
+    borderColor: '#0066cc',
+    borderWidth: 1,
+  },
+  parkingBoxText: {
+    fontSize: 20,
   },
   seasonSelector: {
     position: 'relative',
