@@ -51,7 +51,11 @@ export function RouteControls({origin,destination,date,time,contextKey,onChange}
     <Text style={styles.title}>Rutas a pie</Text>
     <Text>Preferencia de sombra: {preference} %</Text>
     <Slider accessibilityLabel="Preferencia de sombra" minimumValue={0} maximumValue={100} step={5} value={preference}
-      onValueChange={value=>{cancel();setPreference(value);setFastest(null);setShaded(null);setError('');onChange(null);}} minimumTrackTintColor="#258443" />
+      // onValueChange={value=>{cancel();setPreference(value);setFastest(null);setShaded(null);setError('');onChange(null);}} minimumTrackTintColor="#258443" />
+      onValueChange={value=>{cancel();setPreference(value);setFastest(null);setShaded(null);setError('');onChange(null);}}
+      minimumTrackTintColor="#0066cc"
+      maximumTrackTintColor="#ddd"
+      thumbTintColor="#0066cc" /> 
     <Text style={styles.note}>0 %: menor distancia · 100 %: menos metros al sol. La preferencia no garantiza un porcentaje de sombra.</Text>
     <Pressable accessibilityRole="button" accessibilityLabel="Calcular rutas a pie" disabled={!origin||!destination||busy} onPress={calculate} style={[styles.calculate,(!origin||!destination||busy)&&styles.disabled]}>
       <Text style={styles.calculateText}>{busy?'Calculando rutas…':'Calcular rutas'}</Text>
@@ -65,9 +69,11 @@ export function RouteControls({origin,destination,date,time,contextKey,onChange}
   </View>;
 }
 const styles=StyleSheet.create({
-  panel:{marginHorizontal:15,marginBottom:12,padding:15,backgroundColor:'#fff',borderRadius:10,gap:8},
+  // panel:{marginHorizontal:15,marginBottom:12,padding:15,backgroundColor:'#fff',borderRadius:10,gap:8},
+  panel:{padding:15,backgroundColor:'#fff',borderRadius:10,gap:8},
   title:{fontSize:17,fontWeight:'600',color:'#333'},note:{fontSize:12,color:'#666',lineHeight:17},
-  calculate:{backgroundColor:'#1d7050',borderRadius:8,padding:12,alignItems:'center'},calculateText:{color:'#fff',fontWeight:'600'},disabled:{opacity:.45},
+  // calculate:{backgroundColor:'#1d7050',borderRadius:8,padding:12,alignItems:'center'},calculateText:{color:'#fff',fontWeight:'600'},disabled:{opacity:.45},
+  calculate:{backgroundColor:'#0066cc',borderRadius:8,padding:12,alignItems:'center'},calculateText:{color:'#fff',fontWeight:'600'},disabled:{opacity:.45},
   loading:{flexDirection:'row',alignItems:'center',gap:8},cards:{flexDirection:'row',flexWrap:'wrap',gap:8},
   card:{flexGrow:1,flexBasis:180,padding:12,borderWidth:1,borderColor:'#ddd',borderRadius:8,gap:4},active:{borderColor:'#258443',backgroundColor:'#eef8f0'},cardTitle:{fontWeight:'600'},error:{color:'#a13b30',fontSize:13,lineHeight:18},
 });

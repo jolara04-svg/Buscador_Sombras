@@ -801,7 +801,7 @@ export default function SolarCalculatorScreen() {
 
       </View>   
 
-      <View style={styles.seasonSelector}>
+      {/*<View style={styles.seasonSelector}>
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="Abrir selector de estación"
@@ -833,7 +833,7 @@ export default function SolarCalculatorScreen() {
             })}
           </View>
         )}
-      </View>
+      </View>*/}
 
       {/* Panel desplegable con resultados de búsqueda clicables (solo se muestra si hay búsqueda activa y resultados/carga) */}
       {(((modoBusqueda === 'lugar' && busqueda.trim().length >= 2) || (modoBusqueda === 'ruta' && ((tipoBusquedaRuta === 'destino' && busquedaDestino.trim().length >= 2) || (tipoBusquedaRuta === 'origen' && busquedaOrigen.trim().length >= 2)))) && (isSearching || searchResults.length > 0)) && (
@@ -1224,6 +1224,42 @@ export default function SolarCalculatorScreen() {
             </Text>
           </Pressable>
         </View>
+
+        {/* 5. Selector de estación en la esquina superior derecha del mapa */}
+        <View style={styles.seasonSelector}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Abrir selector de estación"
+            accessibilityState={{ expanded: selectorEstacion.menuAbierto }}
+            style={styles.seasonToggle}
+            onPress={alternarSelectorEstacion}
+          >
+            <Text style={styles.seasonToggleText}>☀ Estación: {etiquetaEstacion(estacionSeleccionada)}</Text>
+            <Text style={styles.seasonToggleIcon}>{selectorEstacion.menuAbierto ? '▲' : '▼'}</Text>
+          </Pressable>
+          {selectorEstacion.menuAbierto && (
+            <View style={styles.seasonOptions} accessibilityRole="menu">
+              {ESTACIONES.map((estacion) => {
+                const selected = estacion.value === estacionSeleccionada;
+                return (
+                  <Pressable
+                    key={estacion.value}
+                    accessibilityRole="menuitem"
+                    accessibilityLabel={`Seleccionar ${estacion.label}`}
+                    accessibilityState={{ selected }}
+                    style={[styles.seasonOption, selected && styles.seasonOptionActive]}
+                    onPress={() => cambiarEstacion(estacion.value)}
+                  >
+                    <Text style={[styles.seasonOptionText, selected && styles.seasonOptionTextActive]}>
+                      {estacion.label}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+          )}
+        </View>
+
       </View>
     </ScrollView>
   );
@@ -1467,11 +1503,11 @@ const styles = StyleSheet.create({
     fontSize: 20,
   },
   seasonSelector: {
-    position: 'relative',
-    alignSelf: 'flex-end',
-    marginHorizontal: 15,
-    marginBottom: 10,
+    position: 'absolute',
+    top: 10,
+    right: 10,
     zIndex: 40,
+    elevation: 6,
   },
   seasonToggle: {
     minWidth: 174,
@@ -1761,12 +1797,14 @@ const styles = StyleSheet.create({
   },
   routeControlsWrapper: {
     position: 'relative',
+    marginHorizontal: 15,
+    marginBottom: 12,
   },
   routeControlsCloseButton: {
     position: 'absolute',
     top: 8,
     right: 8,
-    zIndex: 30,
+    zIndex: 10,
     width: 28,
     height: 28,
     borderRadius: 14,
