@@ -107,7 +107,8 @@ export default function SolarCalculatorScreen() {
   // Estados para la barra superior y modos de búsqueda
   const [busqueda, setBusqueda] = useState('');
   const [modoBusqueda, setModoBusqueda] = useState<'lugar' | 'ruta'>('lugar');
-  
+  const [mostrarAjustesRuta, setMostrarAjustesRuta] = useState(false);
+
   // Estados adicionales para el buscador de rutas (Destino y Origen)
   const [busquedaDestino, setBusquedaDestino] = useState('');
   const [busquedaOrigen, setBusquedaOrigen] = useState('');
@@ -494,16 +495,14 @@ export default function SolarCalculatorScreen() {
 
     if (modoBusqueda === 'lugar') {
       setBusqueda(item.nombre);
+      setPuntoSombraSeleccionado({ lat, lon });
+      const selectedDate = new Date(`${fechaOperacion}T${horaOperacion}:00`);
+      if (!Number.isNaN(selectedDate.getTime())) {
+        setResult(calculateSunPosition(selectedDate, lat, lon));
+      }
       // Si el botón de parkings está activo, cargar parkings cercanos
       if (mostrarParkings) {
         cargarParkings(lat, lon);
-      }
-      if (vistaActiva === '2d') {
-        setDestino({ lat, lon });
-        setBusquedaDestino(item.nombre);
-        setModoBusqueda('ruta');
-        setModoSeleccion('destino');
-        setPuntoSombraSeleccionado(null);
       }
     } else if (modoBusqueda === 'ruta') {
       if (tipoBusquedaRuta !== 'origen') {
@@ -740,6 +739,7 @@ export default function SolarCalculatorScreen() {
                               // Sincronizamos con el modo de búsqueda 'lugar' y el modo solar en el mapa
                               setModoBusqueda('lugar');
                               setModoSeleccion('solar');
+                              setMostrarAjustesRuta(false);
                             }}
                           >
                             <Text style={styles.modeButtonText}>🔍</Text>
@@ -752,10 +752,11 @@ export default function SolarCalculatorScreen() {
                               cerrarBusqueda();
                               setVistaActiva('2d');
                               setPuntoSombraSeleccionado(null);
-                              // Sincronizamos con el modo de búsqueda 'ruta' y aseguramos que el primer clic sea el origen
+                              // Sincronizamos con el modo de búsqueda 'ruta' y empezamos buscando el destino
                               setModoBusqueda('ruta');
                               setModoSeleccion('destino'); // Por defecto comenzamos buscando el destino
                               setTipoBusquedaRuta('destino');
+                              setMostrarAjustesRuta(true);
                             }}
                           >
                             <Text style={styles.modeButtonText}>🧭</Text>
@@ -859,9 +860,42 @@ export default function SolarCalculatorScreen() {
         </View>
       )}
 
-      {modoBusqueda === 'ruta' && vistaActiva === '2d' && <RouteControls key={contextoRuta}
+      {/*{modoBusqueda === 'ruta' && vistaActiva === '2d' && <RouteControls key={contextoRuta}
         origin={origenSeleccionado} destination={destino} date={fechaOperacion} time={horaOperacion}
         contextKey={contextoRuta} onChange={setRutas} />}
+      */}
+
+        {modoBusqueda === 'ruta' && vistaActiva === '2d' && mostrarAjustesRuta && (
+         <View style={styles.routeControlsWrapper}>
+           <Pressable
+             style={styles.routeControlsCloseButton}
+             accessibilityRole="button"
+             accessibilityLabel="Cerrar ajustes de ruta"
+             onPress={() => {
+               setMostrarAjustesRuta(false);
+               setOrigen(null);
+               setDestino(null);
+               setBusquedaOrigen('');
+               setBusquedaDestino('');
+               setRutas(null);
+               setModoBusqueda('lugar');
+               setModoSeleccion('solar');
+               cerrarBusqueda();
+             }}
+           >
+             <Text style={styles.routeControlsCloseText}>✕</Text>
+           </Pressable>
+           <RouteControls
+             key={contextoRuta}
+             origin={origenSeleccionado}
+             destination={destino}
+             date={fechaOperacion}
+             time={horaOperacion}
+             contextKey={contextoRuta}
+             onChange={setRutas}
+           />
+         </View>
+       )}
 
       {/* CONTENEDOR PRINCIPAL DEL VISOR DE MAPA (Altura fija y ancho completo) */}
       <View style={styles.mapContainer}>
@@ -1724,5 +1758,25 @@ const styles = StyleSheet.create({
     width: 1,
     height: '60%',
     backgroundColor: '#ccc',
+  },
+  routeControlsWrapper: {
+    position: 'relative',
+  },
+  routeControlsCloseButton: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    zIndex: 30,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: '#f0f0f0',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  routeControlsCloseText: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#333',
   },
 });
