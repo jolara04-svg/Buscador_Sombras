@@ -7,6 +7,20 @@
     "lon": -3.6864209
   },
   {
+    "id": 26080782,
+    "nombre": "Princesa 25",
+    "tipo": "Parking",
+    "lat": 40.4267119,
+    "lon": -3.7143698
+  },
+  {
+    "id": 26341193,
+    "nombre": "Parking Benavente",
+    "tipo": "Parking",
+    "lat": 40.4144691,
+    "lon": -3.7035492
+  },
+  {
     "id": 60420940,
     "nombre": "Facultad de Ciencias",
     "tipo": "Universidad",
@@ -42,11 +56,46 @@
     "lon": -3.6888894
   },
   {
+    "id": 268771082,
+    "nombre": "Ayto - Corona boreal",
+    "tipo": "Parking",
+    "lat": 40.4586864,
+    "lon": -3.7840659
+  },
+  {
     "id": 279108476,
     "nombre": "Plaza del Conde de Benavente",
     "tipo": "Plaza",
     "lat": 40.3775657,
     "lon": -3.7324747
+  },
+  {
+    "id": 298609367,
+    "nombre": "Princesa",
+    "tipo": "Parking",
+    "lat": 40.4251815,
+    "lon": -3.7129265
+  },
+  {
+    "id": 300748727,
+    "nombre": "Montalbán",
+    "tipo": "Parking",
+    "lat": 40.4181784,
+    "lon": -3.6912509
+  },
+  {
+    "id": 300750920,
+    "nombre": "Plaza de Colón",
+    "tipo": "Parking",
+    "lat": 40.4254701,
+    "lon": -3.6890623
+  },
+  {
+    "id": 300751456,
+    "nombre": "Serranopark II",
+    "tipo": "Parking",
+    "lat": 40.429999,
+    "lon": -3.6885639
   },
   {
     "id": 301999811,
@@ -70,11 +119,151 @@
     "lon": -3.6886925
   },
   {
+    "id": 364910487,
+    "nombre": "A",
+    "tipo": "Parking",
+    "lat": 40.4888179,
+    "lon": -3.5950785
+  },
+  {
+    "id": 364910491,
+    "nombre": "B",
+    "tipo": "Parking",
+    "lat": 40.4898335,
+    "lon": -3.5950853
+  },
+  {
+    "id": 364910494,
+    "nombre": "C",
+    "tipo": "Parking",
+    "lat": 40.4908461,
+    "lon": -3.5950853
+  },
+  {
+    "id": 364910497,
+    "nombre": "D",
+    "tipo": "Parking",
+    "lat": 40.4918795,
+    "lon": -3.5950761
+  },
+  {
+    "id": 364910508,
+    "nombre": "E",
+    "tipo": "Parking",
+    "lat": 40.4928643,
+    "lon": -3.595067
+  },
+  {
+    "id": 364910516,
+    "nombre": "F",
+    "tipo": "Parking",
+    "lat": 40.4938768,
+    "lon": -3.5950488
+  },
+  {
+    "id": 370152113,
+    "nombre": "Mostenses",
+    "tipo": "Parking",
+    "lat": 40.4224966,
+    "lon": -3.7089695
+  },
+  {
+    "id": 370503508,
+    "nombre": "Villa de París",
+    "tipo": "Parking",
+    "lat": 40.4251093,
+    "lon": -3.6924042
+  },
+  {
+    "id": 390582264,
+    "nombre": "Centro Colón",
+    "tipo": "Parking",
+    "lat": 40.4249207,
+    "lon": -3.6921427
+  },
+  {
+    "id": 457502021,
+    "nombre": "Estación",
+    "tipo": "Parking",
+    "lat": 40.3420766,
+    "lon": -3.7127146
+  },
+  {
+    "id": 551573440,
+    "nombre": "Parking Plaza de las Descalzas",
+    "tipo": "Parking",
+    "lat": 40.4182133,
+    "lon": -3.7066603
+  },
+  {
+    "id": 623922454,
+    "nombre": "Parking de Santa Ana",
+    "tipo": "Parking",
+    "lat": 40.4146724,
+    "lon": -3.7007342
+  },
+  {
+    "id": 655410405,
+    "nombre": "Parking Coslada 3",
+    "tipo": "Parking",
+    "lat": 40.4372482,
+    "lon": -3.675782
+  },
+  {
+    "id": 674492255,
+    "nombre": "Luchana",
+    "tipo": "Parking",
+    "lat": 40.4313898,
+    "lon": -3.7000104
+  },
+  {
+    "id": 706690031,
+    "nombre": "Aida",
+    "tipo": "Parking",
+    "lat": 40.4572456,
+    "lon": -3.6913445
+  },
+  {
+    "id": 810259262,
+    "nombre": "Corazón de María",
+    "tipo": "Parking",
+    "lat": 40.4443858,
+    "lon": -3.6669736
+  },
+  {
+    "id": 828772147,
+    "nombre": "Parking de la Facultad de Bellas Artes",
+    "tipo": "Parking",
+    "lat": 40.4392759,
+    "lon": -3.7335048
+  },
+  {
     "id": 845763449,
     "nombre": "El Goloso",
     "tipo": "Estación de Transporte",
     "lat": 40.5584694,
     "lon": -3.7138301
+  },
+  {
+    "id": 885681385,
+    "nombre": "Isabel la Católica",
+    "tipo": "Parking",
+    "lat": 40.4215869,
+    "lon": -3.7090555
+  },
+  {
+    "id": 890642118,
+    "nombre": "Palacio de los Deportes",
+    "tipo": "Parking",
+    "lat": 40.4232971,
+    "lon": -3.6719385
+  },
+  {
+    "id": 930662417,
+    "nombre": "Parking Barceló",
+    "tipo": "Parking",
+    "lat": 40.4263394,
+    "lon": -3.7001016
   },
   {
     "id": 936505939,
@@ -84,11 +273,74 @@
     "lon": -3.6977299
   },
   {
+    "id": 1080999497,
+    "nombre": "Centro Comercial La Albufera",
+    "tipo": "Parking",
+    "lat": 40.39263,
+    "lon": -3.6559785
+  },
+  {
     "id": 1152895181,
     "nombre": "Villaverde Bajo",
     "tipo": "Estación de Transporte",
     "lat": 40.352592,
     "lon": -3.6839811
+  },
+  {
+    "id": 1179021817,
+    "nombre": "El Corte Inglés",
+    "tipo": "Parking",
+    "lat": 40.4302749,
+    "lon": -3.7146864
+  },
+  {
+    "id": 1237726255,
+    "nombre": "Parking Mercadona San Antón",
+    "tipo": "Parking",
+    "lat": 40.4218833,
+    "lon": -3.6973754
+  },
+  {
+    "id": 1285573358,
+    "nombre": "Parking Garaje AML",
+    "tipo": "Parking",
+    "lat": 40.4234397,
+    "lon": -3.7000646
+  },
+  {
+    "id": 1430267875,
+    "nombre": "Vinci Park",
+    "tipo": "Parking",
+    "lat": 40.4575187,
+    "lon": -3.6931553
+  },
+  {
+    "id": 1449632134,
+    "nombre": "Aeropuerto T4 Salidas",
+    "tipo": "Parking",
+    "lat": 40.4919365,
+    "lon": -3.5936343
+  },
+  {
+    "id": 1459328462,
+    "nombre": "Aparcamiento Guindalera Plaza San Cayetano",
+    "tipo": "Parking",
+    "lat": 40.4341725,
+    "lon": -3.6704777
+  },
+  {
+    "id": 1473222590,
+    "nombre": "Terminal 4 - Aeropuerto",
+    "tipo": "Parking",
+    "lat": 40.4913335,
+    "lon": -3.59203
+  },
+  {
+    "id": 1474148138,
+    "nombre": "Juan de Vera",
+    "tipo": "Parking",
+    "lat": 40.3963102,
+    "lon": -3.6921004
   },
   {
     "id": 1474148142,
@@ -98,11 +350,39 @@
     "lon": -3.6977743
   },
   {
+    "id": 1490070885,
+    "nombre": "Serrano Park",
+    "tipo": "Parking",
+    "lat": 40.4354766,
+    "lon": -3.686792
+  },
+  {
     "id": 1534461496,
     "nombre": "Las Águilas",
     "tipo": "Estación de Transporte",
     "lat": 40.3814589,
     "lon": -3.7803772
+  },
+  {
+    "id": 1537917858,
+    "nombre": "Galaxia",
+    "tipo": "Parking",
+    "lat": 40.4351473,
+    "lon": -3.71802
+  },
+  {
+    "id": 1558636932,
+    "nombre": "Casino de la Reina",
+    "tipo": "Parking",
+    "lat": 40.40685,
+    "lon": -3.7041761
+  },
+  {
+    "id": 1672772718,
+    "nombre": "Parking Mercado de Chamartín",
+    "tipo": "Parking",
+    "lat": 40.4575854,
+    "lon": -3.6784512
   },
   {
     "id": 1719813601,
@@ -210,6 +490,13 @@
     "lon": -3.7485207
   },
   {
+    "id": 1950481092,
+    "nombre": "Regina",
+    "tipo": "Parking",
+    "lat": 40.4256169,
+    "lon": -3.678704
+  },
+  {
     "id": 2320539320,
     "nombre": "Tifón",
     "tipo": "Museo / Atracción",
@@ -287,6 +574,20 @@
     "lon": -3.7054947
   },
   {
+    "id": 2455745802,
+    "nombre": "Airport parking - private operator",
+    "tipo": "Parking",
+    "lat": 40.4125365,
+    "lon": -3.5872774
+  },
+  {
+    "id": 2587286553,
+    "nombre": "Parking Apolo XI",
+    "tipo": "Parking",
+    "lat": 40.4116583,
+    "lon": -3.669277
+  },
+  {
     "id": 2609596171,
     "nombre": "Doce de Octubre",
     "tipo": "Estación de Transporte",
@@ -329,11 +630,95 @@
     "lon": -3.7096739
   },
   {
+    "id": 2684627325,
+    "nombre": "Azafata",
+    "tipo": "Parking",
+    "lat": 40.4461985,
+    "lon": -3.7041122
+  },
+  {
+    "id": 2782198966,
+    "nombre": "Garajes Luna",
+    "tipo": "Parking",
+    "lat": 40.422962,
+    "lon": -3.7061009
+  },
+  {
+    "id": 2864063276,
+    "nombre": "Garaje Alcocer 43",
+    "tipo": "Parking",
+    "lat": 40.4588682,
+    "lon": -3.6789669
+  },
+  {
+    "id": 2959994415,
+    "nombre": "Aparca&go",
+    "tipo": "Parking",
+    "lat": 40.4034571,
+    "lon": -3.6905523
+  },
+  {
     "id": 3081949231,
     "nombre": "Instituto de Estudios Bursátiles",
     "tipo": "Universidad",
     "lat": 40.4187205,
     "lon": -3.6907028
+  },
+  {
+    "id": 3118823666,
+    "nombre": "Garaje Ovalo",
+    "tipo": "Parking",
+    "lat": 40.4114189,
+    "lon": -3.667968
+  },
+  {
+    "id": 3135968133,
+    "nombre": "Garaje Avenida",
+    "tipo": "Parking",
+    "lat": 40.4557805,
+    "lon": -3.6896791
+  },
+  {
+    "id": 3156039298,
+    "nombre": "San Lamberto",
+    "tipo": "Parking",
+    "lat": 40.4219367,
+    "lon": -3.650523
+  },
+  {
+    "id": 3158292910,
+    "nombre": "LIDL",
+    "tipo": "Parking",
+    "lat": 40.4225746,
+    "lon": -3.6533718
+  },
+  {
+    "id": 3192227082,
+    "nombre": "Aparcamiento público. Velázquez - Juan Bravo",
+    "tipo": "Parking",
+    "lat": 40.4319183,
+    "lon": -3.6834365
+  },
+  {
+    "id": 3269780321,
+    "nombre": "Parking Goya 115",
+    "tipo": "Parking",
+    "lat": 40.4247321,
+    "lon": -3.6717969
+  },
+  {
+    "id": 3290974006,
+    "nombre": "Sor Ángela",
+    "tipo": "Parking",
+    "lat": 40.4601042,
+    "lon": -3.6961728
+  },
+  {
+    "id": 3294675869,
+    "nombre": "Agustín Lara",
+    "tipo": "Parking",
+    "lat": 40.4082524,
+    "lon": -3.7035647
   },
   {
     "id": 3301423109,
@@ -350,11 +735,25 @@
     "lon": -3.6942495
   },
   {
+    "id": 3426834968,
+    "nombre": "Justeat",
+    "tipo": "Parking",
+    "lat": 40.4560081,
+    "lon": -3.7036345
+  },
+  {
     "id": 3500454030,
     "nombre": "Yacimiento Paleontológico de la Carpetana. Estación de Carpetana Metro Madrid",
     "tipo": "Museo / Atracción",
     "lat": 40.3928135,
     "lon": -3.741293
+  },
+  {
+    "id": 3594825866,
+    "nombre": "Aparcamiento Ciudad Universitaria",
+    "tipo": "Parking",
+    "lat": 40.4425143,
+    "lon": -3.7268452
   },
   {
     "id": 3619272386,
@@ -434,6 +833,27 @@
     "lon": -3.7332694
   },
   {
+    "id": 3801862431,
+    "nombre": "Parking Cascorro",
+    "tipo": "Parking",
+    "lat": 40.4088834,
+    "lon": -3.7060845
+  },
+  {
+    "id": 3864110658,
+    "nombre": "Garaje Víctor de la Serna 39",
+    "tipo": "Parking",
+    "lat": 40.4573585,
+    "lon": -3.6724653
+  },
+  {
+    "id": 3869087061,
+    "nombre": "Vecor",
+    "tipo": "Parking",
+    "lat": 40.4689091,
+    "lon": -3.6864593
+  },
+  {
     "id": 3881653765,
     "nombre": "Mississippi",
     "tipo": "Universidad",
@@ -441,11 +861,39 @@
     "lon": -3.7005742
   },
   {
+    "id": 3961686780,
+    "nombre": "Respiro Madrid",
+    "tipo": "Parking",
+    "lat": 40.4734774,
+    "lon": -3.7010499
+  },
+  {
+    "id": 3992052083,
+    "nombre": "Garaje Bravo",
+    "tipo": "Parking",
+    "lat": 40.4045062,
+    "lon": -3.7143927
+  },
+  {
     "id": 4056301456,
     "nombre": "La Sanchita",
     "tipo": "Parque",
     "lat": 40.3901416,
     "lon": -3.6963721
+  },
+  {
+    "id": 4107664514,
+    "nombre": "Área de aparcamiento",
+    "tipo": "Parking",
+    "lat": 40.5172291,
+    "lon": -3.6705633
+  },
+  {
+    "id": 4108856019,
+    "nombre": "Aparcamieno Residentes",
+    "tipo": "Parking",
+    "lat": 40.34267,
+    "lon": -3.71579
   },
   {
     "id": 4173744335,
@@ -474,6 +922,20 @@
     "tipo": "Museo / Atracción",
     "lat": 40.4240287,
     "lon": -3.6894979
+  },
+  {
+    "id": 4346189876,
+    "nombre": "Gran Versalles Parking",
+    "tipo": "Parking",
+    "lat": 40.4285326,
+    "lon": -3.6971401
+  },
+  {
+    "id": 4379753151,
+    "nombre": "Garaje Público",
+    "tipo": "Parking",
+    "lat": 40.4354093,
+    "lon": -3.7136863
   },
   {
     "id": 4401067438,
@@ -542,8 +1004,8 @@
     "id": 4409398566,
     "nombre": "Museo Histórico GeoMinero Don Felipe de Borbón y Grecia",
     "tipo": "Museo / Atracción",
-    "lat": 40.4421364,
-    "lon": -3.7003266
+    "lat": 40.4421888,
+    "lon": -3.700311
   },
   {
     "id": 4409413788,
@@ -623,6 +1085,20 @@
     "lon": -3.7117346
   },
   {
+    "id": 4575801332,
+    "nombre": "Serranopark Juan Bravo",
+    "tipo": "Parking",
+    "lat": 40.432954,
+    "lon": -3.6863475
+  },
+  {
+    "id": 4586808235,
+    "nombre": "Aparcamiento Perpetuo Socorro",
+    "tipo": "Parking",
+    "lat": 40.4634719,
+    "lon": -3.6863605
+  },
+  {
     "id": 4650903089,
     "nombre": "Muralla Árabe",
     "tipo": "Museo / Atracción",
@@ -644,11 +1120,32 @@
     "lon": -3.6502259
   },
   {
-    "id": 4706786392,
-    "nombre": "Puente de Ventas",
-    "tipo": "Museo / Atracción",
-    "lat": 40.4313706,
-    "lon": -3.6607148
+    "id": 4710185796,
+    "nombre": "Aparcamiento Residentes Virgen del Romero",
+    "tipo": "Parking",
+    "lat": 40.437818,
+    "lon": -3.6508978
+  },
+  {
+    "id": 4713495356,
+    "nombre": "Garaje Astoria",
+    "tipo": "Parking",
+    "lat": 40.4244219,
+    "lon": -3.7154758
+  },
+  {
+    "id": 4725967141,
+    "nombre": "Atocha 70",
+    "tipo": "Parking",
+    "lat": 40.4115442,
+    "lon": -3.6977507
+  },
+  {
+    "id": 4838516095,
+    "nombre": "Low cost Parking",
+    "tipo": "Parking",
+    "lat": 40.4019737,
+    "lon": -3.7009771
   },
   {
     "id": 4878861621,
@@ -691,6 +1188,13 @@
     "tipo": "Museo / Atracción",
     "lat": 40.4584339,
     "lon": -3.5973263
+  },
+  {
+    "id": 5275607875,
+    "nombre": "Nuestra Señora del Recuerdo",
+    "tipo": "Parking",
+    "lat": 40.4722906,
+    "lon": -3.6789958
   },
   {
     "id": 5299261414,
@@ -2058,6 +2562,13 @@
     "lon": -3.6811007
   },
   {
+    "id": 5501428619,
+    "nombre": "Parking Princesa Marqués de Urquijo Parkia",
+    "tipo": "Parking",
+    "lat": 40.4294136,
+    "lon": -3.7200726
+  },
+  {
     "id": 5531929912,
     "nombre": "Zona para Cometas",
     "tipo": "Parque",
@@ -2070,6 +2581,13 @@
     "tipo": "Museo / Atracción",
     "lat": 40.4248628,
     "lon": -3.6891296
+  },
+  {
+    "id": 5713804878,
+    "nombre": "Garaje Serra",
+    "tipo": "Parking",
+    "lat": 40.4052293,
+    "lon": -3.6788362
   },
   {
     "id": 5774110605,
@@ -2086,6 +2604,13 @@
     "lon": -3.6901206
   },
   {
+    "id": 5901505664,
+    "nombre": "Viparking",
+    "tipo": "Parking",
+    "lat": 40.4513975,
+    "lon": -3.5650769
+  },
+  {
     "id": 5952667315,
     "nombre": "Centro Universitario de la Defensa",
     "tipo": "Universidad",
@@ -2098,6 +2623,13 @@
     "tipo": "Parque",
     "lat": 40.5116544,
     "lon": -3.6897497
+  },
+  {
+    "id": 6042420250,
+    "nombre": "Aparcamiento público Hacienda Reina Victoria",
+    "tipo": "Parking",
+    "lat": 40.4470285,
+    "lon": -3.7139406
   },
   {
     "id": 6071803485,
@@ -2149,6 +2681,20 @@
     "lon": -3.7006764
   },
   {
+    "id": 6403585906,
+    "nombre": "Parking Mercadona",
+    "tipo": "Parking",
+    "lat": 40.4973774,
+    "lon": -3.6682521
+  },
+  {
+    "id": 6404210973,
+    "nombre": "Parking Avenida del Mediterráneo - Retiro",
+    "tipo": "Parking",
+    "lat": 40.4068215,
+    "lon": -3.6733082
+  },
+  {
     "id": 6449759885,
     "nombre": "Plaza de Olavide",
     "tipo": "Museo / Atracción",
@@ -2170,11 +2716,25 @@
     "lon": -3.70198
   },
   {
+    "id": 6516240427,
+    "nombre": "Parking Condes del Val",
+    "tipo": "Parking",
+    "lat": 40.4540292,
+    "lon": -3.6842016
+  },
+  {
     "id": 6945347196,
     "nombre": "Real Armería",
     "tipo": "Museo / Atracción",
     "lat": 40.4168146,
     "lon": -3.7152135
+  },
+  {
+    "id": 6950375980,
+    "nombre": "Aparcamiento público",
+    "tipo": "Parking",
+    "lat": 40.3709947,
+    "lon": -3.6210494
   },
   {
     "id": 6991759445,
@@ -2226,6 +2786,27 @@
     "lon": -3.7171112
   },
   {
+    "id": 7357905018,
+    "nombre": "Parking Hospital VOT - Promoparc",
+    "tipo": "Parking",
+    "lat": 40.4086886,
+    "lon": -3.7147138
+  },
+  {
+    "id": 7357910043,
+    "nombre": "Parking Conde Casal - Promoparc",
+    "tipo": "Parking",
+    "lat": 40.4054937,
+    "lon": -3.6691453
+  },
+  {
+    "id": 7357912620,
+    "nombre": "Parking La Guindalera - Promoparc",
+    "tipo": "Parking",
+    "lat": 40.4344726,
+    "lon": -3.6710468
+  },
+  {
     "id": 7374773919,
     "nombre": "Nickelodeon Express",
     "tipo": "Museo / Atracción",
@@ -2273,6 +2854,13 @@
     "tipo": "Museo / Atracción",
     "lat": 40.4096718,
     "lon": -3.7524338
+  },
+  {
+    "id": 7385064252,
+    "nombre": "Aparcamiento mixto. Daoíz y Velarde",
+    "tipo": "Parking",
+    "lat": 40.4020976,
+    "lon": -3.6779064
   },
   {
     "id": 7499028215,
@@ -2331,6 +2919,13 @@
     "lon": -3.7039156
   },
   {
+    "id": 8301341786,
+    "nombre": "Aparcamiento Recoletos",
+    "tipo": "Parking",
+    "lat": 40.4211164,
+    "lon": -3.6919151
+  },
+  {
     "id": 8326246961,
     "nombre": "Estación de Mercancías Madrid - Abroñigal",
     "tipo": "Estación de Transporte",
@@ -2343,6 +2938,13 @@
     "tipo": "Museo / Atracción",
     "lat": 40.4391166,
     "lon": -3.731913
+  },
+  {
+    "id": 8408601395,
+    "nombre": "Clínica Ruber Juan Bravo",
+    "tipo": "Parking",
+    "lat": 40.4329449,
+    "lon": -3.6758434
   },
   {
     "id": 8851242464,
@@ -2394,11 +2996,25 @@
     "lon": -3.7379968
   },
   {
+    "id": 8911255441,
+    "nombre": "Parking Argüelles",
+    "tipo": "Parking",
+    "lat": 40.4323016,
+    "lon": -3.7194099
+  },
+  {
     "id": 8928518873,
     "nombre": "Palacio de Cibeles - Ayuntamiento de Madrid",
     "tipo": "Museo / Atracción",
     "lat": 40.4188508,
     "lon": -3.6919027
+  },
+  {
+    "id": 8963971911,
+    "nombre": "Montesa",
+    "tipo": "Parking",
+    "lat": 40.4305846,
+    "lon": -3.6722055
   },
   {
     "id": 9595749911,
@@ -2413,6 +3029,13 @@
     "tipo": "Estación de Transporte",
     "lat": 40.4653284,
     "lon": -3.8078481
+  },
+  {
+    "id": 9734262575,
+    "nombre": "Parking Maxi China",
+    "tipo": "Parking",
+    "lat": 40.4878221,
+    "lon": -3.6078746
   },
   {
     "id": 9736885872,
@@ -2448,6 +3071,13 @@
     "tipo": "Museo / Atracción",
     "lat": 40.4150422,
     "lon": -3.7016558
+  },
+  {
+    "id": 10199846396,
+    "nombre": "Ascensor Parking subterráneo",
+    "tipo": "Parking",
+    "lat": 40.4143312,
+    "lon": -3.730119
   },
   {
     "id": 10214472635,
@@ -2520,6 +3150,13 @@
     "lon": -3.7053917
   },
   {
+    "id": 10873129698,
+    "nombre": "Aparcamiento para residentes. Pez Volador",
+    "tipo": "Parking",
+    "lat": 40.4141394,
+    "lon": -3.6640748
+  },
+  {
     "id": 11041760363,
     "nombre": "Bite the fly",
     "tipo": "Museo / Atracción",
@@ -2539,6 +3176,27 @@
     "tipo": "Museo / Atracción",
     "lat": 40.420125,
     "lon": -3.7015465
+  },
+  {
+    "id": 11214294296,
+    "nombre": "Garage Antonio Leyva 27",
+    "tipo": "Parking",
+    "lat": 40.393744,
+    "lon": -3.7153036
+  },
+  {
+    "id": 11374426070,
+    "nombre": "Parking San Bernardo",
+    "tipo": "Parking",
+    "lat": 40.4248551,
+    "lon": -3.7073213
+  },
+  {
+    "id": 11497015315,
+    "nombre": "Parking Quevedo",
+    "tipo": "Parking",
+    "lat": 40.4368608,
+    "lon": -3.70406
   },
   {
     "id": 11705772672,
@@ -2574,6 +3232,13 @@
     "tipo": "Plaza",
     "lat": 40.4097933,
     "lon": -3.7517537
+  },
+  {
+    "id": 11896553161,
+    "nombre": "Edificio Tecnus",
+    "tipo": "Parking",
+    "lat": 40.453936,
+    "lon": -3.7027215
   },
   {
     "id": 11900011931,
@@ -2863,11 +3528,32 @@
     "lon": -3.7082565
   },
   {
+    "id": 12431873353,
+    "nombre": "Garaje Davila",
+    "tipo": "Parking",
+    "lat": 40.4487704,
+    "lon": -3.701165
+  },
+  {
+    "id": 12460996134,
+    "nombre": "Aparcamiento Marqués Salamanca",
+    "tipo": "Parking",
+    "lat": 40.4305212,
+    "lon": -3.6794486
+  },
+  {
     "id": 12504960201,
     "nombre": "Antigua válvula de Canal Isabel Il",
     "tipo": "Museo / Atracción",
     "lat": 40.4653724,
     "lon": -3.6882512
+  },
+  {
+    "id": 12681286411,
+    "nombre": "Garaje Menéndez",
+    "tipo": "Parking",
+    "lat": 40.4295232,
+    "lon": -3.6738294
   },
   {
     "id": 12697660167,
@@ -2919,6 +3605,27 @@
     "lon": -3.6278286
   },
   {
+    "id": 13090653310,
+    "nombre": "Parking ABC Serrano",
+    "tipo": "Parking",
+    "lat": 40.4321774,
+    "lon": -3.6881436
+  },
+  {
+    "id": 13167699220,
+    "nombre": "Parking de Santa Bárbara",
+    "tipo": "Parking",
+    "lat": 40.4242086,
+    "lon": -3.7010861
+  },
+  {
+    "id": 13167699221,
+    "nombre": "Parking Escuelas Pías de San Antón",
+    "tipo": "Parking",
+    "lat": 40.4242328,
+    "lon": -3.6992871
+  },
+  {
     "id": 13200254003,
     "nombre": "Museo de Telecomunicaciones (Escuela Técnica Superior de Ingenieros en Sistemas de Telecomunicación)",
     "tipo": "Museo / Atracción",
@@ -2947,6 +3654,13 @@
     "lon": -3.7007608
   },
   {
+    "id": 13240433276,
+    "nombre": "Aparcamiento Plaza del Carmen",
+    "tipo": "Parking",
+    "lat": 40.4189474,
+    "lon": -3.7034358
+  },
+  {
     "id": 13326834182,
     "nombre": "Centro de Estudios Universitarios",
     "tipo": "Universidad",
@@ -2961,6 +3675,20 @@
     "lon": -3.681004
   },
   {
+    "id": 13431284918,
+    "nombre": "Parking Claudio Coello 139",
+    "tipo": "Parking",
+    "lat": 40.4357529,
+    "lon": -3.6854615
+  },
+  {
+    "id": 13431284919,
+    "nombre": "Garaje Carpa",
+    "tipo": "Parking",
+    "lat": 40.4366551,
+    "lon": -3.6921842
+  },
+  {
     "id": 13468427959,
     "nombre": "MBway Madrid",
     "tipo": "Universidad",
@@ -2968,11 +3696,32 @@
     "lon": -3.6304765
   },
   {
+    "id": 13476087796,
+    "nombre": "Señorial",
+    "tipo": "Parking",
+    "lat": 40.436061,
+    "lon": -3.6929512
+  },
+  {
+    "id": 13476087798,
+    "nombre": "Garaje Collado",
+    "tipo": "Parking",
+    "lat": 40.4339298,
+    "lon": -3.6926338
+  },
+  {
     "id": 13567357502,
     "nombre": "Plaza Mayor",
     "tipo": "Museo / Atracción",
     "lat": 40.4154436,
     "lon": -3.7073553
+  },
+  {
+    "id": 13602837619,
+    "nombre": "Garaje Manzanares",
+    "tipo": "Parking",
+    "lat": 40.4001683,
+    "lon": -3.7224152
   },
   {
     "id": 13730584201,
@@ -3017,6 +3766,27 @@
     "lon": -3.7496198
   },
   {
+    "id": 13840645867,
+    "nombre": "El Viso",
+    "tipo": "Parking",
+    "lat": 40.4491077,
+    "lon": -3.6879144
+  },
+  {
+    "id": 13840645873,
+    "nombre": "Bernabéu Silos 6",
+    "tipo": "Parking",
+    "lat": 40.4514332,
+    "lon": -3.6869466
+  },
+  {
+    "id": 13850539216,
+    "nombre": "Parking Centro Comercial Arturo Soria Plaza",
+    "tipo": "Parking",
+    "lat": 40.4501816,
+    "lon": -3.6503051
+  },
+  {
     "id": 13992605868,
     "nombre": "Escuela de Relaciones Laborales",
     "tipo": "Universidad",
@@ -3031,11 +3801,32 @@
     "lon": -3.6996916
   },
   {
+    "id": 14112129303,
+    "nombre": "Parking promoparc",
+    "tipo": "Parking",
+    "lat": 40.4043226,
+    "lon": -3.6762076
+  },
+  {
+    "id": 14132725101,
+    "nombre": "Aparcamiento",
+    "tipo": "Parking",
+    "lat": 40.4159517,
+    "lon": -3.7302224
+  },
+  {
     "id": 14154385640,
     "nombre": "Universidad Camilo José Cela",
     "tipo": "Universidad",
     "lat": 40.460184,
     "lon": -3.6885518
+  },
+  {
+    "id": 14201868601,
+    "nombre": "Facultad",
+    "tipo": "Parking",
+    "lat": 40.4489787,
+    "lon": -3.7266423
   },
   {
     "id": 14231296201,
@@ -3071,6 +3862,13 @@
     "tipo": "Universidad",
     "lat": 40.4983846,
     "lon": -3.7060138
+  },
+  {
+    "id": 14360906591,
+    "nombre": "Skywalk Bernabéu",
+    "tipo": "Museo / Atracción",
+    "lat": 40.4531434,
+    "lon": -3.6892113
   },
   {
     "id": 3996190,
@@ -3685,8 +4483,8 @@
     "id": 4101281,
     "nombre": "Calle de la Palma",
     "tipo": "Calle",
-    "lat": 40.4267457,
-    "lon": -3.708077
+    "lat": 40.4267711,
+    "lon": -3.7083052
   },
   {
     "id": 4101282,
@@ -5876,8 +6674,8 @@
     "id": 4363474,
     "nombre": "Paseo de la Reina Cristina",
     "tipo": "Calle",
-    "lat": 40.4073865,
-    "lon": -3.6798669
+    "lat": 40.4073695,
+    "lon": -3.6798331
   },
   {
     "id": 4382659,
@@ -6044,8 +6842,8 @@
     "id": 4487124,
     "nombre": "Calle de Montserrat",
     "tipo": "Calle",
-    "lat": 40.4279603,
-    "lon": -3.7081884
+    "lat": 40.4279115,
+    "lon": -3.7098338
   },
   {
     "id": 4487126,
@@ -6912,8 +7710,8 @@
     "id": 4805089,
     "nombre": "Calle de Rafael Botí",
     "tipo": "Calle",
-    "lat": 40.4640165,
-    "lon": -3.8064948
+    "lat": 40.4640164,
+    "lon": -3.8064944
   },
   {
     "id": 4806504,
@@ -6955,7 +7753,7 @@
     "nombre": "Avenida del Mediterráneo",
     "tipo": "Calle",
     "lat": 40.4073041,
-    "lon": -3.677023
+    "lon": -3.6770621
   },
   {
     "id": 4812381,
@@ -7157,8 +7955,8 @@
     "id": 4814756,
     "nombre": "Calle Federico Moreno Torroba",
     "tipo": "Calle",
-    "lat": 40.4053126,
-    "lon": -3.667718
+    "lat": 40.4053187,
+    "lon": -3.6677143
   },
   {
     "id": 4815490,
@@ -7756,6 +8554,13 @@
     "lon": -3.5946466
   },
   {
+    "id": 4877396,
+    "nombre": "Aparcamiento Bus",
+    "tipo": "Parking",
+    "lat": 40.4551436,
+    "lon": -3.6086603
+  },
+  {
     "id": 4877685,
     "nombre": "Glorieta de la Ermita de la Virgen de la Soledad",
     "tipo": "Calle",
@@ -7948,8 +8753,8 @@
     "id": 4950752,
     "nombre": "Calle de San Hermenegildo",
     "tipo": "Calle",
-    "lat": 40.4283396,
-    "lon": -3.7078809
+    "lat": 40.4283614,
+    "lon": -3.7062379
   },
   {
     "id": 4950753,
@@ -7962,8 +8767,8 @@
     "id": 4950754,
     "nombre": "Calle del Norte",
     "tipo": "Calle",
-    "lat": 40.4265321,
-    "lon": -3.707289
+    "lat": 40.4270566,
+    "lon": -3.7069931
   },
   {
     "id": 4950756,
@@ -8102,15 +8907,15 @@
     "id": 5013941,
     "nombre": "Calle de Sedano",
     "tipo": "Calle",
-    "lat": 40.398292,
-    "lon": -3.7743198
+    "lat": 40.3982963,
+    "lon": -3.7743299
   },
   {
     "id": 5013948,
     "nombre": "Calle Fuentesaúco",
     "tipo": "Calle",
-    "lat": 40.3974668,
-    "lon": -3.7732807
+    "lat": 40.3974681,
+    "lon": -3.7732784
   },
   {
     "id": 5013953,
@@ -8123,8 +8928,8 @@
     "id": 5013960,
     "nombre": "Calle Galicia",
     "tipo": "Calle",
-    "lat": 40.3981409,
-    "lon": -3.7717716
+    "lat": 40.398144,
+    "lon": -3.7717841
   },
   {
     "id": 5013961,
@@ -8138,14 +8943,14 @@
     "nombre": "Plaza Patricio Martínez",
     "tipo": "Plaza",
     "lat": 40.3963014,
-    "lon": -3.7703559
+    "lon": -3.7703584
   },
   {
     "id": 5013963,
     "nombre": "Calle de Villaviciosa",
     "tipo": "Calle",
-    "lat": 40.3967728,
-    "lon": -3.772197
+    "lat": 40.3967759,
+    "lon": -3.7722011
   },
   {
     "id": 5013964,
@@ -8172,8 +8977,8 @@
     "id": 5013967,
     "nombre": "Calle Villacarriedo",
     "tipo": "Calle",
-    "lat": 40.3972744,
-    "lon": -3.7721759
+    "lat": 40.3972725,
+    "lon": -3.7721801
   },
   {
     "id": 5013968,
@@ -8186,8 +8991,8 @@
     "id": 5013969,
     "nombre": "Calle de Carballino",
     "tipo": "Calle",
-    "lat": 40.3969226,
-    "lon": -3.7694756
+    "lat": 40.3969245,
+    "lon": -3.769478
   },
   {
     "id": 5013970,
@@ -8606,8 +9411,8 @@
     "id": 5994012,
     "nombre": "Calle de Carpesa",
     "tipo": "Calle",
-    "lat": 40.3960426,
-    "lon": -3.7700268
+    "lat": 40.3960445,
+    "lon": -3.7700293
   },
   {
     "id": 5994020,
@@ -9614,8 +10419,8 @@
     "id": 7642979,
     "nombre": "Calle del Doctor Cortezo",
     "tipo": "Calle",
-    "lat": 40.4131153,
-    "lon": -3.7038149
+    "lat": 40.4130911,
+    "lon": -3.7038243
   },
   {
     "id": 7642983,
@@ -9649,8 +10454,8 @@
     "id": 7642992,
     "nombre": "Calle del Monte Esquinza",
     "tipo": "Calle",
-    "lat": 40.4288964,
-    "lon": -3.6919831
+    "lat": 40.4288962,
+    "lon": -3.6919896
   },
   {
     "id": 7642995,
@@ -10391,15 +11196,15 @@
     "id": 7649956,
     "nombre": "Calle de Francisco y Jacinto Alcántara",
     "tipo": "Calle",
-    "lat": 40.4285209,
+    "lat": 40.4285241,
     "lon": -3.7236201
   },
   {
     "id": 7649959,
     "nombre": "Paseo de Camoens",
     "tipo": "Calle",
-    "lat": 40.4298075,
-    "lon": -3.7243053
+    "lat": 40.429806,
+    "lon": -3.7243052
   },
   {
     "id": 7700824,
@@ -11140,8 +11945,8 @@
     "id": 7734401,
     "nombre": "Calle Mira el Río Baja",
     "tipo": "Calle",
-    "lat": 40.4078195,
-    "lon": -3.708721
+    "lat": 40.4083467,
+    "lon": -3.7088593
   },
   {
     "id": 7734402,
@@ -11525,8 +12330,8 @@
     "id": 7971932,
     "nombre": "Calle de las Conchas",
     "tipo": "Calle",
-    "lat": 40.41896,
-    "lon": -3.7077951
+    "lat": 40.4189579,
+    "lon": -3.7077923
   },
   {
     "id": 7971933,
@@ -11683,6 +12488,13 @@
     "lon": -3.6968913
   },
   {
+    "id": 7972139,
+    "nombre": "Parking Autobuses",
+    "tipo": "Parking",
+    "lat": 40.5449572,
+    "lon": -3.6913338
+  },
+  {
     "id": 7972158,
     "nombre": "Calle Ruiz de Alarcón",
     "tipo": "Calle",
@@ -11826,8 +12638,8 @@
     "id": 7972452,
     "nombre": "Calle de Luchana",
     "tipo": "Calle",
-    "lat": 40.4310519,
-    "lon": -3.6994877
+    "lat": 40.4313064,
+    "lon": -3.6991881
   },
   {
     "id": 7972465,
@@ -12113,8 +12925,8 @@
     "id": 7972755,
     "nombre": "Calle Rodas",
     "tipo": "Calle",
-    "lat": 40.4083888,
-    "lon": -3.7062866
+    "lat": 40.408073,
+    "lon": -3.7067392
   },
   {
     "id": 7972756,
@@ -12148,8 +12960,8 @@
     "id": 7972760,
     "nombre": "Calle del Ventorrillo",
     "tipo": "Calle",
-    "lat": 40.4072836,
-    "lon": -3.7054849
+    "lat": 40.4070484,
+    "lon": -3.7054705
   },
   {
     "id": 7972761,
@@ -13947,8 +14759,8 @@
     "id": 9934157,
     "nombre": "Calle Pedro Teixeira",
     "tipo": "Calle",
-    "lat": 40.4550172,
-    "lon": -3.6928026
+    "lat": 40.4550151,
+    "lon": -3.6928028
   },
   {
     "id": 9934175,
@@ -14313,6 +15125,13 @@
     "tipo": "Parque",
     "lat": 40.4493542,
     "lon": -3.6932206
+  },
+  {
+    "id": 10042144,
+    "nombre": "Centro Comercial La Vaguada",
+    "tipo": "Parking",
+    "lat": 40.4799837,
+    "lon": -3.7068326
   },
   {
     "id": 10044037,
@@ -14913,8 +15732,8 @@
     "id": 10642173,
     "nombre": "Pasaje de La Remonta",
     "tipo": "Calle",
-    "lat": 40.4638193,
-    "lon": -3.6965358
+    "lat": 40.4638225,
+    "lon": -3.6965432
   },
   {
     "id": 10642244,
@@ -15865,8 +16684,8 @@
     "id": 11353089,
     "nombre": "Calle de Leonardo Prieto Castro",
     "tipo": "Calle",
-    "lat": 40.4514908,
-    "lon": -3.7241812
+    "lat": 40.4514983,
+    "lon": -3.7241745
   },
   {
     "id": 11353182,
@@ -17827,20 +18646,6 @@
     "tipo": "Calle",
     "lat": 40.4849475,
     "lon": -3.687069
-  },
-  {
-    "id": 14483371,
-    "nombre": "Jardines de Andrés Saborit",
-    "tipo": "Parque",
-    "lat": 40.4463147,
-    "lon": -3.6995189
-  },
-  {
-    "id": 14483486,
-    "nombre": "Jardín de Salvador Rivas Goday",
-    "tipo": "Parque",
-    "lat": 40.4462372,
-    "lon": -3.6979156
   },
   {
     "id": 14484711,
@@ -20114,15 +20919,15 @@
     "id": 15241789,
     "nombre": "Calle Reyes Magos",
     "tipo": "Calle",
-    "lat": 40.4077191,
-    "lon": -3.6773241
+    "lat": 40.4077151,
+    "lon": -3.6773231
   },
   {
     "id": 15241790,
     "nombre": "Calle de Roncesvalles",
     "tipo": "Calle",
-    "lat": 40.4081786,
-    "lon": -3.6776856
+    "lat": 40.4081683,
+    "lon": -3.677689
   },
   {
     "id": 15241791,
@@ -20378,10 +21183,10 @@
   },
   {
     "id": 15416284,
-    "nombre": "ETSI Agronómica, Alimentaria y de Biosistemas",
+    "nombre": "Edificio Agrónomos",
     "tipo": "Universidad",
-    "lat": 40.4420493,
-    "lon": -3.7281969
+    "lat": 40.442049,
+    "lon": -3.728197
   },
   {
     "id": 15416286,
@@ -20504,10 +21309,10 @@
   },
   {
     "id": 15431571,
-    "nombre": "EUIT Forestales",
+    "nombre": "Escuela Universitaria de Ingeniería Técnica Forestal",
     "tipo": "Universidad",
-    "lat": 40.4484641,
-    "lon": -3.7235835
+    "lat": 40.4484645,
+    "lon": -3.723584
   },
   {
     "id": 15435239,
@@ -20637,10 +21442,10 @@
   },
   {
     "id": 15438357,
-    "nombre": "ETSI Navales",
+    "nombre": "Escuela Técnica Superior de Ingenieros Navales",
     "tipo": "Universidad",
-    "lat": 40.4393288,
-    "lon": -3.7238137
+    "lat": 40.4393284,
+    "lon": -3.7238153
   },
   {
     "id": 15470833,
@@ -20765,8 +21570,8 @@
     "id": 15996113,
     "nombre": "Escuela Técnica Superior de Edificación",
     "tipo": "Universidad",
-    "lat": 40.4391978,
-    "lon": -3.7322096
+    "lat": 40.4391988,
+    "lon": -3.7322111
   },
   {
     "id": 15996114,
@@ -20779,8 +21584,8 @@
     "id": 15996116,
     "nombre": "Pabellón Nuevo ETSAM",
     "tipo": "Universidad",
-    "lat": 40.4403182,
-    "lon": -3.7305216
+    "lat": 40.4403185,
+    "lon": -3.730524
   },
   {
     "id": 15996117,
@@ -20800,8 +21605,8 @@
     "id": 15996130,
     "nombre": "UNED Facultades de Derecho y CC. Políticas y Sociología",
     "tipo": "Universidad",
-    "lat": 40.4354268,
-    "lon": -3.733548
+    "lat": 40.4354232,
+    "lon": -3.7335453
   },
   {
     "id": 15996132,
@@ -20821,15 +21626,8 @@
     "id": 15996137,
     "nombre": "Facultad de Bellas Artes",
     "tipo": "Universidad",
-    "lat": 40.441155,
-    "lon": -3.7335081
-  },
-  {
-    "id": 15996138,
-    "nombre": "INEF - Instituto Nacional de Educación Física",
-    "tipo": "Universidad",
-    "lat": 40.4382049,
-    "lon": -3.7329701
+    "lat": 40.4411555,
+    "lon": -3.733508
   },
   {
     "id": 16095967,
@@ -21486,8 +22284,8 @@
     "id": 20616415,
     "nombre": "Ronda de la Comunicación",
     "tipo": "Calle",
-    "lat": 40.5128207,
-    "lon": -3.6633539
+    "lat": 40.5128368,
+    "lon": -3.6633701
   },
   {
     "id": 20617510,
@@ -22635,7 +23433,7 @@
     "nombre": "Cuesta de Moyano",
     "tipo": "Calle",
     "lat": 40.4095563,
-    "lon": -3.6905291
+    "lon": -3.6904663
   },
   {
     "id": 23076536,
@@ -22734,6 +23532,13 @@
     "tipo": "Parque",
     "lat": 40.3919659,
     "lon": -3.6869842
+  },
+  {
+    "id": 23101515,
+    "nombre": "Eva market",
+    "tipo": "Parking",
+    "lat": 40.389219,
+    "lon": -3.6962542
   },
   {
     "id": 23101579,
@@ -22999,7 +23804,7 @@
     "nombre": "Jardín histórico El Capricho de la Alameda Osuna",
     "tipo": "Parque",
     "lat": 40.4564574,
-    "lon": -3.5983807
+    "lon": -3.5983877
   },
   {
     "id": 23168813,
@@ -23208,8 +24013,8 @@
     "id": 23279209,
     "nombre": "Calle de la Carabela",
     "tipo": "Calle",
-    "lat": 40.4574199,
-    "lon": -3.5916629
+    "lat": 40.4574237,
+    "lon": -3.59166
   },
   {
     "id": 23279263,
@@ -23223,7 +24028,7 @@
     "nombre": "Avenida de Cantabria",
     "tipo": "Calle",
     "lat": 40.4542242,
-    "lon": -3.5879522
+    "lon": -3.5879587
   },
   {
     "id": 23279288,
@@ -23359,6 +24164,20 @@
     "lon": -3.6129483
   },
   {
+    "id": 23289018,
+    "nombre": "O/E; Amarillo",
+    "tipo": "Parking",
+    "lat": 40.4641236,
+    "lon": -3.6187572
+  },
+  {
+    "id": 23289025,
+    "nombre": "A/E; Violeta",
+    "tipo": "Parking",
+    "lat": 40.464793,
+    "lon": -3.6139572
+  },
+  {
     "id": 23289076,
     "nombre": "Glorieta de Edimburgo",
     "tipo": "Calle",
@@ -23441,6 +24260,13 @@
     "tipo": "Calle",
     "lat": 40.4601497,
     "lon": -3.5887844
+  },
+  {
+    "id": 23290936,
+    "nombre": "Parking de Larga Estancia T1-T2-T3",
+    "tipo": "Parking",
+    "lat": 40.4647119,
+    "lon": -3.5820404
   },
   {
     "id": 23291119,
@@ -23758,6 +24584,13 @@
     "lon": -3.5756632
   },
   {
+    "id": 23339374,
+    "nombre": "Bolsa de Taxis",
+    "tipo": "Parking",
+    "lat": 40.4687117,
+    "lon": -3.5771721
+  },
+  {
     "id": 23342555,
     "nombre": "Calle de Bariloche",
     "tipo": "Calle",
@@ -24062,8 +24895,8 @@
     "id": 23359485,
     "nombre": "Calle de la Falúa",
     "tipo": "Calle",
-    "lat": 40.4547311,
-    "lon": -3.5885789
+    "lat": 40.4547278,
+    "lon": -3.588586
   },
   {
     "id": 23359509,
@@ -24916,7 +25749,7 @@
     "id": 23488132,
     "nombre": "Calle Emeterio Castaños",
     "tipo": "Calle",
-    "lat": 40.463883,
+    "lat": 40.4638826,
     "lon": -3.6609543
   },
   {
@@ -25021,15 +25854,15 @@
     "id": 23488294,
     "nombre": "Calle de Añastro",
     "tipo": "Calle",
-    "lat": 40.4685271,
-    "lon": -3.6626631
+    "lat": 40.4680286,
+    "lon": -3.6632886
   },
   {
     "id": 23488295,
     "nombre": "Calle Berlanga de Duero",
     "tipo": "Calle",
     "lat": 40.4704363,
-    "lon": -3.6599235
+    "lon": -3.6599214
   },
   {
     "id": 23488331,
@@ -25462,8 +26295,8 @@
     "id": 23551895,
     "nombre": "Avenida Camino de Santiago",
     "tipo": "Calle",
-    "lat": 40.5124653,
-    "lon": -3.6655483
+    "lat": 40.5124781,
+    "lon": -3.665529
   },
   {
     "id": 23551905,
@@ -25910,8 +26743,8 @@
     "id": 23604035,
     "nombre": "Calle de Valcarlos",
     "tipo": "Calle",
-    "lat": 40.5067052,
-    "lon": -3.6628114
+    "lat": 40.5067183,
+    "lon": -3.6627992
   },
   {
     "id": 23604118,
@@ -26348,6 +27181,13 @@
     "lon": -3.7889729
   },
   {
+    "id": 23655368,
+    "nombre": "Aparcamiento Estacion de Aravaca",
+    "tipo": "Parking",
+    "lat": 40.4478058,
+    "lon": -3.7858954
+  },
+  {
     "id": 23678323,
     "nombre": "Calle Berna",
     "tipo": "Calle",
@@ -26372,8 +27212,8 @@
     "id": 23689372,
     "nombre": "Avenida de Santo Domingo de la Calzada",
     "tipo": "Calle",
-    "lat": 40.507719,
-    "lon": -3.6787361
+    "lat": 40.5077175,
+    "lon": -3.6787368
   },
   {
     "id": 23689375,
@@ -26444,6 +27284,20 @@
     "tipo": "Calle",
     "lat": 40.4081883,
     "lon": -3.6955472
+  },
+  {
+    "id": 23704629,
+    "nombre": "Parking P2",
+    "tipo": "Parking",
+    "lat": 40.4682608,
+    "lon": -3.5726194
+  },
+  {
+    "id": 23704759,
+    "nombre": "Parking P1",
+    "tipo": "Parking",
+    "lat": 40.4642455,
+    "lon": -3.5724019
   },
   {
     "id": 23712993,
@@ -26547,15 +27401,15 @@
     "id": 23785404,
     "nombre": "Calle de Triacastela",
     "tipo": "Calle",
-    "lat": 40.5099269,
-    "lon": -3.6700541
+    "lat": 40.5099277,
+    "lon": -3.6700607
   },
   {
     "id": 23785416,
     "nombre": "Glorieta de Lalín",
     "tipo": "Calle",
-    "lat": 40.5114917,
-    "lon": -3.6709251
+    "lat": 40.5114912,
+    "lon": -3.670939
   },
   {
     "id": 23785440,
@@ -26638,8 +27492,8 @@
     "id": 23802690,
     "nombre": "Carretera Fuencarral-Hortaleza",
     "tipo": "Calle",
-    "lat": 40.5074777,
-    "lon": -3.6802677
+    "lat": 40.5074749,
+    "lon": -3.680262
   },
   {
     "id": 23814838,
@@ -26647,6 +27501,13 @@
     "tipo": "Calle",
     "lat": 40.3991686,
     "lon": -3.6734248
+  },
+  {
+    "id": 23816508,
+    "nombre": "Aparcamiento Rodajos",
+    "tipo": "Parking",
+    "lat": 40.4122523,
+    "lon": -3.7788144
   },
   {
     "id": 23817039,
@@ -27797,6 +28658,13 @@
     "lon": -3.7433628
   },
   {
+    "id": 23994557,
+    "nombre": "E; Rojo",
+    "tipo": "Parking",
+    "lat": 40.469643,
+    "lon": -3.613194
+  },
+  {
     "id": 24004648,
     "nombre": "Avenida de Peña Prieta",
     "tipo": "Calle",
@@ -28110,13 +28978,6 @@
     "tipo": "Calle",
     "lat": 40.4782412,
     "lon": -3.7242897
-  },
-  {
-    "id": 24233794,
-    "nombre": "Vía Colectora A-2",
-    "tipo": "Calle",
-    "lat": 40.4541244,
-    "lon": -3.5824994
   },
   {
     "id": 24251869,
@@ -28633,8 +29494,8 @@
     "id": 24365045,
     "nombre": "Calle de la Salle",
     "tipo": "Calle",
-    "lat": 40.467057,
-    "lon": -3.7846897
+    "lat": 40.4670568,
+    "lon": -3.7846895
   },
   {
     "id": 24365152,
@@ -28738,8 +29599,8 @@
     "id": 24401236,
     "nombre": "Calle de Valdesquí",
     "tipo": "Calle",
-    "lat": 40.4649804,
-    "lon": -3.7727293
+    "lat": 40.4649803,
+    "lon": -3.7727292
   },
   {
     "id": 24404795,
@@ -28831,6 +29692,13 @@
     "tipo": "Calle",
     "lat": 40.4156089,
     "lon": -3.7365256
+  },
+  {
+    "id": 24466577,
+    "nombre": "Aparcamiento Madrid Destino",
+    "tipo": "Parking",
+    "lat": 40.4149795,
+    "lon": -3.7409563
   },
   {
     "id": 24466578,
@@ -29327,7 +30195,7 @@
     "nombre": "Calle de Navas de Oro",
     "tipo": "Calle",
     "lat": 40.4724109,
-    "lon": -3.7736582
+    "lon": -3.7733395
   },
   {
     "id": 24504885,
@@ -29354,14 +30222,14 @@
     "id": 24504894,
     "nombre": "Calle de Torreadrada",
     "tipo": "Calle",
-    "lat": 40.472327,
-    "lon": -3.7737561
+    "lat": 40.4717557,
+    "lon": -3.7735212
   },
   {
     "id": 24504932,
     "nombre": "Calle del Portillo del Pardo",
     "tipo": "Calle",
-    "lat": 40.47325,
+    "lat": 40.4732557,
     "lon": -3.7715293
   },
   {
@@ -29439,14 +30307,14 @@
     "nombre": "Calle Tapia de Casariego",
     "tipo": "Calle",
     "lat": 40.4685444,
-    "lon": -3.7660072
+    "lon": -3.766007
   },
   {
     "id": 24519627,
     "nombre": "Calle de Argentona",
     "tipo": "Calle",
     "lat": 40.4641349,
-    "lon": -3.7679107
+    "lon": -3.767911
   },
   {
     "id": 24519629,
@@ -29649,7 +30517,7 @@
     "nombre": "Calle de Tapia de Casariego",
     "tipo": "Calle",
     "lat": 40.4666845,
-    "lon": -3.7707998
+    "lon": -3.7707997
   },
   {
     "id": 24577900,
@@ -30237,7 +31105,7 @@
     "nombre": "Calle Infanta Catalina Micaela",
     "tipo": "Calle",
     "lat": 40.4892017,
-    "lon": -3.653016
+    "lon": -3.6530154
   },
   {
     "id": 25025342,
@@ -30642,15 +31510,15 @@
     "id": 25995618,
     "nombre": "Calle de Fernando de Rojas",
     "tipo": "Calle",
-    "lat": 40.492351,
-    "lon": -3.6487302
+    "lat": 40.4923523,
+    "lon": -3.6487228
   },
   {
     "id": 25996014,
     "nombre": "Calle de Julio Casares",
     "tipo": "Calle",
-    "lat": 40.4892892,
-    "lon": -3.6475891
+    "lat": 40.4892883,
+    "lon": -3.647589
   },
   {
     "id": 25996019,
@@ -30686,6 +31554,13 @@
     "tipo": "Calle",
     "lat": 40.4903391,
     "lon": -3.650737
+  },
+  {
+    "id": 26039451,
+    "nombre": "Vía Colectora A-2",
+    "tipo": "Calle",
+    "lat": 40.4520982,
+    "lon": -3.5648143
   },
   {
     "id": 26114296,
@@ -30817,8 +31692,8 @@
     "id": 26116987,
     "nombre": "Calle Almarza",
     "tipo": "Calle",
-    "lat": 40.468913,
-    "lon": -3.6605605
+    "lat": 40.4688734,
+    "lon": -3.6604838
   },
   {
     "id": 26117087,
@@ -30943,8 +31818,8 @@
     "id": 26117233,
     "nombre": "Calle Navaleno",
     "tipo": "Calle",
-    "lat": 40.4697424,
-    "lon": -3.6607803
+    "lat": 40.4697489,
+    "lon": -3.6607882
   },
   {
     "id": 26117253,
@@ -31706,8 +32581,8 @@
     "id": 27330499,
     "nombre": "Calle del Cardenal Tavera",
     "tipo": "Calle",
-    "lat": 40.4947921,
-    "lon": -3.6592518
+    "lat": 40.4947868,
+    "lon": -3.6592431
   },
   {
     "id": 27334052,
@@ -33827,8 +34702,8 @@
     "id": 27867294,
     "nombre": "Avenida Fuente de San Isidro",
     "tipo": "Calle",
-    "lat": 40.5949021,
-    "lon": -3.598201
+    "lat": 40.595025,
+    "lon": -3.5985593
   },
   {
     "id": 27868837,
@@ -38000,7 +38875,7 @@
     "nombre": "Calle de Villajimena",
     "tipo": "Calle",
     "lat": 40.4074878,
-    "lon": -3.6091229
+    "lon": -3.6090512
   },
   {
     "id": 28007745,
@@ -38214,7 +39089,7 @@
   },
   {
     "id": 28016592,
-    "nombre": "Calle Marchamalo",
+    "nombre": "Calle de Marchamalo",
     "tipo": "Calle",
     "lat": 40.3976258,
     "lon": -3.6482481
@@ -40666,8 +41541,8 @@
     "id": 28385512,
     "nombre": "Avenida de la Pesadilla",
     "tipo": "Calle",
-    "lat": 40.5960063,
-    "lon": -3.597901
+    "lat": 40.5967744,
+    "lon": -3.5998352
   },
   {
     "id": 28385520,
@@ -40708,8 +41583,8 @@
     "id": 28390385,
     "nombre": "Calle de Enero",
     "tipo": "Calle",
-    "lat": 40.4477154,
-    "lon": -3.5650993
+    "lat": 40.4477276,
+    "lon": -3.5656489
   },
   {
     "id": 28390415,
@@ -40736,8 +41611,8 @@
     "id": 28390489,
     "nombre": "Calle de Noviembre",
     "tipo": "Calle",
-    "lat": 40.4431115,
-    "lon": -3.5684911
+    "lat": 40.4434692,
+    "lon": -3.5684737
   },
   {
     "id": 28390490,
@@ -43053,8 +43928,8 @@
     "id": 28798423,
     "nombre": "Calle Benalmádena",
     "tipo": "Calle",
-    "lat": 40.385356,
-    "lon": -3.6384987
+    "lat": 40.3853573,
+    "lon": -3.6385022
   },
   {
     "id": 28798449,
@@ -43657,6 +44532,13 @@
     "tipo": "Calle",
     "lat": 40.3624703,
     "lon": -3.6517611
+  },
+  {
+    "id": 28815732,
+    "nombre": "Madrid Movilidad - Base Mediodía III",
+    "tipo": "Parking",
+    "lat": 40.365287,
+    "lon": -3.6481362
   },
   {
     "id": 28815737,
@@ -44453,7 +45335,7 @@
     "id": 29021370,
     "nombre": "Calle Lamiaco",
     "tipo": "Calle",
-    "lat": 40.4739302,
+    "lat": 40.4739367,
     "lon": -3.8235035
   },
   {
@@ -44467,8 +45349,8 @@
     "id": 29021372,
     "nombre": "Calle Guecho",
     "tipo": "Calle",
-    "lat": 40.4712443,
-    "lon": -3.8166908
+    "lat": 40.4712442,
+    "lon": -3.8166909
   },
   {
     "id": 29021390,
@@ -44789,7 +45671,7 @@
     "id": 29068153,
     "nombre": "Campus de la Dehesa de la Villa de la Universidad Pablo de Nebrija",
     "tipo": "Universidad",
-    "lat": 40.4533393,
+    "lat": 40.4533395,
     "lon": -3.7191466
   },
   {
@@ -45300,14 +46182,14 @@
     "id": 29373240,
     "nombre": "Calle Viento",
     "tipo": "Calle",
-    "lat": 40.4420916,
-    "lon": -3.5717004
+    "lat": 40.4422979,
+    "lon": -3.5716721
   },
   {
     "id": 29373287,
     "nombre": "Calle de Octubre",
     "tipo": "Calle",
-    "lat": 40.4415486,
+    "lat": 40.4415543,
     "lon": -3.5674497
   },
   {
@@ -45328,7 +46210,7 @@
     "id": 29373326,
     "nombre": "Calle de Agosto",
     "tipo": "Calle",
-    "lat": 40.4418419,
+    "lat": 40.4418402,
     "lon": -3.5633475
   },
   {
@@ -46609,8 +47491,8 @@
     "id": 30648316,
     "nombre": "Edificio Agrícolas",
     "tipo": "Universidad",
-    "lat": 40.4427182,
-    "lon": -3.7298554
+    "lat": 40.442718,
+    "lon": -3.729856
   },
   {
     "id": 30648317,
@@ -46791,21 +47673,14 @@
     "id": 30725640,
     "nombre": "Polideportivo Complejo deportivo Nuestra Señora de la Almudena",
     "tipo": "Universidad",
-    "lat": 40.4511698,
-    "lon": -3.7181988
-  },
-  {
-    "id": 30725643,
-    "nombre": "Edificio Universitario Pirineos",
-    "tipo": "Universidad",
-    "lat": 40.4533059,
-    "lon": -3.718979
+    "lat": 40.4511725,
+    "lon": -3.718211
   },
   {
     "id": 30725648,
     "nombre": "Edificio Pirineos",
     "tipo": "Calle",
-    "lat": 40.4534858,
+    "lat": 40.4534645,
     "lon": -3.7185233
   },
   {
@@ -47185,6 +48060,13 @@
     "tipo": "Calle",
     "lat": 40.4386517,
     "lon": -3.7326815
+  },
+  {
+    "id": 30814664,
+    "nombre": "Aparcamiento Moncloa",
+    "tipo": "Parking",
+    "lat": 40.4430604,
+    "lon": -3.7326954
   },
   {
     "id": 30814674,
@@ -48839,6 +49721,13 @@
     "lon": -3.6604981
   },
   {
+    "id": 31719863,
+    "nombre": "EMT - Depósito de Fuencarral.",
+    "tipo": "Parking",
+    "lat": 40.4794007,
+    "lon": -3.6822882
+  },
+  {
     "id": 31724165,
     "nombre": "Calle Gerardo Baena",
     "tipo": "Calle",
@@ -49136,8 +50025,8 @@
     "id": 31772487,
     "nombre": "Calle de Medea",
     "tipo": "Calle",
-    "lat": 40.4398948,
-    "lon": -3.6229593
+    "lat": 40.4398927,
+    "lon": -3.6229556
   },
   {
     "id": 31776623,
@@ -49658,6 +50547,20 @@
     "lon": -3.7339852
   },
   {
+    "id": 32396902,
+    "nombre": "Parking Ciudad Deportiva Real Madrid",
+    "tipo": "Parking",
+    "lat": 40.4771444,
+    "lon": -3.6093757
+  },
+  {
+    "id": 32427776,
+    "nombre": "Aparcamiento Autobuses",
+    "tipo": "Parking",
+    "lat": 40.4821115,
+    "lon": -3.5937684
+  },
+  {
     "id": 32427843,
     "nombre": "Carretera de Barajas",
     "tipo": "Calle",
@@ -49684,6 +50587,27 @@
     "tipo": "Calle",
     "lat": 40.4090516,
     "lon": -3.7305737
+  },
+  {
+    "id": 32459574,
+    "nombre": "P-10 Empleados",
+    "tipo": "Parking",
+    "lat": 40.4819557,
+    "lon": -3.591362
+  },
+  {
+    "id": 32459577,
+    "nombre": "Bolsa de Taxis T4",
+    "tipo": "Parking",
+    "lat": 40.4807044,
+    "lon": -3.5914934
+  },
+  {
+    "id": 32459578,
+    "nombre": "P-11",
+    "tipo": "Parking",
+    "lat": 40.4806308,
+    "lon": -3.5947589
   },
   {
     "id": 32463025,
@@ -49728,18 +50652,18 @@
     "lon": -3.7682866
   },
   {
-    "id": 32516205,
-    "nombre": "Rectorado UPM (Edificio A)",
-    "tipo": "Universidad",
-    "lat": 40.4485857,
-    "lon": -3.7193906
-  },
-  {
     "id": 32516427,
     "nombre": "Rectorado UPM (Edificio B)",
     "tipo": "Universidad",
-    "lat": 40.4481103,
-    "lon": -3.7178229
+    "lat": 40.4481105,
+    "lon": -3.717824
+  },
+  {
+    "id": 32516836,
+    "nombre": "Aparcamiento del Rectorado de la Universidad Politécnica de Madrid",
+    "tipo": "Parking",
+    "lat": 40.4495572,
+    "lon": -3.7199038
   },
   {
     "id": 32562482,
@@ -50603,6 +51527,13 @@
     "lon": -3.5990698
   },
   {
+    "id": 33807171,
+    "nombre": "Madrid Movilidad - Base Mediodía II",
+    "tipo": "Parking",
+    "lat": 40.3590051,
+    "lon": -3.6519347
+  },
+  {
     "id": 33812753,
     "nombre": "Carretera de acceso al Parque Tecnológico de Valdemingómez",
     "tipo": "Calle",
@@ -50648,8 +51579,8 @@
     "id": 33814252,
     "nombre": "Calle del Arte Conceptual",
     "tipo": "Calle",
-    "lat": 40.3608075,
-    "lon": -3.584448
+    "lat": 40.3608077,
+    "lon": -3.5844526
   },
   {
     "id": 33814293,
@@ -50929,7 +51860,7 @@
     "nombre": "Plaza de la Provincia",
     "tipo": "Calle",
     "lat": 40.4147885,
-    "lon": -3.7060213
+    "lon": -3.7061088
   },
   {
     "id": 34095413,
@@ -50965,6 +51896,13 @@
     "tipo": "Parque",
     "lat": 40.3674532,
     "lon": -3.7155755
+  },
+  {
+    "id": 34107034,
+    "nombre": "Aparcamiento disuasorio \"Calle Simca\"",
+    "tipo": "Parking",
+    "lat": 40.3655699,
+    "lon": -3.7050952
   },
   {
     "id": 34207893,
@@ -51131,7 +52069,7 @@
     "id": 35418733,
     "nombre": "Calle de septiembre",
     "tipo": "Calle",
-    "lat": 40.4415221,
+    "lat": 40.4415245,
     "lon": -3.5663883
   },
   {
@@ -51933,6 +52871,13 @@
     "lon": -3.6897351
   },
   {
+    "id": 44098847,
+    "nombre": "Aparcamiento disuasorio Colonia Jardín",
+    "tipo": "Parking",
+    "lat": 40.3969141,
+    "lon": -3.7755186
+  },
+  {
     "id": 44098901,
     "nombre": "Calle del Monte Olivetti",
     "tipo": "Calle",
@@ -52321,8 +53266,8 @@
     "id": 45885405,
     "nombre": "Central Térmica de la Ciudad Universitaria de Madrid",
     "tipo": "Universidad",
-    "lat": 40.4469615,
-    "lon": -3.7239221
+    "lat": 40.446962,
+    "lon": -3.723923
   },
   {
     "id": 46098090,
@@ -52862,6 +53807,13 @@
     "tipo": "Calle",
     "lat": 40.471987,
     "lon": -3.7134988
+  },
+  {
+    "id": 56185388,
+    "nombre": "Aparcamiento de profesores ETSAM",
+    "tipo": "Parking",
+    "lat": 40.4393461,
+    "lon": -3.7308421
   },
   {
     "id": 56228661,
@@ -53581,8 +54533,8 @@
     "id": 71134493,
     "nombre": "Calle del Cordel de Pavones",
     "tipo": "Calle",
-    "lat": 40.3956918,
-    "lon": -3.6204187
+    "lat": 40.3951781,
+    "lon": -3.6206222
   },
   {
     "id": 71232246,
@@ -53946,7 +54898,7 @@
     "nombre": "Jardín de Portugalete",
     "tipo": "Calle",
     "lat": 40.4579942,
-    "lon": -3.6532538
+    "lon": -3.6532345
   },
   {
     "id": 77820511,
@@ -54442,8 +55394,8 @@
     "id": 83694298,
     "nombre": "Instituto de Patrimonio Cultural de España",
     "tipo": "Universidad",
-    "lat": 40.4411582,
-    "lon": -3.7348633
+    "lat": 40.4411587,
+    "lon": -3.7348641
   },
   {
     "id": 83897705,
@@ -54458,6 +55410,20 @@
     "tipo": "Calle",
     "lat": 40.422525,
     "lon": -3.627575
+  },
+  {
+    "id": 84479608,
+    "nombre": "Calle de Luis Vives",
+    "tipo": "Calle",
+    "lat": 40.4432228,
+    "lon": -3.6773044
+  },
+  {
+    "id": 84488712,
+    "nombre": "Carrefour",
+    "tipo": "Parking",
+    "lat": 40.3693204,
+    "lon": -3.5999744
   },
   {
     "id": 84503705,
@@ -54668,13 +55634,6 @@
     "tipo": "Calle",
     "lat": 40.4385217,
     "lon": -3.6643641
-  },
-  {
-    "id": 85518572,
-    "nombre": "Calle de Luis Vives",
-    "tipo": "Calle",
-    "lat": 40.4442438,
-    "lon": -3.676042
   },
   {
     "id": 85518575,
@@ -55301,10 +56260,10 @@
   },
   {
     "id": 90965273,
-    "nombre": "Entrada CENIM",
+    "nombre": "CENIM",
     "tipo": "Calle",
-    "lat": 40.4464277,
-    "lon": -3.7220655
+    "lat": 40.4464298,
+    "lon": -3.7220699
   },
   {
     "id": 91406696,
@@ -55816,6 +56775,13 @@
     "tipo": "Calle",
     "lat": 40.4734213,
     "lon": -3.65165
+  },
+  {
+    "id": 98323473,
+    "nombre": "Caja Mágica",
+    "tipo": "Parking",
+    "lat": 40.367347,
+    "lon": -3.6854759
   },
   {
     "id": 98338859,
@@ -56476,6 +57442,13 @@
     "lon": -3.778941
   },
   {
+    "id": 101233552,
+    "nombre": "EMT - Depósito de Sanchinarro.",
+    "tipo": "Parking",
+    "lat": 40.4839237,
+    "lon": -3.6467224
+  },
+  {
     "id": 101727527,
     "nombre": "Calle Juan Mieg",
     "tipo": "Calle",
@@ -56607,6 +57580,13 @@
     "tipo": "Calle",
     "lat": 40.3975413,
     "lon": -3.6926064
+  },
+  {
+    "id": 106327232,
+    "nombre": "Mercadona",
+    "tipo": "Parking",
+    "lat": 40.3720908,
+    "lon": -3.6954697
   },
   {
     "id": 106594107,
@@ -56817,6 +57797,13 @@
     "tipo": "Calle",
     "lat": 40.4029182,
     "lon": -3.676581
+  },
+  {
+    "id": 109082903,
+    "nombre": "Aparcamiento Villaescusa",
+    "tipo": "Parking",
+    "lat": 40.4195196,
+    "lon": -3.6297603
   },
   {
     "id": 109190389,
@@ -57400,6 +58387,13 @@
     "lon": -3.6614222
   },
   {
+    "id": 118614524,
+    "nombre": "Aparcamiento Mapfre",
+    "tipo": "Parking",
+    "lat": 40.4478713,
+    "lon": -3.7778263
+  },
+  {
     "id": 118645859,
     "nombre": "Paseo del Embarcadero",
     "tipo": "Calle",
@@ -57410,8 +58404,8 @@
     "id": 119060054,
     "nombre": "Bulevar de José Prat",
     "tipo": "Calle",
-    "lat": 40.3969633,
-    "lon": -3.6184863
+    "lat": 40.3969419,
+    "lon": -3.6184013
   },
   {
     "id": 120460622,
@@ -59262,6 +60256,13 @@
     "lon": -3.6268347
   },
   {
+    "id": 130005608,
+    "nombre": "Plenilunio",
+    "tipo": "Parking",
+    "lat": 40.4469687,
+    "lon": -3.5875832
+  },
+  {
     "id": 130206477,
     "nombre": "Camino de la Granjilla",
     "tipo": "Calle",
@@ -59372,6 +60373,13 @@
     "tipo": "Calle",
     "lat": 40.402702,
     "lon": -3.7473251
+  },
+  {
+    "id": 132613254,
+    "nombre": "Aparcamiento de profesores",
+    "tipo": "Parking",
+    "lat": 40.4067509,
+    "lon": -3.6108749
   },
   {
     "id": 132671789,
@@ -59540,6 +60548,13 @@
     "tipo": "Museo / Atracción",
     "lat": 40.436987,
     "lon": -3.6857688
+  },
+  {
+    "id": 135188202,
+    "nombre": "Jardín de Ramón Ortiz",
+    "tipo": "Parque",
+    "lat": 40.4265916,
+    "lon": -3.72168
   },
   {
     "id": 135311409,
@@ -59755,8 +60770,8 @@
     "id": 135863134,
     "nombre": "Calle Formigal",
     "tipo": "Calle",
-    "lat": 40.4639132,
-    "lon": -3.7731245
+    "lat": 40.4639138,
+    "lon": -3.7731237
   },
   {
     "id": 135863138,
@@ -60081,13 +61096,6 @@
     "lon": -3.7667784
   },
   {
-    "id": 138884805,
-    "nombre": "Plaza de la Condesa de Gavia",
-    "tipo": "Parque",
-    "lat": 40.4492478,
-    "lon": -3.7019458
-  },
-  {
     "id": 139634507,
     "nombre": "sólo BUS",
     "tipo": "Calle",
@@ -60233,6 +61241,20 @@
     "tipo": "Calle",
     "lat": 40.3873672,
     "lon": -3.6173532
+  },
+  {
+    "id": 140560499,
+    "nombre": "Parking de Urgencias",
+    "tipo": "Parking",
+    "lat": 40.386144,
+    "lon": -3.6159088
+  },
+  {
+    "id": 140751390,
+    "nombre": "A/C",
+    "tipo": "Parking",
+    "lat": 40.470826,
+    "lon": -3.6195309
   },
   {
     "id": 140851983,
@@ -61540,15 +62562,8 @@
     "id": 150772472,
     "nombre": "Avenida de Gregorio del Amo",
     "tipo": "Calle",
-    "lat": 40.4462484,
-    "lon": -3.7213817
-  },
-  {
-    "id": 150772475,
-    "nombre": "Facultad de Educación, Universidad Complutense de Madrid",
-    "tipo": "Universidad",
-    "lat": 40.4506634,
-    "lon": -3.7178623
+    "lat": 40.4460624,
+    "lon": -3.7215433
   },
   {
     "id": 150772490,
@@ -61598,6 +62613,20 @@
     "tipo": "Calle",
     "lat": 40.3645985,
     "lon": -3.8032689
+  },
+  {
+    "id": 153028544,
+    "nombre": "Aparcemiento EMACOT del museo",
+    "tipo": "Parking",
+    "lat": 40.3668903,
+    "lon": -3.8027476
+  },
+  {
+    "id": 153224474,
+    "nombre": "Aparcemiento del museo de aire",
+    "tipo": "Parking",
+    "lat": 40.366573,
+    "lon": -3.8022913
   },
   {
     "id": 153224475,
@@ -61754,6 +62783,20 @@
     "lon": -3.5788424
   },
   {
+    "id": 157431412,
+    "nombre": "Parking de Empleados",
+    "tipo": "Parking",
+    "lat": 40.4658412,
+    "lon": -3.5780988
+  },
+  {
+    "id": 157526921,
+    "nombre": "Parking Express Salidas T2",
+    "tipo": "Parking",
+    "lat": 40.4687638,
+    "lon": -3.5705312
+  },
+  {
     "id": 158851758,
     "nombre": "Calle de Santiago Amón",
     "tipo": "Calle",
@@ -61864,6 +62907,13 @@
     "tipo": "Calle",
     "lat": 40.4640232,
     "lon": -3.6884382
+  },
+  {
+    "id": 164371301,
+    "nombre": "Alquiler de Estacionamiento de Vehículos",
+    "tipo": "Parking",
+    "lat": 40.4640802,
+    "lon": -3.5715137
   },
   {
     "id": 165225746,
@@ -62580,6 +63630,13 @@
     "lon": -3.6451499
   },
   {
+    "id": 173458328,
+    "nombre": "SAMUR-Protección Civil",
+    "tipo": "Parking",
+    "lat": 40.3596122,
+    "lon": -3.6903242
+  },
+  {
     "id": 173934037,
     "nombre": "Calle de Villapalacios",
     "tipo": "Calle",
@@ -62667,8 +63724,8 @@
     "id": 175346934,
     "nombre": "Calle de los Poetas",
     "tipo": "Calle",
-    "lat": 40.3962753,
-    "lon": -3.6230394
+    "lat": 40.3959884,
+    "lon": -3.6218333
   },
   {
     "id": 175346946,
@@ -63875,6 +64932,27 @@
     "lon": -3.6857038
   },
   {
+    "id": 186758578,
+    "nombre": "E; Naranja",
+    "tipo": "Parking",
+    "lat": 40.4696646,
+    "lon": -3.6233185
+  },
+  {
+    "id": 186758580,
+    "nombre": "E; Verde",
+    "tipo": "Parking",
+    "lat": 40.4683823,
+    "lon": -3.6219498
+  },
+  {
+    "id": 186758587,
+    "nombre": "Verde",
+    "tipo": "Parking",
+    "lat": 40.4685463,
+    "lon": -3.6209112
+  },
+  {
     "id": 187020465,
     "nombre": "Calle de Felipe el Hermoso",
     "tipo": "Calle",
@@ -63980,6 +65058,27 @@
     "lon": -3.5599574
   },
   {
+    "id": 189530738,
+    "nombre": "CIB",
+    "tipo": "Calle",
+    "lat": 40.4480571,
+    "lon": -3.7221328
+  },
+  {
+    "id": 189530746,
+    "nombre": "ICTAN",
+    "tipo": "Calle",
+    "lat": 40.447787,
+    "lon": -3.7236079
+  },
+  {
+    "id": 189577424,
+    "nombre": "Aparcamiento alumnos ETSAM",
+    "tipo": "Parking",
+    "lat": 40.4409898,
+    "lon": -3.7318439
+  },
+  {
     "id": 189577448,
     "nombre": "Jardines del Museo del Traje",
     "tipo": "Parque",
@@ -63997,22 +65096,22 @@
     "id": 189809928,
     "nombre": "Biblioteca ETSIAAB",
     "tipo": "Universidad",
-    "lat": 40.4430319,
-    "lon": -3.7292543
+    "lat": 40.4430325,
+    "lon": -3.729241
   },
   {
     "id": 189809931,
     "nombre": "Escuela Técnica Superior de Ingenieros Agrónomos - Ingeniería Rural: Mecanización",
     "tipo": "Universidad",
-    "lat": 40.4427857,
-    "lon": -3.7288451
+    "lat": 40.442786,
+    "lon": -3.728845
   },
   {
     "id": 189809933,
     "nombre": "Centro de Innovación en Tecnología para el Desarrollo Humano itdUPM",
     "tipo": "Universidad",
-    "lat": 40.4428659,
-    "lon": -3.7283051
+    "lat": 40.4428675,
+    "lon": -3.7283045
   },
   {
     "id": 189952519,
@@ -64104,6 +65203,13 @@
     "tipo": "Calle",
     "lat": 40.4030742,
     "lon": -3.6044634
+  },
+  {
+    "id": 194292401,
+    "nombre": "Madrid Movilidad - Base de Vicálvaro",
+    "tipo": "Parking",
+    "lat": 40.4001115,
+    "lon": -3.5840827
   },
   {
     "id": 194937959,
@@ -64424,8 +65530,8 @@
     "id": 201238944,
     "nombre": "Calle Galera",
     "tipo": "Calle",
-    "lat": 40.454318,
-    "lon": -3.5892158
+    "lat": 40.4543108,
+    "lon": -3.5892181
   },
   {
     "id": 201238945,
@@ -64508,8 +65614,8 @@
     "id": 206306026,
     "nombre": "Avenida de Viñuelas",
     "tipo": "Calle",
-    "lat": 40.593803,
-    "lon": -3.6043786
+    "lat": 40.5953186,
+    "lon": -3.6054713
   },
   {
     "id": 207455210,
@@ -64582,11 +65688,25 @@
     "lon": -3.6657618
   },
   {
+    "id": 208072189,
+    "nombre": "Plaza de Villafranca de los Barros",
+    "tipo": "Parking",
+    "lat": 40.4812819,
+    "lon": -3.712051
+  },
+  {
     "id": 208075087,
     "nombre": "Plaza de Esquivias",
     "tipo": "Parque",
     "lat": 40.4826258,
     "lon": -3.7127272
+  },
+  {
+    "id": 208075204,
+    "nombre": "Plaza de Cieza",
+    "tipo": "Parking",
+    "lat": 40.4818288,
+    "lon": -3.7124424
   },
   {
     "id": 208341953,
@@ -64906,9 +66026,9 @@
   {
     "id": 218518352,
     "nombre": "Plaza Ciudad de Viena",
-    "tipo": "Parque",
-    "lat": 40.4477094,
-    "lon": -3.7166493
+    "tipo": "Plaza",
+    "lat": 40.4477119,
+    "lon": -3.7166504
   },
   {
     "id": 218518353,
@@ -64919,7 +66039,7 @@
   },
   {
     "id": 218518355,
-    "nombre": "Universidad Pontificia de Salamanca (Campus de Madrid)",
+    "nombre": "Universidad Pontificia de Salamanca",
     "tipo": "Universidad",
     "lat": 40.4451265,
     "lon": -3.7203981
@@ -65089,22 +66209,22 @@
     "id": 225238780,
     "nombre": "Carretera de Boadilla",
     "tipo": "Calle",
-    "lat": 40.3990233,
-    "lon": -3.7711603
+    "lat": 40.3990167,
+    "lon": -3.7711966
   },
   {
     "id": 225324239,
     "nombre": "Aulario C - ETSIAAB",
     "tipo": "Universidad",
-    "lat": 40.4431349,
-    "lon": -3.7300246
+    "lat": 40.4431355,
+    "lon": -3.730025
   },
   {
     "id": 225324240,
     "nombre": "Centro de Lenguas",
     "tipo": "Universidad",
-    "lat": 40.4431577,
-    "lon": -3.7295745
+    "lat": 40.4431585,
+    "lon": -3.729575
   },
   {
     "id": 225485171,
@@ -65112,6 +66232,20 @@
     "tipo": "Calle",
     "lat": 40.4470558,
     "lon": -3.6163776
+  },
+  {
+    "id": 226141663,
+    "nombre": "EADS CASA Employee Private Parking",
+    "tipo": "Parking",
+    "lat": 40.4468729,
+    "lon": -3.5383045
+  },
+  {
+    "id": 226141920,
+    "nombre": "EADS CASA Visitor Private Parking",
+    "tipo": "Parking",
+    "lat": 40.4471612,
+    "lon": -3.5399019
   },
   {
     "id": 226263552,
@@ -65870,6 +67004,13 @@
     "lon": -3.708177
   },
   {
+    "id": 235474177,
+    "nombre": "Parking público",
+    "tipo": "Parking",
+    "lat": 40.4745882,
+    "lon": -3.5851612
+  },
+  {
     "id": 235613030,
     "nombre": "Calle de Anturio",
     "tipo": "Calle",
@@ -65896,6 +67037,13 @@
     "tipo": "Calle",
     "lat": 40.451318,
     "lon": -3.7368397
+  },
+  {
+    "id": 236866771,
+    "nombre": "Parking empleados Hospital Clínico",
+    "tipo": "Parking",
+    "lat": 40.4420843,
+    "lon": -3.7190505
   },
   {
     "id": 236871351,
@@ -66325,6 +67473,13 @@
     "lon": -3.6286658
   },
   {
+    "id": 242479326,
+    "nombre": "Aparcamiento Policía Municipal.",
+    "tipo": "Parking",
+    "lat": 40.3929128,
+    "lon": -3.6891089
+  },
+  {
     "id": 242505315,
     "nombre": "Jardín de Embajadores M-30",
     "tipo": "Parque",
@@ -66393,6 +67548,13 @@
     "tipo": "Museo / Atracción",
     "lat": 40.3950128,
     "lon": -3.7226275
+  },
+  {
+    "id": 245008157,
+    "nombre": "Parking Residentes Marqués de Suanzes",
+    "tipo": "Parking",
+    "lat": 40.4439711,
+    "lon": -3.623541
   },
   {
     "id": 245049105,
@@ -66545,8 +67707,8 @@
     "id": 247829799,
     "nombre": "Calle Casabermeja",
     "tipo": "Calle",
-    "lat": 40.3854164,
-    "lon": -3.6373125
+    "lat": 40.3854178,
+    "lon": -3.637316
   },
   {
     "id": 247960193,
@@ -66871,6 +68033,13 @@
     "lon": -3.7680082
   },
   {
+    "id": 255677188,
+    "nombre": "Aparcamiento Disuasorio de Aviación Española",
+    "tipo": "Parking",
+    "lat": 40.3831881,
+    "lon": -3.783752
+  },
+  {
     "id": 255734816,
     "nombre": "Callejón de la Rosa",
     "tipo": "Calle",
@@ -66897,6 +68066,13 @@
     "tipo": "Parque",
     "lat": 40.4334282,
     "lon": -3.7109686
+  },
+  {
+    "id": 257710355,
+    "nombre": "Complejo de Torrespaña",
+    "tipo": "Parking",
+    "lat": 40.4201477,
+    "lon": -3.6633694
   },
   {
     "id": 257710356,
@@ -67056,8 +68232,8 @@
     "id": 261837216,
     "nombre": "Plaza de Mariano de Cavia",
     "tipo": "Calle",
-    "lat": 40.4076213,
-    "lon": -3.6789415
+    "lat": 40.4075555,
+    "lon": -3.6789562
   },
   {
     "id": 261868386,
@@ -67151,6 +68327,13 @@
     "lon": -3.6484129
   },
   {
+    "id": 267446047,
+    "nombre": "plaza Ramón Gómez de la Serna 85",
+    "tipo": "Parking",
+    "lat": 40.4834476,
+    "lon": -3.7292035
+  },
+  {
     "id": 267606667,
     "nombre": "Centro universitario Villanueva",
     "tipo": "Universidad",
@@ -67235,18 +68418,11 @@
     "lon": -3.6191514
   },
   {
-    "id": 272829264,
-    "nombre": "Instituto de Energía Solar",
-    "tipo": "Universidad",
-    "lat": 40.4533257,
-    "lon": -3.7269521
-  },
-  {
-    "id": 272829275,
-    "nombre": "Edificio B, ETSI de Telecomunicación",
-    "tipo": "Universidad",
-    "lat": 40.4528555,
-    "lon": -3.726046
+    "id": 272950593,
+    "nombre": "Jardín del Cerro Ventoso",
+    "tipo": "Parking",
+    "lat": 40.450507,
+    "lon": -3.6692962
   },
   {
     "id": 272998800,
@@ -67417,6 +68593,13 @@
     "lon": -3.6702264
   },
   {
+    "id": 277664366,
+    "nombre": "Plaza de minusválidos",
+    "tipo": "Parking",
+    "lat": 40.4385535,
+    "lon": -3.6529362
+  },
+  {
     "id": 277676652,
     "nombre": "Calle de Demetrio López",
     "tipo": "Calle",
@@ -67424,18 +68607,18 @@
     "lon": -3.6558747
   },
   {
-    "id": 277707917,
-    "nombre": "Edificio C, ETSI de Telecomunicación",
-    "tipo": "Universidad",
-    "lat": 40.4533851,
-    "lon": -3.7261909
-  },
-  {
     "id": 279346289,
     "nombre": "Particular del Olvido",
     "tipo": "Calle",
     "lat": 40.3865886,
     "lon": -3.7026552
+  },
+  {
+    "id": 279465242,
+    "nombre": "Aparcamiento Fernán González",
+    "tipo": "Parking",
+    "lat": 40.4175795,
+    "lon": -3.6753684
   },
   {
     "id": 280656429,
@@ -67550,13 +68733,6 @@
     "lon": -3.6549245
   },
   {
-    "id": 289645033,
-    "nombre": "Calle de Marchamalo",
-    "tipo": "Calle",
-    "lat": 40.3966585,
-    "lon": -3.6473308
-  },
-  {
     "id": 289645035,
     "nombre": "Plaza de Pedro Marcos",
     "tipo": "Parque",
@@ -67582,7 +68758,7 @@
     "nombre": "Calle de San Millán de la Cogolla",
     "tipo": "Calle",
     "lat": 40.5056088,
-    "lon": -3.6726246
+    "lon": -3.6726305
   },
   {
     "id": 290451017,
@@ -67779,6 +68955,13 @@
     "tipo": "Calle",
     "lat": 40.4330786,
     "lon": -3.6591698
+  },
+  {
+    "id": 294496734,
+    "nombre": "Parking Bajo Coste T1, T2",
+    "tipo": "Parking",
+    "lat": 40.4599353,
+    "lon": -3.5777686
   },
   {
     "id": 295097258,
@@ -68082,6 +69265,13 @@
     "lon": -3.7017141
   },
   {
+    "id": 301602118,
+    "nombre": "Parque Móvil del Estado",
+    "tipo": "Parking",
+    "lat": 40.4376086,
+    "lon": -3.7072282
+  },
+  {
     "id": 301602119,
     "nombre": "Plaza Ángel Francés",
     "tipo": "Calle",
@@ -68092,8 +69282,8 @@
     "id": 301914847,
     "nombre": "CUNEF",
     "tipo": "Universidad",
-    "lat": 40.4514844,
-    "lon": -3.7196941
+    "lat": 40.4514835,
+    "lon": -3.7196935
   },
   {
     "id": 301967413,
@@ -68113,7 +69303,7 @@
     "id": 301967417,
     "nombre": "Callejón de Vicálvaro",
     "tipo": "Calle",
-    "lat": 40.4546255,
+    "lat": 40.454627,
     "lon": -3.5954634
   },
   {
@@ -68453,6 +69643,20 @@
     "lon": -3.7192384
   },
   {
+    "id": 310661315,
+    "nombre": "Parking Mundial",
+    "tipo": "Parking",
+    "lat": 40.4592387,
+    "lon": -3.6862211
+  },
+  {
+    "id": 310738156,
+    "nombre": "Garaje Lope de Haro",
+    "tipo": "Parking",
+    "lat": 40.4565955,
+    "lon": -3.7030458
+  },
+  {
     "id": 310777705,
     "nombre": "Pasaje de Rogelio Muñoz",
     "tipo": "Calle",
@@ -68486,6 +69690,13 @@
     "tipo": "Calle",
     "lat": 40.4155583,
     "lon": -3.6409184
+  },
+  {
+    "id": 311161133,
+    "nombre": "Base de Samur 4",
+    "tipo": "Parking",
+    "lat": 40.42772,
+    "lon": -3.6469164
   },
   {
     "id": 311614379,
@@ -68614,6 +69825,13 @@
     "lon": -3.635207
   },
   {
+    "id": 315273537,
+    "nombre": "Aparcamiento en descampado",
+    "tipo": "Parking",
+    "lat": 40.4718396,
+    "lon": -3.6320103
+  },
+  {
     "id": 316187866,
     "nombre": "Calle José Antonio Novas",
     "tipo": "Calle",
@@ -68659,15 +69877,15 @@
     "id": 317061665,
     "nombre": "Espacio Pablo VI",
     "tipo": "Universidad",
-    "lat": 40.4448009,
-    "lon": -3.7206622
+    "lat": 40.444801,
+    "lon": -3.7206625
   },
   {
     "id": 317061666,
-    "nombre": "Instituto Pluridisciplinar (UCM)",
+    "nombre": "Instituto Pluridisciplinar",
     "tipo": "Universidad",
-    "lat": 40.4438525,
-    "lon": -3.7203247
+    "lat": 40.443827,
+    "lon": -3.720325
   },
   {
     "id": 317220791,
@@ -69356,6 +70574,13 @@
     "lon": -3.6501925
   },
   {
+    "id": 326219560,
+    "nombre": "Bohemios",
+    "tipo": "Parking",
+    "lat": 40.3572531,
+    "lon": -3.6943135
+  },
+  {
     "id": 326560333,
     "nombre": "Calle Mario Roso de Luna",
     "tipo": "Calle",
@@ -69503,6 +70728,13 @@
     "lon": -3.6285353
   },
   {
+    "id": 327961390,
+    "nombre": "P.A.R.",
+    "tipo": "Parking",
+    "lat": 40.4700708,
+    "lon": -3.6349355
+  },
+  {
     "id": 328689535,
     "nombre": "Plaza de la Torre del Oro",
     "tipo": "Parque",
@@ -69515,6 +70747,13 @@
     "tipo": "Calle",
     "lat": 40.3736794,
     "lon": -3.6921599
+  },
+  {
+    "id": 328839921,
+    "nombre": "Parking Lidl",
+    "tipo": "Parking",
+    "lat": 40.4345424,
+    "lon": -3.6348674
   },
   {
     "id": 328889784,
@@ -69926,8 +71165,8 @@
     "id": 336521529,
     "nombre": "Calle Baltasar",
     "tipo": "Calle",
-    "lat": 40.4661389,
-    "lon": -3.6535227
+    "lat": 40.4661541,
+    "lon": -3.6534956
   },
   {
     "id": 336758159,
@@ -70060,7 +71299,7 @@
     "nombre": "Calle del Alcalde Pedro Gutiérrez",
     "tipo": "Calle",
     "lat": 40.3978212,
-    "lon": -3.5448768
+    "lon": -3.5448766
   },
   {
     "id": 338170292,
@@ -70325,15 +71564,22 @@
     "id": 340010488,
     "nombre": "Facultad de Educación",
     "tipo": "Universidad",
-    "lat": 40.451609,
-    "lon": -3.7176797
+    "lat": 40.4516105,
+    "lon": -3.7176776
+  },
+  {
+    "id": 340010490,
+    "nombre": "CUNEF Universidad",
+    "tipo": "Universidad",
+    "lat": 40.448926,
+    "lon": -3.7147685
   },
   {
     "id": 340205456,
     "nombre": "Biblioteca Bernardo de la Torre y Rojas",
     "tipo": "Universidad",
-    "lat": 40.4509401,
-    "lon": -3.7204045
+    "lat": 40.450961,
+    "lon": -3.720417
   },
   {
     "id": 340897702,
@@ -70542,8 +71788,8 @@
     "id": 351721038,
     "nombre": "Universidad Internacional Menéndez Pelayo",
     "tipo": "Universidad",
-    "lat": 40.4428071,
-    "lon": -3.7201647
+    "lat": 40.442807,
+    "lon": -3.720164
   },
   {
     "id": 351794399,
@@ -70600,6 +71846,13 @@
     "tipo": "Calle",
     "lat": 40.4722262,
     "lon": -3.8174778
+  },
+  {
+    "id": 357287250,
+    "nombre": "Parking Servicio Madrileño de Salud",
+    "tipo": "Parking",
+    "lat": 40.4662702,
+    "lon": -3.7277558
   },
   {
     "id": 357563688,
@@ -70777,13 +72030,6 @@
     "lon": -3.6632946
   },
   {
-    "id": 373779287,
-    "nombre": "Calle Cervantes",
-    "tipo": "Calle",
-    "lat": 40.4146242,
-    "lon": -3.6966983
-  },
-  {
     "id": 373780111,
     "nombre": "Calle de Quevedo",
     "tipo": "Calle",
@@ -70959,11 +72205,25 @@
     "lon": -3.7000383
   },
   {
+    "id": 385581307,
+    "nombre": "Garage Lar",
+    "tipo": "Parking",
+    "lat": 40.43608,
+    "lon": -3.6957533
+  },
+  {
     "id": 385705190,
     "nombre": "Vicerrectorado de Internacionalización (Universidad San Pablo CEU)",
     "tipo": "Universidad",
-    "lat": 40.4430167,
-    "lon": -3.7168846
+    "lat": 40.4430785,
+    "lon": -3.7168855
+  },
+  {
+    "id": 386233535,
+    "nombre": "Parking Puerta de Toledo",
+    "tipo": "Parking",
+    "lat": 40.407108,
+    "lon": -3.7103774
   },
   {
     "id": 387421982,
@@ -70980,18 +72240,18 @@
     "lon": -3.7137366
   },
   {
-    "id": 388681438,
-    "nombre": "Facultad de Ciencias Económicas y Empresariales (Universidad San Pablo CEU)",
-    "tipo": "Universidad",
-    "lat": 40.442549,
-    "lon": -3.7173925
-  },
-  {
     "id": 388912127,
     "nombre": "Calle Divina Pastora",
     "tipo": "Calle",
     "lat": 40.4955781,
     "lon": -3.6914016
+  },
+  {
+    "id": 393341930,
+    "nombre": "Aparcamiento Policía Municipal y SAMUR-PC",
+    "tipo": "Parking",
+    "lat": 40.4299457,
+    "lon": -3.6623352
   },
   {
     "id": 393402998,
@@ -71008,11 +72268,39 @@
     "lon": -3.7326572
   },
   {
+    "id": 393694770,
+    "nombre": "Punto de Encuento SUR (Emergencias).",
+    "tipo": "Parking",
+    "lat": 40.4546964,
+    "lon": -3.566142
+  },
+  {
+    "id": 393694776,
+    "nombre": "Punto de Encuentro Norte(Emergencias).",
+    "tipo": "Parking",
+    "lat": 40.4801502,
+    "lon": -3.5794539
+  },
+  {
     "id": 395057663,
     "nombre": "Parque de Alamedillas",
     "tipo": "Parque",
     "lat": 40.5000582,
     "lon": -3.7008886
+  },
+  {
+    "id": 395308834,
+    "nombre": "Madrid Movilidad - Base de Barajas.",
+    "tipo": "Parking",
+    "lat": 40.4670783,
+    "lon": -3.5753216
+  },
+  {
+    "id": 396135121,
+    "nombre": "Selur - Base Urbaser",
+    "tipo": "Parking",
+    "lat": 40.3781008,
+    "lon": -3.6338022
   },
   {
     "id": 398748609,
@@ -71047,7 +72335,7 @@
     "nombre": "UNED - Centro de zona Las Tablas",
     "tipo": "Universidad",
     "lat": 40.5044853,
-    "lon": -3.6661685
+    "lon": -3.6661741
   },
   {
     "id": 401655797,
@@ -71069,6 +72357,13 @@
     "tipo": "Calle",
     "lat": 40.3747102,
     "lon": -3.7373513
+  },
+  {
+    "id": 403859503,
+    "nombre": "Biblioteca Universidad San Pablo CEU",
+    "tipo": "Universidad",
+    "lat": 40.4432005,
+    "lon": -3.717907
   },
   {
     "id": 404418223,
@@ -71139,6 +72434,13 @@
     "tipo": "Calle",
     "lat": 40.4777153,
     "lon": -3.668429
+  },
+  {
+    "id": 409559239,
+    "nombre": "Parking San Fernando",
+    "tipo": "Parking",
+    "lat": 40.5268521,
+    "lon": -3.6893496
   },
   {
     "id": 409798971,
@@ -71316,6 +72618,13 @@
     "lon": -3.7674321
   },
   {
+    "id": 424607706,
+    "nombre": "Parking La Paz - Llano Castellano",
+    "tipo": "Parking",
+    "lat": 40.4839119,
+    "lon": -3.6854496
+  },
+  {
     "id": 424844827,
     "nombre": "Calle Santiago Bernabéu",
     "tipo": "Calle",
@@ -71426,6 +72735,13 @@
     "tipo": "Calle",
     "lat": 40.3713756,
     "lon": -3.7623285
+  },
+  {
+    "id": 434771171,
+    "nombre": "Parking Intercambiador Avenida de América",
+    "tipo": "Parking",
+    "lat": 40.4381936,
+    "lon": -3.6764418
   },
   {
     "id": 436534619,
@@ -71571,8 +72887,15 @@
     "id": 446639555,
     "nombre": "Plaza de la Remonta",
     "tipo": "Calle",
-    "lat": 40.4641406,
-    "lon": -3.6969478
+    "lat": 40.4641388,
+    "lon": -3.6969409
+  },
+  {
+    "id": 447581903,
+    "nombre": "Aparcamiento público Miguel Hernández",
+    "tipo": "Parking",
+    "lat": 40.3867455,
+    "lon": -3.6384568
   },
   {
     "id": 449077746,
@@ -71967,6 +73290,20 @@
     "lon": -3.6830517
   },
   {
+    "id": 500978334,
+    "nombre": "P 1",
+    "tipo": "Parking",
+    "lat": 40.3625223,
+    "lon": -3.6923438
+  },
+  {
+    "id": 500978338,
+    "nombre": "P 3",
+    "tipo": "Parking",
+    "lat": 40.3625043,
+    "lon": -3.6915847
+  },
+  {
     "id": 501236331,
     "nombre": "Calle de José Massó",
     "tipo": "Calle",
@@ -71993,6 +73330,27 @@
     "tipo": "Calle",
     "lat": 40.4345971,
     "lon": -3.7103078
+  },
+  {
+    "id": 503570914,
+    "nombre": "P2",
+    "tipo": "Parking",
+    "lat": 40.3625528,
+    "lon": -3.6919182
+  },
+  {
+    "id": 503767516,
+    "nombre": "Sur",
+    "tipo": "Parking",
+    "lat": 40.4341545,
+    "lon": -3.5987214
+  },
+  {
+    "id": 503772723,
+    "nombre": "Sur A",
+    "tipo": "Parking",
+    "lat": 40.4343048,
+    "lon": -3.5956615
   },
   {
     "id": 504636703,
@@ -72065,6 +73423,13 @@
     "lon": -3.6031392
   },
   {
+    "id": 515002923,
+    "nombre": "Oeste",
+    "tipo": "Parking",
+    "lat": 40.4366076,
+    "lon": -3.6041852
+  },
+  {
     "id": 515007988,
     "nombre": "Avenida del Atlético Aviación",
     "tipo": "Calle",
@@ -72091,6 +73456,27 @@
     "tipo": "Calle",
     "lat": 40.4334977,
     "lon": -3.5983786
+  },
+  {
+    "id": 518296717,
+    "nombre": "Azul",
+    "tipo": "Parking",
+    "lat": 40.4658826,
+    "lon": -3.6199814
+  },
+  {
+    "id": 518296778,
+    "nombre": "Rojo",
+    "tipo": "Parking",
+    "lat": 40.4695114,
+    "lon": -3.614173
+  },
+  {
+    "id": 518296792,
+    "nombre": "E; Marrón",
+    "tipo": "Parking",
+    "lat": 40.4708646,
+    "lon": -3.6144777
   },
   {
     "id": 519294613,
@@ -72140,6 +73526,13 @@
     "tipo": "Calle",
     "lat": 40.4154114,
     "lon": -3.6842249
+  },
+  {
+    "id": 533626970,
+    "nombre": "Bus",
+    "tipo": "Parking",
+    "lat": 40.4374902,
+    "lon": -3.5974981
   },
   {
     "id": 541893608,
@@ -72345,13 +73738,6 @@
     "lon": -3.7009855
   },
   {
-    "id": 553098274,
-    "nombre": "Fuente de Neptuno",
-    "tipo": "Museo / Atracción",
-    "lat": 40.4152553,
-    "lon": -3.6941511
-  },
-  {
     "id": 553237709,
     "nombre": "Jardines del COAM",
     "tipo": "Parque",
@@ -72527,6 +73913,13 @@
     "lon": -3.7093037
   },
   {
+    "id": 559264113,
+    "nombre": "Aparcamiento de alumnos",
+    "tipo": "Parking",
+    "lat": 40.4065394,
+    "lon": -3.6121358
+  },
+  {
     "id": 559264118,
     "nombre": "Edificio de Gestión",
     "tipo": "Universidad",
@@ -72681,6 +74074,13 @@
     "lon": -3.6594486
   },
   {
+    "id": 586696725,
+    "nombre": "Parking Naranja",
+    "tipo": "Parking",
+    "lat": 40.4505053,
+    "lon": -3.546016
+  },
+  {
     "id": 587033206,
     "nombre": "Calle Pastores",
     "tipo": "Calle",
@@ -72721,6 +74121,13 @@
     "tipo": "Plaza",
     "lat": 40.4660049,
     "lon": -3.6893839
+  },
+  {
+    "id": 601671549,
+    "nombre": "Depósito de automóviles",
+    "tipo": "Parking",
+    "lat": 40.4647196,
+    "lon": -3.6442514
   },
   {
     "id": 603128173,
@@ -72828,11 +74235,46 @@
     "lon": -3.6875824
   },
   {
+    "id": 645729145,
+    "nombre": "Aparcamiento de gimnasio Go Fit",
+    "tipo": "Parking",
+    "lat": 40.4768502,
+    "lon": -3.7186115
+  },
+  {
     "id": 654023301,
     "nombre": "Parque Forestal Cerro Almodóvar",
     "tipo": "Parque",
     "lat": 40.3889256,
     "lon": -3.6050626
+  },
+  {
+    "id": 662054498,
+    "nombre": "Aparcamiento Facultad de Ciencias UNED",
+    "tipo": "Parking",
+    "lat": 40.4369602,
+    "lon": -3.735872
+  },
+  {
+    "id": 662743687,
+    "nombre": "Aparcamiento Residentes Espalter",
+    "tipo": "Parking",
+    "lat": 40.4127357,
+    "lon": -3.6905044
+  },
+  {
+    "id": 662745161,
+    "nombre": "Aparcamiento Mixto Reyes Magos",
+    "tipo": "Parking",
+    "lat": 40.4085235,
+    "lon": -3.6764661
+  },
+  {
+    "id": 662754469,
+    "nombre": "Aparcamiento para residentes. Conde de Casal - Mediterráneo",
+    "tipo": "Parking",
+    "lat": 40.4070655,
+    "lon": -3.6738034
   },
   {
     "id": 663108822,
@@ -73003,6 +74445,13 @@
     "lon": -3.5800171
   },
   {
+    "id": 710670012,
+    "nombre": "Arroyo del Olivar",
+    "tipo": "Parking",
+    "lat": 40.3898218,
+    "lon": -3.6569845
+  },
+  {
     "id": 720087027,
     "nombre": "Calle Luis Gutiérrez Soto",
     "tipo": "Calle",
@@ -73022,6 +74471,13 @@
     "tipo": "Calle",
     "lat": 40.4567521,
     "lon": -3.5563399
+  },
+  {
+    "id": 725395833,
+    "nombre": "Parking Centro Norte",
+    "tipo": "Parking",
+    "lat": 40.4711022,
+    "lon": -3.6853529
   },
   {
     "id": 730234328,
@@ -73178,6 +74634,20 @@
     "lon": -3.7475155
   },
   {
+    "id": 781652978,
+    "nombre": "Aparcamiento Residentes Antonio Maura",
+    "tipo": "Parking",
+    "lat": 40.4165694,
+    "lon": -3.6903845
+  },
+  {
+    "id": 781652979,
+    "nombre": "Aparcamiento Residentes Niño Jesús",
+    "tipo": "Parking",
+    "lat": 40.4110367,
+    "lon": -3.6752921
+  },
+  {
     "id": 788139880,
     "nombre": "Calle Costureras",
     "tipo": "Calle",
@@ -73246,6 +74716,13 @@
     "tipo": "Parque",
     "lat": 40.3431714,
     "lon": -3.6906433
+  },
+  {
+    "id": 816100906,
+    "nombre": "Avenida Provisional Valdecarros 2",
+    "tipo": "Calle",
+    "lat": 40.3625448,
+    "lon": -3.6210398
   },
   {
     "id": 820269194,
@@ -73325,6 +74802,13 @@
     "lon": -3.7240193
   },
   {
+    "id": 856085405,
+    "nombre": "Alcampo Vallecas",
+    "tipo": "Parking",
+    "lat": 40.393193,
+    "lon": -3.6546443
+  },
+  {
     "id": 858178843,
     "nombre": "La Plazoleta",
     "tipo": "Plaza",
@@ -73337,6 +74821,13 @@
     "tipo": "Parque",
     "lat": 40.3738806,
     "lon": -3.6674985
+  },
+  {
+    "id": 859637127,
+    "nombre": "Aparcamiento para residentes. Rutilio Gacís",
+    "tipo": "Parking",
+    "lat": 40.3939309,
+    "lon": -3.6965006
   },
   {
     "id": 872191791,
@@ -73381,6 +74872,13 @@
     "lon": -3.6198781
   },
   {
+    "id": 894055920,
+    "nombre": "Aparcamiento Público Las Cortes",
+    "tipo": "Parking",
+    "lat": 40.4157026,
+    "lon": -3.6962002
+  },
+  {
     "id": 896274306,
     "nombre": "Plaza de los Carros",
     "tipo": "Calle",
@@ -73412,8 +74910,8 @@
     "id": 908928026,
     "nombre": "Rectorado UPM (Edificio C)",
     "tipo": "Universidad",
-    "lat": 40.4481038,
-    "lon": -3.7182894
+    "lat": 40.448104,
+    "lon": -3.7182895
   },
   {
     "id": 910118729,
@@ -73556,6 +75054,13 @@
     "lon": -3.7525841
   },
   {
+    "id": 943666108,
+    "nombre": "Aparcamiento disuasorio de Fuente de la Mora",
+    "tipo": "Parking",
+    "lat": 40.4845898,
+    "lon": -3.6646013
+  },
+  {
     "id": 944178589,
     "nombre": "Intercambiador de Av. de América (Largo Recorrido)",
     "tipo": "Calle",
@@ -73596,6 +75101,13 @@
     "tipo": "Parque",
     "lat": 40.3673626,
     "lon": -3.7458445
+  },
+  {
+    "id": 964260792,
+    "nombre": "Laboratorio de Acuicultura",
+    "tipo": "Universidad",
+    "lat": 40.450828,
+    "lon": -3.7211215
   },
   {
     "id": 964337664,
@@ -73806,6 +75318,13 @@
     "tipo": "Parque",
     "lat": 40.4572496,
     "lon": -3.7141103
+  },
+  {
+    "id": 1014927579,
+    "nombre": "Parking camiones recogida residuos",
+    "tipo": "Parking",
+    "lat": 40.4853345,
+    "lon": -3.6622101
   },
   {
     "id": 1017596633,
@@ -74207,32 +75726,11 @@
     "lon": -3.573225
   },
   {
-    "id": 1154374582,
-    "nombre": "Cementerio Parroquial San Sebastián Mártir",
-    "tipo": "Calle",
-    "lat": 40.382119,
-    "lon": -3.7520027
-  },
-  {
     "id": 1155409209,
     "nombre": "Calle Esquilache",
     "tipo": "Calle",
     "lat": 40.4447761,
     "lon": -3.7051858
-  },
-  {
-    "id": 1155637120,
-    "nombre": "Edificio D, ETSI de Telecomunicación",
-    "tipo": "Universidad",
-    "lat": 40.4521216,
-    "lon": -3.7255994
-  },
-  {
-    "id": 1155637122,
-    "nombre": "Edificio A, ETSI de Telecomunicación",
-    "tipo": "Universidad",
-    "lat": 40.4520384,
-    "lon": -3.7264247
   },
   {
     "id": 1158567480,
@@ -74268,6 +75766,13 @@
     "tipo": "Calle",
     "lat": 40.4465792,
     "lon": -3.7824975
+  },
+  {
+    "id": 1177514948,
+    "nombre": "Garage Ciudad de los Periodistas",
+    "tipo": "Parking",
+    "lat": 40.4841238,
+    "lon": -3.7096065
   },
   {
     "id": 1184614336,
@@ -74329,8 +75834,8 @@
     "id": 1203145116,
     "nombre": "Pasaje de Maestros Ladrilleros",
     "tipo": "Calle",
-    "lat": 40.4645653,
-    "lon": -3.6986292
+    "lat": 40.4645477,
+    "lon": -3.6986387
   },
   {
     "id": 1204946290,
@@ -74520,6 +76025,48 @@
     "tipo": "Calle",
     "lat": 40.456547,
     "lon": -3.7290597
+  },
+  {
+    "id": 1216841585,
+    "nombre": "Parking Barajas T4 A",
+    "tipo": "Parking",
+    "lat": 40.4887897,
+    "lon": -3.5947629
+  },
+  {
+    "id": 1216841586,
+    "nombre": "Parking Barajas T4 B",
+    "tipo": "Parking",
+    "lat": 40.4898102,
+    "lon": -3.5947657
+  },
+  {
+    "id": 1216841590,
+    "nombre": "Parking Barajas T4 C",
+    "tipo": "Parking",
+    "lat": 40.490817,
+    "lon": -3.5947761
+  },
+  {
+    "id": 1216841595,
+    "nombre": "Parking Barajas T4 D",
+    "tipo": "Parking",
+    "lat": 40.49182,
+    "lon": -3.5947757
+  },
+  {
+    "id": 1216841596,
+    "nombre": "Parking Barajas T4 E",
+    "tipo": "Parking",
+    "lat": 40.492823,
+    "lon": -3.5947891
+  },
+  {
+    "id": 1216841597,
+    "nombre": "Parking Barajas T4 F",
+    "tipo": "Parking",
+    "lat": 40.493842,
+    "lon": -3.5947913
   },
   {
     "id": 1217802129,
@@ -74816,6 +76363,13 @@
     "lon": -3.6810867
   },
   {
+    "id": 1280906800,
+    "nombre": "Parking Express T2",
+    "tipo": "Parking",
+    "lat": 40.4680862,
+    "lon": -3.5692676
+  },
+  {
     "id": 1284467286,
     "nombre": "Plaza de la Emperatriz",
     "tipo": "Parque",
@@ -74861,8 +76415,8 @@
     "id": 1301448948,
     "nombre": "Aulario D ETSIAAB",
     "tipo": "Universidad",
-    "lat": 40.4431041,
-    "lon": -3.7287763
+    "lat": 40.4431055,
+    "lon": -3.7287765
   },
   {
     "id": 1304263478,
@@ -74961,6 +76515,48 @@
     "tipo": "Calle",
     "lat": 40.4154019,
     "lon": -3.7073748
+  },
+  {
+    "id": 1332581448,
+    "nombre": "Avenida Provisional Valdecarros 5",
+    "tipo": "Calle",
+    "lat": 40.3599993,
+    "lon": -3.6174992
+  },
+  {
+    "id": 1332581450,
+    "nombre": "Avenida Provisional Valdecarros 25",
+    "tipo": "Calle",
+    "lat": 40.3606867,
+    "lon": -3.618542
+  },
+  {
+    "id": 1332581451,
+    "nombre": "Avenida Provisional Valdecarros 7",
+    "tipo": "Calle",
+    "lat": 40.3605719,
+    "lon": -3.618481
+  },
+  {
+    "id": 1332581453,
+    "nombre": "Avenida Provisional Valdecarros 24",
+    "tipo": "Calle",
+    "lat": 40.3594731,
+    "lon": -3.620908
+  },
+  {
+    "id": 1332581454,
+    "nombre": "Avenida Provisional Valdecarros 26",
+    "tipo": "Calle",
+    "lat": 40.3603605,
+    "lon": -3.6200708
+  },
+  {
+    "id": 1332581455,
+    "nombre": "Avenida Provisional Valdecarros 4",
+    "tipo": "Calle",
+    "lat": 40.3612141,
+    "lon": -3.6192782
   },
   {
     "id": 1332896526,
@@ -75173,6 +76769,13 @@
     "lon": -3.7375302
   },
   {
+    "id": 1360233070,
+    "nombre": "P3A",
+    "tipo": "Parking",
+    "lat": 40.4051206,
+    "lon": -3.686681
+  },
+  {
     "id": 1360293384,
     "nombre": "T3 walkway",
     "tipo": "Calle",
@@ -75320,6 +76923,13 @@
     "lon": -3.6244726
   },
   {
+    "id": 1369213784,
+    "nombre": "Cementerio Parroquial San Sebastián Mártir",
+    "tipo": "Calle",
+    "lat": 40.3824333,
+    "lon": -3.7517258
+  },
+  {
     "id": 1371203820,
     "nombre": "Calle de los Huertos de la Torre",
     "tipo": "Calle",
@@ -75447,91 +77057,84 @@
   },
   {
     "id": 1385720869,
-    "nombre": "Calle Los Baldíos",
+    "nombre": "Calle de Los Baldíos",
     "tipo": "Calle",
     "lat": 40.3987802,
     "lon": -3.5410006
   },
   {
     "id": 1385720870,
-    "nombre": "Calle Provisional Los Cerros 7",
+    "nombre": "Calle de Virginia Tovar Martín",
     "tipo": "Calle",
     "lat": 40.3999287,
     "lon": -3.5357034
   },
   {
     "id": 1385720871,
-    "nombre": "Calle Manuel de Terán Álvarez",
+    "nombre": "Calle de Manuel de Terán Álvarez",
     "tipo": "Calle",
     "lat": 40.3988157,
     "lon": -3.5391071
   },
   {
     "id": 1385812540,
-    "nombre": "Calle Doctor José Luis Gilarranz",
+    "nombre": "Calle del Doctor José Luis Gilarranz",
     "tipo": "Calle",
     "lat": 40.4010959,
     "lon": -3.5316927
   },
   {
     "id": 1385812541,
-    "nombre": "Calle el Concordado",
+    "nombre": "Calle de el Concordado",
     "tipo": "Calle",
     "lat": 40.3990922,
     "lon": -3.5372225
   },
   {
     "id": 1385812542,
-    "nombre": "Calle Provisional Los Cerros 16",
+    "nombre": "Calle de Ataúlfo Argenta",
     "tipo": "Calle",
     "lat": 40.3993776,
     "lon": -3.5354096
   },
   {
     "id": 1385812543,
-    "nombre": "Calle Provisional Los Cerros 15",
+    "nombre": "Calle de Pedro Bidagor Lasarte",
     "tipo": "Calle",
     "lat": 40.3997442,
     "lon": -3.5333437
   },
   {
     "id": 1386080277,
-    "nombre": "Calle Provisional Los Cerros 3",
+    "nombre": "Calle de José Rodríguez Losada",
     "tipo": "Calle",
     "lat": 40.4041462,
     "lon": -3.539668
   },
   {
-    "id": 1386080279,
-    "nombre": "Calle Pedro Bidagor Lasarte",
-    "tipo": "Calle",
-    "lat": 40.4056516,
-    "lon": -3.5333797
-  },
-  {
     "id": 1386080280,
-    "nombre": "Calle Juana Espinós Orlando",
+    "nombre": "Calle de Juana Espinós Orlando",
     "tipo": "Calle",
     "lat": 40.4050685,
     "lon": -3.5410433
   },
   {
     "id": 1386080281,
-    "nombre": "Calle María del Carmen Pescador del Hoyo",
+    "nombre": "Calle de María del Carmen Pescador del Hoyo",
     "tipo": "Calle",
     "lat": 40.4060574,
     "lon": -3.5372845
   },
   {
     "id": 1386080283,
-    "nombre": "Calle Vicente Palacio Atard",
+    "nombre": "Calle de Vicente Palacio Atard",
     "tipo": "Calle",
     "lat": 40.4049706,
     "lon": -3.5391586
   },
   {
     "id": 1386080284,
-    "nombre": "Calle Provisional Los Cerros 6",
+    "nombre": "Calle de Gonzalo Anes y Álvarez de Castrillón",
     "tipo": "Calle",
     "lat": 40.4027721,
     "lon": -3.5357273
@@ -75556,6 +77159,13 @@
     "tipo": "Universidad",
     "lat": 40.4474496,
     "lon": -3.7097662
+  },
+  {
+    "id": 1395754564,
+    "nombre": "Barceló",
+    "tipo": "Parking",
+    "lat": 40.4268651,
+    "lon": -3.6984783
   },
   {
     "id": 1408808511,
@@ -75633,6 +77243,13 @@
     "tipo": "Calle",
     "lat": 40.380539,
     "lon": -3.7870011
+  },
+  {
+    "id": 1436702854,
+    "nombre": "Parking T1 Salidas (dropoff)",
+    "tipo": "Parking",
+    "lat": 40.4640976,
+    "lon": -3.5708958
   },
   {
     "id": 1436720609,
@@ -75768,6 +77385,13 @@
     "lon": -3.5708728
   },
   {
+    "id": 1460170301,
+    "nombre": "Parking Lomcar",
+    "tipo": "Parking",
+    "lat": 40.4504542,
+    "lon": -3.5646578
+  },
+  {
     "id": 1460328723,
     "nombre": "Calle Impala",
     "tipo": "Calle",
@@ -75831,6 +77455,13 @@
     "lon": -3.6335698
   },
   {
+    "id": 1462346732,
+    "nombre": "Avenida Provisional Valdecarros 36",
+    "tipo": "Calle",
+    "lat": 40.3557933,
+    "lon": -3.6305587
+  },
+  {
     "id": 1462959109,
     "nombre": "Plaza Centro Cultural El Madroño",
     "tipo": "Plaza",
@@ -75887,6 +77518,13 @@
     "lon": -3.7809833
   },
   {
+    "id": 1475136023,
+    "nombre": "Abonados A7",
+    "tipo": "Parking",
+    "lat": 40.4551314,
+    "lon": -3.5651149
+  },
+  {
     "id": 1475596211,
     "nombre": "Calle Provisional Carcel de Carabanchel 5",
     "tipo": "Calle",
@@ -75936,6 +77574,13 @@
     "lon": -3.7568276
   },
   {
+    "id": 1479893544,
+    "nombre": "P3B",
+    "tipo": "Parking",
+    "lat": 40.4039631,
+    "lon": -3.6850675
+  },
+  {
     "id": 1481064837,
     "nombre": "Calle de las Fuentes de San Jorge",
     "tipo": "Calle",
@@ -75978,11 +77623,25 @@
     "lon": -3.7244005
   },
   {
+    "id": 1488000801,
+    "nombre": "Aparcamiento Residentes Iván de Vargas",
+    "tipo": "Parking",
+    "lat": 40.4031258,
+    "lon": -3.7241456
+  },
+  {
     "id": 1488007750,
     "nombre": "Acceso parking Maxi China",
     "tipo": "Calle",
     "lat": 40.405812,
     "lon": -3.7244362
+  },
+  {
+    "id": 1488018365,
+    "nombre": "Zona carga y descarga",
+    "tipo": "Parking",
+    "lat": 40.4021214,
+    "lon": -3.7228902
   },
   {
     "id": 1492388763,
@@ -75997,6 +77656,13 @@
     "tipo": "Calle",
     "lat": 40.3882745,
     "lon": -3.6211658
+  },
+  {
+    "id": 1492658062,
+    "nombre": "Zona de carga y descarga",
+    "tipo": "Parking",
+    "lat": 40.4006715,
+    "lon": -3.7221877
   },
   {
     "id": 1498849859,
@@ -76342,32 +78008,53 @@
     "lon": -3.7078361
   },
   {
+    "id": 1542914962,
+    "nombre": "Calle Doctor José Luis Gilarranz",
+    "tipo": "Calle",
+    "lat": 40.3959281,
+    "lon": -3.5426078
+  },
+  {
     "id": 1542916716,
-    "nombre": "Calle Montero",
+    "nombre": "Calle de Casa Montero",
     "tipo": "Calle",
     "lat": 40.3980155,
     "lon": -3.5391068
   },
   {
     "id": 1542993326,
-    "nombre": "Calle El Raso",
+    "nombre": "Calle de El Raso",
     "tipo": "Calle",
     "lat": 40.4057551,
     "lon": -3.5410721
   },
   {
     "id": 1542993327,
-    "nombre": "Calle Alfredo Di Stefano",
+    "nombre": "Calle de Alfredo Di Stefano",
     "tipo": "Calle",
     "lat": 40.4052615,
     "lon": -3.5335126
   },
   {
     "id": 1542993328,
-    "nombre": "Calle Francisco José Portela Sandoval",
+    "nombre": "Calle de Francisco José Portela Sandoval",
     "tipo": "Calle",
     "lat": 40.4082583,
     "lon": -3.5374241
+  },
+  {
+    "id": 1544292708,
+    "nombre": "P 24h Tudescos",
+    "tipo": "Parking",
+    "lat": 40.4213704,
+    "lon": -3.7052552
+  },
+  {
+    "id": 1544959310,
+    "nombre": "Saba Estación Tren Madrid - Atocha P2",
+    "tipo": "Parking",
+    "lat": 40.4052414,
+    "lon": -3.6878466
   },
   {
     "id": 1552567031,
@@ -76426,6 +78113,13 @@
     "lon": -3.571072
   },
   {
+    "id": 1557409607,
+    "nombre": "Parking Privado Monseñor Oscar Romero",
+    "tipo": "Parking",
+    "lat": 40.3816277,
+    "lon": -3.7510931
+  },
+  {
     "id": 1562502981,
     "nombre": "Calle Juana Mordó",
     "tipo": "Calle",
@@ -76482,8 +78176,15 @@
     "lon": -3.6874091
   },
   {
+    "id": 1565303580,
+    "nombre": "Calle Los Baldíos",
+    "tipo": "Calle",
+    "lat": 40.3944511,
+    "lon": -3.5423444
+  },
+  {
     "id": 1565303581,
-    "nombre": "Calle Provisional Los Cerros 11",
+    "nombre": "Calle María del Carmen Pescador del Hoyo",
     "tipo": "Calle",
     "lat": 40.4026239,
     "lon": -3.5372553
@@ -76536,5 +78237,40 @@
     "tipo": "Parque",
     "lat": 40.4228458,
     "lon": -3.661332
+  },
+  {
+    "id": 1575103311,
+    "nombre": "Calle Nueva Espaldas a Felipe Mora",
+    "tipo": "Calle",
+    "lat": 40.4669013,
+    "lon": -3.7072815
+  },
+  {
+    "id": 1575829730,
+    "nombre": "Instituto Geográfico Nacional",
+    "tipo": "Calle",
+    "lat": 40.4458478,
+    "lon": -3.71003
+  },
+  {
+    "id": 1580469232,
+    "nombre": "Parking Martínez Campos 42",
+    "tipo": "Parking",
+    "lat": 40.4345395,
+    "lon": -3.692424
+  },
+  {
+    "id": 1581670749,
+    "nombre": "Puente de Ventas",
+    "tipo": "Museo / Atracción",
+    "lat": 40.4313762,
+    "lon": -3.6607198
+  },
+  {
+    "id": 1582205733,
+    "nombre": "Universidad Internacional Menéndez Pelayo",
+    "tipo": "Parking",
+    "lat": 40.4427794,
+    "lon": -3.7197525
   }
 ]
