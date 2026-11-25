@@ -21,6 +21,13 @@ export interface Mapa2DProps {
   modoSeleccion?: 'solar' | 'origen' | 'destino';
   modoBusqueda?: 'lugar' | 'ruta';
   rutas?: MapRoutes | null;
+  parkings?: Array<{
+    id: string | number;
+    lat: number;
+    lon: number;
+    nombre: string;
+    probabilidad: number | string;
+  }>;
 }
 
 export const Mapa2D: React.FC<Mapa2DProps> = ({
@@ -32,6 +39,7 @@ export const Mapa2D: React.FC<Mapa2DProps> = ({
   destino,
   rutas,
   modoBusqueda = 'lugar',
+  parkings,
 }) => {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   useEffect(() => {
@@ -111,6 +119,30 @@ export const Mapa2D: React.FC<Mapa2DProps> = ({
         modoBusqueda === 'ruta' && origen ? `map.setView([${origen.lat}, ${origen.lon}], 16);` : ''}
 
       ${modoBusqueda === 'ruta' ? routeOverlayScript(rutas,origen,destino) : ''}
+
+      // Grupo de capas dedicado a los parkings para evitar mezclar capas y permitir limpieza fácil
+      var parkingLayerGroup = L.layerGroup().addTo(map);
+
+      // Renderizar los parkings si existen en las props
+      var parkingsData = ${JSON.stringify(parkings || [])};
+      if (parkingsData && Array.isArray(parkingsData)) {
+        parkingsData.forEach(function(p) {
+          // Crear un círculo marcador azul para cada parking
+          var parkingMarker = L.circleMarker([p.lat, p.lon], {
+            color: '#0056b3',
+            fillColor: '#007bff',
+            fillOpacity: 0.8,
+            radius: 8
+          });
+
+          var mensaje = p.nombre + ': ' + p.probabilidad + '% libre';
+
+          // En web, mostrar un popup al hacer clic en el marcador de parking
+          parkingMarker.bindPopup(mensaje);
+
+          parkingLayerGroup.addLayer(parkingMarker);
+        });
+      }
 
       map.on('click', function(e) {
         var clickedLat = e.latlng.lat;
