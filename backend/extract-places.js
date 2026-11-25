@@ -33,7 +33,11 @@ area["name"="Madrid"]["admin_level"="8"]->.searchArea;
   node["leisure"="park"](area.searchArea);
   way["leisure"="park"](area.searchArea);
 
-  // 6. Estaciones de tren y metro
+  // 6. Parkings (Aparcamientos)
+  node["amenity"="parking"](area.searchArea);
+  way["amenity"="parking"](area.searchArea);
+
+  // 7. Estaciones de tren y metro
   node["railway"="station"](area.searchArea);
   way["railway"="station"](area.searchArea);
   node["station"="subway"](area.searchArea);
@@ -54,6 +58,7 @@ function determinarTipo(tags) {
   if (tags.amenity === 'university' || tags.building === 'university') return 'Universidad';
   if (tags.tourism) return 'Museo / Atracción';
   if (tags.leisure === 'park') return 'Parque';
+  if (tags.amenity === 'parking') return 'Parking';
   if (tags.railway || tags.station === 'subway') return 'Estación de Transporte';
   return 'Lugar';
 }

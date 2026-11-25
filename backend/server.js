@@ -43,6 +43,51 @@ try {
   console.error('[Buscador] Error al cargar places.json:', err.message);
 }
 
+// Carga de estadísticas de aparcamiento y disponibilidad
+let parkingStats = {};
+const parkingStatsFilePath = path.join(__dirname, 'parking_stats.json');
+
+try {
+  if (fs.existsSync(parkingStatsFilePath)) {
+    const rawStats = fs.readFileSync(parkingStatsFilePath, 'utf8');
+    parkingStats = JSON.parse(rawStats);
+    console.log('[Parkings] Estadísticas de aparcamiento cargadas correctamente.');
+  } else {
+    console.log('[Parkings] No se encontró parking_stats.json, inicializando vacío.');
+    parkingStats = {};
+  }
+} catch (err) {
+  console.error('[Parkings] Error al cargar parking_stats.json:', err.message);
+}
+
+/**
+ * Guarda las estadísticas actuales de parkings en el archivo JSON persistente.
+ */
+function guardarEstadisticas() {
+  try {
+    fs.writeFileSync(parkingStatsFilePath, JSON.stringify(parkingStats, null, 2), 'utf8');
+  } catch (err) {
+    console.error('[Parkings] Error al guardar parking_stats.json:', err.message);
+  }
+}
+
+/**
+ * Calcula la distancia en metros entre dos puntos geográficos usando la fórmula de Haversine.
+ * @param {number} lat1 - Latitud del punto 1.
+ * @param {number} lon1 - Longitud del punto 1.
+ * @param {number} lat2 - Latitud del punto 2.
+ * @param {number} lon2 - Longitud del punto 2.
+ * @returns {number} Distancia en metros.
+ */
+function calcularDistanciaHaversine(lat1, lon1, lat2, lon2) {
+  const R = 6371e3; // Radio de la tierra en metros
+  const rad = Math.PI / 180;
+  const dLat = (lat2 - lat1) * rad;
+  const dLon = (lon2 - lon1) * rad;
+  const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * rad) * Math.cos(lat2 * rad) * Math.sin(dLon / 2) ** 2;
+  return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
+}
+
 const fuseOptions = {
   keys: ['nombre'],
   threshold: 0.3,         // Tolerancia a errores tipográficos (fuzzy search)
@@ -141,6 +186,67 @@ app.get('/api/search', (req, res) => {
   const topResults = searchResults.slice(0, 10).map(result => result.item);
 
   res.json(topResults);
+});
+
+// -------------------------------------------------------------
+// Endpoint de Parkings: GET /api/parkings?lat=...&lon=...&radius=...
+// Devuelve parkings cercanos con probabilidad de disponibilidad calculada.
+// -------------------------------------------------------------
+app.get('/api/parkings', (req, res) => {
+  const lat = parseFloat(req.query.lat);
+  const lon = parseFloat(req.query.lon);
+  const radius = req.query.radius ? parseFloat(req.query.radius) : 500;
+
+  if (isNaN(lat) || isNaN(lon)) {
+    return res.status(400).json({ error: 'Debes proporcionar "lat" y "lon" válidos.' });
+  }
+
+  const parkingsDisponibles = placesData.filter(place => place.tipo === 'Parking');
+  const horaActual = new Date().getHours();
+
+  const parkingsConDistanciaYProbabilidad = parkingsDisponibles.map(parking => {
+    const distancia = calcularDistanciaHaversine(lat, lon, parking.lat, parking.lon);
+    const statsId = String(parking.id);
+    const contador = (parkingStats[statsId] && parkingStats[statsId][horaActual]) || 0;
+    const probabilidad = Math.max(0, 1 - (contador / 10));
+
+    return {
+      id: parking.id,
+      nombre: parking.nombre,
+      lat: parking.lat,
+      lon: parking.lon,
+      distancia: Math.round(distancia),
+      probabilidad: Number(probabilidad.toFixed(2)),
+    };
+  });
+
+  const parkingsFiltrados = parkingsConDistanciaYProbabilidad
+    .filter(p => p.distancia <= radius)
+    .sort((a, b) => a.distancia - b.distancia)
+    .slice(0, 30);
+
+  res.json(parkingsFiltrados);
+});
+
+// -------------------------------------------------------------
+// Endpoint de Solicitud de Parking: POST /api/parkings/:id/request
+// Registra una solicitud/búsqueda de aparcamiento para actualizar estadísticas.
+// -------------------------------------------------------------
+app.post('/api/parkings/:id/request', (req, res) => {
+  const parkingId = String(req.params.id);
+  const horaActual = new Date().getHours();
+
+  if (!parkingStats[parkingId]) {
+    parkingStats[parkingId] = {};
+  }
+
+  parkingStats[parkingId][horaActual] = (parkingStats[parkingId][horaActual] || 0) + 1;
+  guardarEstadisticas();
+
+  res.json({
+    success: true,
+    contadorActual: parkingStats[parkingId][horaActual],
+  });
 });
 
 // -------------------------------------------------------------
