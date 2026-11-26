@@ -140,12 +140,18 @@ export default function SolarCalculatorScreen() {
     }
   };
 
-  // Limpiar parkings si mostrarParkings cambia a false
+  // Cargar parkings automáticamente al activar el toggle o cambiar de ubicación, y limpiar si se desactiva
   useEffect(() => {
-    if (!mostrarParkings) {
+    if (mostrarParkings) {
+      const lat = parseFloat(latitude);
+      const lon = parseFloat(longitude);
+      if (!isNaN(lat) && !isNaN(lon)) {
+        cargarParkings(lat, lon);
+      }
+    } else {
       setParkings([]);
     }
-  }, [mostrarParkings]);
+  }, [mostrarParkings, latitude, longitude]);
 
   // Estados para el buscador de lugares y debounce
   const [searchResults, setSearchResults] = useState<any[]>([]);
@@ -904,12 +910,13 @@ export default function SolarCalculatorScreen() {
           <Mapa2D
             initialLat={parseFloat(latitude) || MADRID_LAT}
             initialLon={parseFloat(longitude) || MADRID_LON}
-            // Pasamos el origen, destino, modo de selección y el modo de búsqueda al mapa
+            // Pasamos el origen, destino, modo de selección, modo de búsqueda y parkings al mapa
             origen={origenSeleccionado}
             destino={destino}
             rutas={rutas?.contextKey === contextoRuta ? rutas : null}
             modoSeleccion={modoSeleccion}
             modoBusqueda={modoBusqueda}
+            parkings={parkings}
             onSeleccionarCoordenada={handleMapCoordinateSelection}
           />
         )}

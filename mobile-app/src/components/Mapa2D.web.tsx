@@ -42,6 +42,18 @@ export const Mapa2D: React.FC<Mapa2DProps> = ({
   parkings,
 }) => {
   const iframeRef = useRef<HTMLIFrameElement>(null);
+
+  const sendParkingsToIframe = () => {
+    iframeRef.current?.contentWindow?.postMessage(
+      { type: 'UPDATE_PARKINGS', parkings: parkings || [] },
+      '*'
+    );
+  };
+
+  useEffect(() => {
+    sendParkingsToIframe();
+  }, [parkings]);
+
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
       if (event.source !== iframeRef.current?.contentWindow) return;
@@ -120,29 +132,49 @@ export const Mapa2D: React.FC<Mapa2DProps> = ({
 
       ${modoBusqueda === 'ruta' ? routeOverlayScript(rutas,origen,destino) : ''}
 
-      // Grupo de capas dedicado a los parkings para evitar mezclar capas y permitir limpieza fácil
-      var parkingLayerGroup = L.layerGroup().addTo(map);
+      
+      // Capa dedicada a los parkings para limpiar y repintar dinámicamente sin recargar el mapa
+      var parkingsLayer = L.layerGroup().addTo(map);
 
-      // Renderizar los parkings si existen en las props
-      var parkingsData = ${JSON.stringify(parkings || [])};
-      if (parkingsData && Array.isArray(parkingsData)) {
+      function escapeHtml(value) {
+        return String(value == null ? '' : value)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#39;');
+      }
+
+      function renderParkings(parkingsData) {
+        parkingsLayer.clearLayers();
+        if (!Array.isArray(parkingsData)) return;
         parkingsData.forEach(function(p) {
-          // Crear un círculo marcador azul para cada parking
-          var parkingMarker = L.circleMarker([p.lat, p.lon], {
+          var latNum = Number(p.lat);
+          var lonNum = Number(p.lon);
+          if (!Number.isFinite(latNum) || !Number.isFinite(lonNum)) return;
+
+          var parkingMarker = L.circleMarker([latNum, lonNum], {
             color: '#0056b3',
             fillColor: '#007bff',
             fillOpacity: 0.8,
             radius: 8
           });
 
-          var mensaje = p.nombre + ': ' + p.probabilidad + '% libre';
-
-          // En web, mostrar un popup al hacer clic en el marcador de parking
+          var mensaje = escapeHtml(p.nombre) + ': ' + escapeHtml(p.probabilidad) + '% libre';
           parkingMarker.bindPopup(mensaje);
-
-          parkingLayerGroup.addLayer(parkingMarker);
+          parkingsLayer.addLayer(parkingMarker);
         });
       }
+
+      window.addEventListener('message', function(event) {
+        var data = event.data;
+        if (typeof data === 'string') {
+          try { data = JSON.parse(data); } catch (err) { return; }
+        }
+        if (data && data.type === 'UPDATE_PARKINGS') {
+          renderParkings(data.parkings);
+        }
+      });
 
       map.on('click', function(e) {
         var clickedLat = e.latlng.lat;
@@ -166,6 +198,7 @@ export const Mapa2D: React.FC<Mapa2DProps> = ({
         ref={iframeRef}
         title="Mapa Leaflet 2D"
         srcDoc={leafletHtml}
+        onLoad={sendParkingsToIframe}
         style={{ width: '100%', height: '100%', border: 'none', display: 'block' }}
       />
     </View>
