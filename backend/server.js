@@ -71,6 +71,21 @@ function guardarEstadisticas() {
   }
 }
 
+
+/**
+ * Extrae una hora válida (0-23) del parámetro query "hora" ("HH:MM" o "HH").
+ * Si no es válida o no se envía, devuelve la hora actual del servidor.
+ */
+function obtenerHoraConsulta(horaParam) {
+  if (typeof horaParam === 'string') {
+    const match = horaParam.trim().match(/^([01]?\d|2[0-3])(?::[0-5]\d)?$/);
+    if (match) {
+      return parseInt(match[1], 10);
+    }
+  }
+  return new Date().getHours();
+}
+
 /**
  * Calcula la distancia en metros entre dos puntos geográficos usando la fórmula de Haversine.
  * @param {number} lat1 - Latitud del punto 1.
@@ -202,13 +217,18 @@ app.get('/api/parkings', (req, res) => {
   }
 
   const parkingsDisponibles = placesData.filter(place => place.tipo === 'Parking' || place.tipo === 'Parking en Calle');
-  const horaActual = new Date().getHours();
+  // const horaActual = new Date().getHours();
+  const horaConsulta = obtenerHoraConsulta(req.query.hora);
+  const horaInicioStr = `${String(horaConsulta).padStart(2, '0')}:00`;
+  const horaFinStr = `${String((horaConsulta + 1) % 24).padStart(2, '0')}:00`;
+  const franjaHoraria = `${horaInicioStr} - ${horaFinStr}`;
 
   const parkingsConDistanciaYProbabilidad = parkingsDisponibles.map(parking => {
     const distancia = calcularDistanciaHaversine(lat, lon, parking.lat, parking.lon);
     const statsId = String(parking.id);
-    const contador = (parkingStats[statsId] && parkingStats[statsId][horaActual]) || 0;
-    const probabilidad = Math.max(0, 1 - (contador / 10));
+    // const contador = (parkingStats[statsId] && parkingStats[statsId][horaActual]) || 0;
+    const contador = (parkingStats[statsId] && parkingStats[statsId][horaConsulta]) || 0;
+    const probabilidad = Math.max(0, 1 - (contador / 50));
 
     return {
       id: parking.id,
@@ -216,7 +236,7 @@ app.get('/api/parkings', (req, res) => {
       lat: parking.lat,
       lon: parking.lon,
       distancia: Math.round(distancia),
-      probabilidad: Number(probabilidad.toFixed(2)),
+      probabilidad: Math.round(probabilidad * 100),
     };
   });
 
@@ -234,18 +254,22 @@ app.get('/api/parkings', (req, res) => {
 // -------------------------------------------------------------
 app.post('/api/parkings/:id/request', (req, res) => {
   const parkingId = String(req.params.id);
-  const horaActual = new Date().getHours();
+  // const horaActual = new Date().getHours();
+  const horaConsulta = obtenerHoraConsulta(req.query.hora);
 
   if (!parkingStats[parkingId]) {
     parkingStats[parkingId] = {};
   }
 
-  parkingStats[parkingId][horaActual] = (parkingStats[parkingId][horaActual] || 0) + 1;
+  // parkingStats[parkingId][horaActual] = (parkingStats[parkingId][horaActual] || 0) + 1;
+  parkingStats[parkingId][horaConsulta] = (parkingStats[parkingId][horaConsulta] || 0) + 1;
   guardarEstadisticas();
 
   res.json({
     success: true,
-    contadorActual: parkingStats[parkingId][horaActual],
+    // contadorActual: parkingStats[parkingId][horaActual],
+    hora: horaConsulta,
+    contadorActual: parkingStats[parkingId][horaConsulta],
   });
 });
 

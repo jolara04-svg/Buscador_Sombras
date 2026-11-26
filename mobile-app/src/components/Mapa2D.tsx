@@ -19,6 +19,7 @@ interface Mapa2DProps {
     lon: number;
     nombre: string;
     probabilidad: number | string;
+    franjaHoraria?: string;
   }>;
 }
 
@@ -28,7 +29,24 @@ export function Mapa2D({ onSeleccionarCoordenada, initialLat = 40.4168, initialL
 
   const webViewRef = useRef<WebView>(null);
 
-  const htmlContent = `
+  // const htmlContent = `
+  const sendParkingsToWebView = () => {
+    const serializedParkings = JSON.stringify(parkings || [])
+      .replace(/</g, '\\u003c')
+      .replace(/\u2028/g, '\\u2028')
+      .replace(/\u2029/g, '\\u2029');
+    webViewRef.current?.injectJavaScript(`
+      if (typeof window.updateParkings === 'function') {
+        window.updateParkings(${serializedParkings});
+      }
+      true;
+    `);
+  };
+  useEffect(() => {
+    sendParkingsToWebView();
+  }, [parkings]);
+
+  const htmlContent = useMemo(() => `
     <!DOCTYPE html>
     <html>
     <head>
@@ -82,22 +100,46 @@ export function Mapa2D({ onSeleccionarCoordenada, initialLat = 40.4168, initialL
 
         ${modoBusqueda === 'ruta' ? routeOverlayScript(rutas,origen,destino) : ''}
 
-        // Grupo de capas dedicado a los parkings para evitar mezclar capas y permitir limpieza fácil
-        var parkingLayerGroup = L.layerGroup().addTo(map);
+        // Capa dedicada a los parkings para limpiar y repintar dinámicamente sin recargar el mapa
+        // if (!map.getPane('parkingsPane')) {
+        //   var parkingsPane = map.createPane('parkingsPane');
+        //   parkingsPane.style.zIndex = 650;
+        //   parkingsPane.style.pointerEvents = 'auto';
+        // }
+        var parkingsLayer = L.layerGroup().addTo(map);
 
-        // Renderizar los parkings si existen en las props
-        var parkingsData = ${JSON.stringify(parkings || [])};
-        if (parkingsData && Array.isArray(parkingsData)) {
+        function escapeHtml(value) {
+          return String(value == null ? '' : value)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+        }
+
+        window.updateParkings = function(parkingsData) {
+          parkingsLayer.clearLayers();
+          if (!Array.isArray(parkingsData)) return;
           parkingsData.forEach(function(p) {
-            // Crear un círculo marcador azul para cada parking
-            var parkingMarker = L.circleMarker([p.lat, p.lon], {
+            var latNum = Number(p.lat);
+            var lonNum = Number(p.lon);
+            if (!Number.isFinite(latNum) || !Number.isFinite(lonNum)) return;
+
+            var parkingMarker = L.circleMarker([latNum, lonNum], {
+              // pane: 'parkingsPane',
+              // color: '#ffffff',
+              // weight: 2,
               color: '#0056b3',
               fillColor: '#007bff',
-              fillOpacity: 0.8,
+              fillOpacity: 0.,
               radius: 8
             });
 
-            var mensaje = p.nombre + ': ' + p.probabilidad + '% libre';
+            var franjaTexto = p.franjaHoraria
+              ? '<br/>Franja horaria: ' + escapeHtml(p.franjaHoraria)
+              : '';
+            var mensaje = escapeHtml(p.nombre) + ': ' + escapeHtml(p.probabilidad) + '% libre' + franjaTexto;
+            // parkingMarker.bindPopup(mensaje);
 
             // Al hacer clic en un marcador de parking en móvil, enviar postMessage con la información
             parkingMarker.on('click', function(e) {
@@ -107,9 +149,9 @@ export function Mapa2D({ onSeleccionarCoordenada, initialLat = 40.4168, initialL
               }
             });
 
-            parkingLayerGroup.addLayer(parkingMarker);
+            parkingsLayer.addLayer(parkingMarker);
           });
-        }
+        };
 
         map.on('click', function(e) {
           var lat = e.latlng.lat;
@@ -124,7 +166,9 @@ export function Mapa2D({ onSeleccionarCoordenada, initialLat = 40.4168, initialL
       </script>
     </body>
     </html>
-  `;
+  `, [initialLat, initialLon, origen, destino, modoBusqueda, rutas]);
+
+  const webViewSource = useMemo(() => ({ html: htmlContent }), [htmlContent]);
 
   const handleMessage = (event: any) => {
     try {
@@ -141,9 +185,10 @@ export function Mapa2D({ onSeleccionarCoordenada, initialLat = 40.4168, initialL
     <View style={styles.container}>
       <WebView
         ref={webViewRef}
-        source={{ html: htmlContent }}
+        source={webViewSource}
         style={styles.webview}
         onMessage={handleMessage}
+        onLoadEnd={sendParkingsToWebView}
         javaScriptEnabled={true}
         domStorageEnabled={true}
         originWhitelist={['*']}

@@ -27,6 +27,7 @@ export interface Mapa2DProps {
     lon: number;
     nombre: string;
     probabilidad: number | string;
+    franjaHoraria?: string;
   }>;
 }
 
@@ -134,6 +135,11 @@ export const Mapa2D: React.FC<Mapa2DProps> = ({
 
       
       // Capa dedicada a los parkings para limpiar y repintar dinámicamente sin recargar el mapa
+      // if (!map.getPane('parkingsPane')) {
+      //   var parkingsPane = map.createPane('parkingsPane');
+      //   parkingsPane.style.zIndex = 650;
+      //   parkingsPane.style.pointerEvents = 'auto';
+      // }
       var parkingsLayer = L.layerGroup().addTo(map);
 
       function escapeHtml(value) {
@@ -154,14 +160,23 @@ export const Mapa2D: React.FC<Mapa2DProps> = ({
           if (!Number.isFinite(latNum) || !Number.isFinite(lonNum)) return;
 
           var parkingMarker = L.circleMarker([latNum, lonNum], {
+            // pane: 'parkingsPane',
+            // color: '#ffffff',
+            // weight: 2,
             color: '#0056b3',
             fillColor: '#007bff',
             fillOpacity: 0.8,
             radius: 8
           });
 
-          var mensaje = escapeHtml(p.nombre) + ': ' + escapeHtml(p.probabilidad) + '% libre';
+          var franjaTexto = p.franjaHoraria
+            ? '<br/>Franja horaria: ' + escapeHtml(p.franjaHoraria)
+            : '';
+          var mensaje = escapeHtml(p.nombre) + ': ' + escapeHtml(p.probabilidad) + '% libre' + franjaTexto;
           parkingMarker.bindPopup(mensaje);
+          parkingMarker.on('click', function(e) {
+            L.DomEvent.stopPropagation(e);
+          });
           parkingsLayer.addLayer(parkingMarker);
         });
       }

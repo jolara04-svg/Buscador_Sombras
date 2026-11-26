@@ -126,32 +126,81 @@ export default function SolarCalculatorScreen() {
    * @param {number} lat - Latitud
    * @param {number} lon - Longitud
    */
-  const cargarParkings = async (lat: number, lon: number) => {
+  // const cargarParkings = async (lat: number, lon: number) => {
+  const cargarParkings = async (lat: number, lon: number, hora?: string) => {
     try {
-      const response = await fetch(`http://localhost:3000/api/parkings?lat=${lat}&lon=${lon}&radius=500`);
+      // const response = await fetch(`http://localhost:3000/api/parkings?lat=${lat}&lon=${lon}&radius=500`);
+      const horaQuery = hora ? `&hora=${encodeURIComponent(hora)}` : '';
+      const response = await fetch(`http://localhost:3000/api/parkings?lat=${lat}&lon=${lon}&radius=500${horaQuery}`);
       if (!response.ok) {
         throw new Error('Error al cargar parkings');
       }
       const data = await response.json();
-      setParkings(Array.isArray(data) ? data : data.parkings || []);
+      // setParkings(Array.isArray(data) ? data : data.parkings || []);
+      const lista = Array.isArray(data) ? data : data.parkings || [];
+      const horaBase = hora ? parseInt(hora.split(':')[0], 10) : new Date().getHours();
+      const franjaFallback = `${String(horaBase).padStart(2, '0')}:00 - ${String((horaBase + 1) % 24).padStart(2, '0')}:00`;
+      setParkings(
+        lista.map((p: any) => ({
+          ...p,
+          franjaHoraria: p.franjaHoraria || franjaFallback,
+        }))
+      );
     } catch (error) {
       console.warn('No se pudieron cargar los parkings:', error);
       setParkings([]);
     }
   };
 
-  // Cargar parkings automáticamente al activar el toggle o cambiar de ubicación, y limpiar si se desactiva
-  useEffect(() => {
-    if (mostrarParkings) {
-      const lat = parseFloat(latitude);
-      const lon = parseFloat(longitude);
-      if (!isNaN(lat) && !isNaN(lon)) {
-        cargarParkings(lat, lon);
+
+  // const registrarSolicitudParking = async (item: any, lat: number, lon: number) => {
+  const registrarSolicitudParking = async (item: any, lat: number, lon: number, hora?: string) => {
+    if ((item.tipo === 'Parking' || item.tipo === 'Parking en Calle') && item.id != null) {
+      try {
+        // await fetch(`http://localhost:3000/api/parkings/${item.id}/request`, {
+        const horaQuery = hora ? `?hora=${encodeURIComponent(hora)}` : '';
+        await fetch(`http://localhost:3000/api/parkings/${item.id}/request${horaQuery}`, {
+          method: 'POST',
+        });
+        if (mostrarParkings) {
+          // cargarParkings(lat, lon);
+          cargarParkings(lat, lon, hora);
+        }
+      } catch (error) {
+        console.warn('No se pudo registrar la solicitud de parking:', error);
       }
-    } else {
-      setParkings([]);
     }
-  }, [mostrarParkings, latitude, longitude]);
+  };
+
+  // Cargar parkings según el modo activo (lugar consultado o destino de la ruta) y limpiar si se desactiva
+  // useEffect(() => {
+    // if (mostrarParkings) {
+    //   const lat = parseFloat(latitude);
+    //   const lon = parseFloat(longitude);
+    //   if (!isNaN(lat) && !isNaN(lon)) {
+    //     cargarParkings(lat, lon);
+    //   }
+    // } else {
+    // if (!mostrarParkings) {
+    //   setParkings([]);
+    //   return;
+    // }
+  // }, [mostrarParkings, latitude, longitude]);
+    // if (modoBusqueda === 'ruta') {
+    //   if (destino) {
+    //     cargarParkings(destino.lat, destino.lon);
+    //   } else {
+    //     setParkings([]);
+    //   }
+    //   return;
+    // }
+
+    // const lat = parseFloat(latitude);
+    // const lon = parseFloat(longitude);
+    // if (!isNaN(lat) && !isNaN(lon)) {
+    //   cargarParkings(lat, lon);
+    // }
+  // }, [mostrarParkings, modoBusqueda, destino, latitude, longitude]);
 
   // Estados para el buscador de lugares y debounce
   const [searchResults, setSearchResults] = useState<any[]>([]);
@@ -231,6 +280,28 @@ export default function SolarCalculatorScreen() {
   const [modoSeleccion, setModoSeleccion] = useState<'solar' | 'origen' | 'destino'>('solar');
   const origenSeleccionado = usarUbicacionActual ? ubicacionActual : origen;
 
+  // Cargar parkings según el modo activo (lugar consultado o destino de la ruta) y limpiar si se desactiva
+  useEffect(() => {
+    if (!mostrarParkings) {
+      setParkings([]);
+      return;
+    }
+
+    if (modoBusqueda === 'ruta') {
+      if (destino) {
+        cargarParkings(destino.lat, destino.lon);
+      } else {
+        setParkings([]);
+      }
+      return;
+    }
+
+    const lat = parseFloat(latitude);
+    const lon = parseFloat(longitude);
+    if (!isNaN(lat) && !isNaN(lon)) {
+      cargarParkings(lat, lon);
+    }
+  }, [mostrarParkings, modoBusqueda, destino, latitude, longitude]);
 
   // Formateo de la fecha (YYYY-MM-DD)
   const [fechaOperacion, setFechaOperacion] = useState(
@@ -244,6 +315,33 @@ export default function SolarCalculatorScreen() {
   const [horaOperacion, setHoraOperacion] = useState(
     new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: false })
   );
+
+  const horaParking = /^([01]?\d|2[0-3]):[0-5]\d$/.test(horaOperacion.trim())
+    ? horaOperacion.trim()
+    : undefined;
+
+  // Cargar parkings según el modo activo y la hora seleccionada, y limpiar si se desactiva
+  useEffect(() => {
+    if (!mostrarParkings) {
+      setParkings([]);
+      return;
+    }
+
+    if (modoBusqueda === 'ruta') {
+      if (destino) {
+        cargarParkings(destino.lat, destino.lon, horaParking);
+      } else {
+        setParkings([]);
+      }
+      return;
+    }
+
+    const lat = parseFloat(latitude);
+    const lon = parseFloat(longitude);
+    if (!isNaN(lat) && !isNaN(lon)) {
+      cargarParkings(lat, lon, horaParking);
+    }
+  }, [mostrarParkings, modoBusqueda, destino, latitude, longitude, horaParking]);
 
   const [rutas,setRutas]=useState<MapRoutes|null>(null);
   const contextoRuta=JSON.stringify([origenSeleccionado?.lat,origenSeleccionado?.lon,destino?.lat,destino?.lon,fechaOperacion,horaOperacion]);
@@ -494,30 +592,42 @@ export default function SolarCalculatorScreen() {
     const lat = Number(item.lat), lon = Number(item.lon);
     if (!Number.isFinite(lat) || !Number.isFinite(lon) || Math.abs(lat) > 90 || Math.abs(lon) > 180) return;
     // Actualizar coordenadas principales para la calculadora solar y vista
-    setLatitude(String(item.lat));
-    setLongitude(String(item.lon));
-    setLatitudeDisplay(truncarA6Decimales(item.lat));
-    setLongitudeDisplay(truncarA6Decimales(item.lon));
+    // setLatitude(String(item.lat));
+    // setLongitude(String(item.lon));
+    // setLatitudeDisplay(truncarA6Decimales(item.lat));
+    // setLongitudeDisplay(truncarA6Decimales(item.lon));
 
     if (modoBusqueda === 'lugar') {
+      setLatitude(String(item.lat));
+      setLongitude(String(item.lon));
+      setLatitudeDisplay(truncarA6Decimales(item.lat));
+      setLongitudeDisplay(truncarA6Decimales(item.lon));
       setBusqueda(item.nombre);
       setPuntoSombraSeleccionado({ lat, lon });
       const selectedDate = new Date(`${fechaOperacion}T${horaOperacion}:00`);
       if (!Number.isNaN(selectedDate.getTime())) {
         setResult(calculateSunPosition(selectedDate, lat, lon));
       }
+      // registrarSolicitudParking(item, lat, lon);
+      registrarSolicitudParking(item, lat, lon, horaParking);
       // Si el botón de parkings está activo, cargar parkings cercanos
-      if (mostrarParkings) {
-        cargarParkings(lat, lon);
-      }
+      // if (mostrarParkings) {
+      //   cargarParkings(lat, lon);
+      // }
     } else if (modoBusqueda === 'ruta') {
       if (tipoBusquedaRuta !== 'origen') {
+        setLatitude(String(item.lat));
+        setLongitude(String(item.lon));
+        setLatitudeDisplay(truncarA6Decimales(item.lat));
+        setLongitudeDisplay(truncarA6Decimales(item.lon));
         setDestino({ lat, lon });
         setBusquedaDestino(item.nombre);
         // Si el botón de parkings está activo, cargar parkings para el destino
-        if (mostrarParkings) {
-          cargarParkings(lat, lon);
-        }
+        // if (mostrarParkings) {
+        //   cargarParkings(lat, lon);
+        // }
+        // registrarSolicitudParking(item, lat, lon);
+        registrarSolicitudParking(item, lat, lon, horaParking);
       } else if (tipoBusquedaRuta === 'origen') {
         setUsarUbicacionActual(false);
         setOrigen({ lat, lon });
@@ -580,9 +690,9 @@ export default function SolarCalculatorScreen() {
       setLatitudeDisplay(truncarA6Decimales(lat.toString()));
       setLongitudeDisplay(truncarA6Decimales(lon.toString()));
       // Si el botón de parkings está activo, cargar parkings al tocar el mapa en modo lugar
-      if (mostrarParkings) {
-        cargarParkings(lat, lon);
-      }
+      // if (mostrarParkings) {
+      //   cargarParkings(lat, lon);
+      // }
       return;
     }
 
@@ -596,9 +706,9 @@ export default function SolarCalculatorScreen() {
         setDestino({ lat, lon });
         setBusquedaDestino(`${lat.toFixed(6)}, ${lon.toFixed(6)}`);
         // Si el botón de parkings está activo, cargar parkings al seleccionar destino en el mapa
-        if (mostrarParkings) {
-          cargarParkings(lat, lon);
-        }
+        // if (mostrarParkings) {
+        //   cargarParkings(lat, lon);
+        // }
       }
       cerrarBusqueda();
     }
@@ -615,9 +725,9 @@ export default function SolarCalculatorScreen() {
     >
       <View style={styles.header}>
         <Text style={styles.title}>Calculadora de Posición Solar</Text>
-        <Text style={styles.subtitle}>Ingrese fecha, hora y ubicación</Text>
+        {/*<Text style={styles.subtitle}>Ingrese fecha, hora y ubicación</Text>
         {locationStatus === 'loading' && <Text style={styles.locationStatus}>Obteniendo ubicación...</Text>}
-        {locationStatus === 'fallback' && <Text style={styles.locationStatus}>No se pudo obtener tu ubicación. Se muestra Madrid.</Text>}
+        {locationStatus === 'fallback' && <Text style={styles.locationStatus}>No se pudo obtener tu ubicación. Se muestra Madrid.</Text>}*/}
       </View>
 
                 {/* BARRA SUPERIOR TIPO GOOGLE MAPS */}
@@ -791,6 +901,41 @@ export default function SolarCalculatorScreen() {
                           placeholder="HH:MM"
                         />
                       </View>
+                      {/* 3. Selector de estación */}
+                      <View style={styles.seasonSelector}>
+                        <Pressable
+                          accessibilityRole="button"
+                          accessibilityLabel="Abrir selector de estación"
+                          accessibilityState={{ expanded: selectorEstacion.menuAbierto }}
+                          style={styles.seasonToggle}
+                          onPress={alternarSelectorEstacion}
+                        >
+                          <Text style={styles.seasonToggleText}>☀ Estación: {etiquetaEstacion(estacionSeleccionada)}</Text>
+                          <Text style={styles.seasonToggleIcon}>{selectorEstacion.menuAbierto ? '▲' : '▼'}</Text>
+                        </Pressable>
+                        {selectorEstacion.menuAbierto && (
+                          <View style={styles.seasonOptions} accessibilityRole="menu">
+                            {ESTACIONES.map((estacion) => {
+                              const selected = estacion.value === estacionSeleccionada;
+                              return (
+                                <Pressable
+                                  key={estacion.value}
+                                  accessibilityRole="menuitem"
+                                  accessibilityLabel={`Seleccionar ${estacion.label}`}
+                                  accessibilityState={{ selected }}
+                                  style={[styles.seasonOption, selected && styles.seasonOptionActive]}
+                                  onPress={() => cambiarEstacion(estacion.value)}
+                                >
+                                  <Text style={[styles.seasonOptionText, selected && styles.seasonOptionTextActive]}>
+                                    {estacion.label}
+                                  </Text>
+                                </Pressable>
+                              );
+                            })}
+                          </View>
+                        )}
+                      </View>
+
 
                       {/* Botón toggle para mostrar/ocultar parkings */}
                       <Pressable
@@ -938,11 +1083,12 @@ export default function SolarCalculatorScreen() {
               //Background map properties. Copied them.
               initialLat={parseFloat(latitude) || MADRID_LAT}
               initialLon={parseFloat(longitude) || MADRID_LON}
-              // Pasamos el origen, destino, modo de selección y el modo de búsqueda al mapa
+              // Pasamos el origen, destino, modo de selección, modo de búsqueda al mapa
               origen={origenSeleccionado}
               destino={destino}
               modoSeleccion={modoSeleccion}
               modoBusqueda={modoBusqueda}
+              // parkings={parkings}
               onSeleccionarCoordenada={handleMapCoordinateSelection}
             />
           )}
@@ -1232,40 +1378,7 @@ export default function SolarCalculatorScreen() {
           </Pressable>
         </View>
 
-        {/* 5. Selector de estación en la esquina superior derecha del mapa */}
-        <View style={styles.seasonSelector}>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Abrir selector de estación"
-            accessibilityState={{ expanded: selectorEstacion.menuAbierto }}
-            style={styles.seasonToggle}
-            onPress={alternarSelectorEstacion}
-          >
-            <Text style={styles.seasonToggleText}>☀ Estación: {etiquetaEstacion(estacionSeleccionada)}</Text>
-            <Text style={styles.seasonToggleIcon}>{selectorEstacion.menuAbierto ? '▲' : '▼'}</Text>
-          </Pressable>
-          {selectorEstacion.menuAbierto && (
-            <View style={styles.seasonOptions} accessibilityRole="menu">
-              {ESTACIONES.map((estacion) => {
-                const selected = estacion.value === estacionSeleccionada;
-                return (
-                  <Pressable
-                    key={estacion.value}
-                    accessibilityRole="menuitem"
-                    accessibilityLabel={`Seleccionar ${estacion.label}`}
-                    accessibilityState={{ selected }}
-                    style={[styles.seasonOption, selected && styles.seasonOptionActive]}
-                    onPress={() => cambiarEstacion(estacion.value)}
-                  >
-                    <Text style={[styles.seasonOptionText, selected && styles.seasonOptionTextActive]}>
-                      {estacion.label}
-                    </Text>
-                  </Pressable>
-                );
-              })}
-            </View>
-          )}
-        </View>
+        
 
       </View>
     </ScrollView>
@@ -1308,7 +1421,7 @@ const styles = StyleSheet.create({
     paddingTop: 10,
     paddingBottom: 10,
     backgroundColor: 'transparent',
-    zIndex: 10,
+    zIndex: 30,
     gap: 10,
   },
   searchBar: {
@@ -1320,8 +1433,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderRadius: 10,
     paddingHorizontal: 15,
-    paddingVertical: 8,
-    minHeight: 50,
+    paddingVertical: 2,
+    minHeight: 30,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
@@ -1333,7 +1446,10 @@ const styles = StyleSheet.create({
     minWidth: 0,
     fontSize: 15,
     color: '#333',
-    height: 38,
+    height: 36,
+    ...Platform.select({
+      web: { outlineStyle: 'none' } as any,
+    }),
   },
   routeSearchWrapper: {
     flex: 1,
@@ -1413,8 +1529,11 @@ const styles = StyleSheet.create({
     marginLeft: 5,
   },
   modeButton: {
-    padding: 8,
-    borderRadius: 20,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
     backgroundColor: '#f0f0f0',
   },
   modeButtonActive: {
@@ -1470,7 +1589,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: '#fff',
     borderRadius: 10,
-    height: 50,
+    height: 40,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
@@ -1482,6 +1601,9 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontSize: 14,
     color: '#333',
+    ...Platform.select({
+      web: { outlineStyle: 'none' } as any,
+    }),
   },
   verticalDivider: {
     width: 1,
@@ -1489,10 +1611,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#ccc',
   },
   parkingBox: {
-    width: 50,
-    height: 50,
+    width: 40,
+    height: 40,
     backgroundColor: '#fff',
-    borderRadius: 25,
+    borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#000',
@@ -1510,9 +1632,11 @@ const styles = StyleSheet.create({
     fontSize: 20,
   },
   seasonSelector: {
-    position: 'absolute',
-    top: 10,
-    right: 10,
+    // position: 'absolute',
+    // top: 10,
+    // right: 10,
+    position: 'relative',
+    alignSelf: 'flex-start',
     zIndex: 40,
     elevation: 6,
   },
@@ -1522,8 +1646,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 12,
-    paddingVertical: 9,
-    borderRadius: 8,
+    // paddingVertical: 9,
+    // borderRadius: 8,
+    height: 40,
+    borderRadius: 10,
     backgroundColor: '#0066cc',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
