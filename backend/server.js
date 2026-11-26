@@ -201,7 +201,7 @@ app.get('/api/parkings', (req, res) => {
     return res.status(400).json({ error: 'Debes proporcionar "lat" y "lon" válidos.' });
   }
 
-  const parkingsDisponibles = placesData.filter(place => place.tipo === 'Parking');
+  const parkingsDisponibles = placesData.filter(place => place.tipo === 'Parking' || place.tipo === 'Parking en Calle');
   const horaActual = new Date().getHours();
 
   const parkingsConDistanciaYProbabilidad = parkingsDisponibles.map(parking => {

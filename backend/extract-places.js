@@ -37,6 +37,14 @@ area["name"="Madrid"]["admin_level"="8"]->.searchArea;
   node["amenity"="parking"](area.searchArea);
   way["amenity"="parking"](area.searchArea);
 
+  // Aparcamientos en la calle (vías con estacionamiento en vía pública)
+  way["highway"]["parking:lane:both"](area.searchArea);
+  way["highway"]["parking:lane:right"](area.searchArea);
+  way["highway"]["parking:lane:left"](area.searchArea);
+  way["highway"]["parking:both"](area.searchArea);
+  way["highway"]["parking:right"](area.searchArea);
+  way["highway"]["parking:left"](area.searchArea);
+
   // 7. Estaciones de tren y metro
   node["railway"="station"](area.searchArea);
   way["railway"="station"](area.searchArea);
@@ -53,6 +61,8 @@ out center;
  */
 function determinarTipo(tags) {
   if (!tags) return 'Lugar';
+  // Si la vía tiene alguna etiqueta de aparcamiento en calle, clasificar como 'Parking en Calle' antes de highway
+  if (Object.keys(tags).some(k => k.startsWith('parking:'))) return 'Parking en Calle';
   if (tags.highway) return 'Calle';
   if (tags.place === 'square') return 'Plaza';
   if (tags.amenity === 'university' || tags.building === 'university') return 'Universidad';
